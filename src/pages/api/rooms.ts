@@ -26,6 +26,8 @@ export default async function handler(
     });
   }
 
+  
+
   try {
     const { data, error } = await supabase.from('rooms').select('*');
     

@@ -1,4 +1,5 @@
 import Layout from "@/components/admin/Layout";
+import { Reorder } from "motion/react";
 
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -6,6 +7,22 @@ import { useState } from "react";
 export default function create() {
   const [hasPromotion, setHasPromotion] = useState(false);
   const router = useRouter();
+
+  const [amenities, setAmenities] = useState([""]); // ✅ start with 1 default input
+
+  const handleEditAmenity = (index: number, value: string) => {
+    setAmenities((prev) => prev.map((a, i) => (i === index ? value : a)));
+  };
+
+  const handleAddAmenity = () => {
+    setAmenities((prev) => [...prev, ""]);
+  };
+
+  const handleDeleteAmenity = (index: number) => {
+    if (amenities.length > 1) {
+      setAmenities((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
 
   return (
     <Layout>
@@ -191,32 +208,74 @@ export default function create() {
                 </div>
               </div>
               <div className="space-y-6 mt-5">
-                <h2 className="text-lg font-medium text-gray-700 border-b border-gray-200 pb-2">
+                <h2 className="text-lg font-medium text-gray-700 border-t pt-5 border-gray-200 pb-2">
                   Room Amenities
                 </h2>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amenity <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-3 mb-4">
-                    <img src="/assets/drag-icon.png" alt="drag-icon" className="w-4" />
-                    <input
-                      type="text"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter amenity"
-                    />
-                    {/* Delete Amenity Button */}
-                    <button className="text-gray-600">Delete</button>
-                  </div>
+                {/* Amenity */}
+                <Reorder.Group
+                  axis="y"
+                  values={amenities}
+                  onReorder={setAmenities}
+                  className="space-y-2"
+                >
+                  {amenities.map((amenity, index) => (
+                    <Reorder.Item
+                      key={index}
+                      value={amenity}
+                      className="w-full"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        {/* Drag handle */}
+                        <img
+                          src="/assets/drag-icon.png"
+                          alt="drag"
+                          className="w-4 cursor-grab shrink-0 mt-7"
+                        />
 
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 px-4 py-2 text-orange-600 border border-orange-600 rounded-md hover:bg-orange-50 transition-colors disabled:opacity-50"
-                  >
-                    + Add Amenity
-                  </button>
-                </div>
+                        {/* Editable input */}
+                        <div className="flex flex-col flex-1 gap-y-2 justify-center">
+                        <label>Amenity <span className="text-red">*</span></label>
+                        <input
+                          type="text"
+                          value={amenity}
+                          onChange={(e) =>
+                            handleEditAmenity(index, e.target.value)
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter amenity"
+                        />
+                        </div>
+
+                        {/* Delete button (disabled if only one) */}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAmenity(index)}
+                          disabled={amenities.length === 1}
+                          className={`shrink-0 mt-7 ${
+                            amenities.length === 1
+                              ? "text-gray-400 cursor-not-allowed"
+                              : "text-red-500 hover:underline"
+                          }`}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </Reorder.Item>
+                  ))}
+                </Reorder.Group>
+
+                {/* Add Amenity Button */}
+                <button
+                  type="button"
+                  onClick={handleAddAmenity}
+                  className="mt-3 flex items-center gap-2 px-4 py-2 
+                   text-orange-600 border border-orange-600 rounded-md 
+                   hover:bg-orange-50 transition-colors"
+                >
+                  + Add Amenity
+                </button>
               </div>
             </div>
           </div>
