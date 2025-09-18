@@ -1,40 +1,87 @@
 import Head from "next/head";
 import { useState } from "react";
+import { useRouter } from "next/router";
+import { createClient } from "@supabase/supabase-js";
+
+interface Errors {
+  username: string;
+  password: string;
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function CustomerLoginPage() {
-  interface Errors {
-    username: string;
-    password: string;
-  }
+  const router = useRouter();
 
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errors, setErrors] = useState({ username: "", password: "" });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     let newErrors: Errors = { username: "", password: "" };
 
-    // ตรวจสอบเงื่อนไข
-    if (username.length < 6) {
-      newErrors.username = "Username must be at least 6 characters";
+    // Trim ช่องว่าง
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
+    // ตรวจสอบ username หรือ email
+    if (!trimmedUsername) {
+      newErrors.username = "Username or Email is required";
+    } else {
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedUsername);
+      if (!isEmail && trimmedUsername.length < 6) {
+        newErrors.username = "Username must be at least 6 characters";
+      }
     }
-    if (password.length < 6) {
+
+    // ตรวจสอบ password
+    if (!trimmedPassword) {
+      newErrors.password = "Password is required";
+    } else if (trimmedPassword.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
-    if (!username || !password) {
-      if (!username) newErrors.username = "Username is required";
-      if (!password) newErrors.password = "Password is required";
-    }
 
-    // ถ้าไม่มีข้อผิดพลาดให้ทำการล็อกอิน
-    if (!newErrors.username && !newErrors.password) {
-      // สามารถเพิ่มการส่งข้อมูลไปที่ backend ที่นี่
-      console.log("Logging in with", username, password);
-    }
-
+    // แสดง error ถ้ามี
     setErrors(newErrors);
+    if (newErrors.username || newErrors.password) return;
+
+    // ตรวจสอบว่าเป็น email หรือ username
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedUsername);
+    let emailToLogin = trimmedUsername;
+
+    if (!isEmail) {
+      const { data, error } = await supabase
+        .from("users")
+        .select("email")
+        .eq("username", trimmedUsername)
+        .single();
+
+      if (error || !data?.email) {
+        setErrors({ username: "Username not found", password: "" });
+        return;
+      }
+
+      emailToLogin = data.email;
+    }
+
+    const { data: authData, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email: emailToLogin,
+        password: trimmedPassword,
+      });
+
+    if (authError) {
+      setErrors({
+        username: "Login failed: " + authError.message,
+        password: "",
+      });
+    } else {
+      router.push("/dashboard");
+    }
   };
 
   return (
