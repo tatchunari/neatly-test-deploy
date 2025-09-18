@@ -1,6 +1,42 @@
 import Head from "next/head";
+import { useState } from "react";
 
 export default function CustomerLoginPage() {
+  interface Errors {
+    username: string;
+    password: string;
+  }
+
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [errors, setErrors] = useState({ username: "", password: "" });
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    let newErrors: Errors = { username: "", password: "" };
+
+    // ตรวจสอบเงื่อนไข
+    if (username.length < 6) {
+      newErrors.username = "Username must be at least 6 characters";
+    }
+    if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    if (!username || !password) {
+      if (!username) newErrors.username = "Username is required";
+      if (!password) newErrors.password = "Password is required";
+    }
+
+    // ถ้าไม่มีข้อผิดพลาดให้ทำการล็อกอิน
+    if (!newErrors.username && !newErrors.password) {
+      // สามารถเพิ่มการส่งข้อมูลไปที่ backend ที่นี่
+      console.log("Logging in with", username, password);
+    }
+
+    setErrors(newErrors);
+  };
+
   return (
     <>
       <Head>
@@ -30,17 +66,26 @@ export default function CustomerLoginPage() {
             {/* เมนูเดสก์ท็อป (ซ่อนบนมือถือ) */}
             <div className="hidden md:flex w-[444px]">
               <div className="py-[20px] px-[24px] text-center flex items-center justify-center">
-                <a href="#" className="text-black text-[14px] font-inter leading-[16px]">
+                <a
+                  href="#"
+                  className="text-black text-[14px] font-inter leading-[16px]"
+                >
                   About Neatly
                 </a>
               </div>
               <div className="py-[20px] px-[24px] text-center flex items-center justify-center">
-                <a href="#" className="text-black text-[14px] font-inter leading-[16px]">
+                <a
+                  href="#"
+                  className="text-black text-[14px] font-inter leading-[16px]"
+                >
                   Service & Facilities
                 </a>
               </div>
               <div className="py-[20px] px-[24px] text-center flex items-center justify-center">
-                <a href="#" className="text-black text-[14px] font-inter leading-[16px]">
+                <a
+                  href="#"
+                  className="text-black text-[14px] font-inter leading-[16px]"
+                >
                   Rooms & Suits
                 </a>
               </div>
@@ -64,7 +109,12 @@ export default function CustomerLoginPage() {
             aria-label="Menu"
           >
             <svg viewBox="0 0 24 24" className="w-6 h-6">
-              <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M3 6h18M3 12h18M3 18h18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -92,7 +142,7 @@ export default function CustomerLoginPage() {
               </div>
 
               <div className="w-full md:w-[452px]">
-                <form>
+                <form onSubmit={handleSubmit}>
                   <div className="mb-5 md:mb-[40px]">
                     <label
                       htmlFor="email"
@@ -103,9 +153,18 @@ export default function CustomerLoginPage() {
                     <input
                       id="email"
                       type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       placeholder="Enter your username or email"
                       className="w-full md:w-[452px] h-[48px] rounded border border-gray-300 bg-white pt-3 pr-4 pb-3 pl-3 text-[16px] outline-none placeholder:text-gray-500 focus:border-green-700 focus:ring-2 focus:ring-green-100 transition"
                     />
+                    <p
+                      className={`text-sm h-5 mt-1 ${
+                        errors.username ? "text-red-500 visible" : "invisible"
+                      }`}
+                    >
+                      {errors.username || "placeholder"}
+                    </p>
                   </div>
 
                   <div className="mb-5 md:mb-[40px]">
@@ -118,15 +177,24 @@ export default function CustomerLoginPage() {
                     <input
                       id="password"
                       type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
                       className="w-full md:w-[452px] h-[48px] rounded border border-gray-300 bg-white pt-3 pr-4 pb-3 pl-3 text-[16px] outline-none placeholder:text-gray-500 focus:border-green-700 focus:ring-2 focus:ring-green-100 transition"
                     />
+                    <p
+                      className={`text-sm h-5 mt-1 ${
+                        errors.password ? "text-red-500 visible" : "invisible"
+                      }`}
+                    >
+                      {errors.password || "placeholder"}
+                    </p>
                   </div>
 
                   <div className="flex flex-col">
                     <button
-                      type="button"
-                      className="w-full md:w-[452px] h-[48px] mb-4 md:mb-[16px] rounded bg-orange-600 font-inter text-white text-[16px] font-semibold leading-[16px] px-8 transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                      type="submit"
+                      className="w-full md:w-[452px] h-[48px] mb-4 md:mb-[16px] rounded bg-orange-600 font-inter text-white text-[16px] font-semibold leading-[16px] px-8 cursor-pointer transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
                     >
                       Log In
                     </button>
