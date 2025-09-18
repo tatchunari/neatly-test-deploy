@@ -9,7 +9,7 @@ const menuItems = [
   },
   { 
     label: "Room Management", 
-    href: "/admin/rooms",
+    href: "/admin/room-management",
     icon: "/assets/manage-green.png",
   },
   { 
@@ -66,11 +66,9 @@ export default function Sidebar() {
   {/* Logout Button at the bottom */}
   <div className="mt-auto mb-30 border-t-1 border-green-100/20">
     <button
-      onClick={() => {
-        // Handle logout logic here
-        console.log("Logout clicked");
+      onClick={() => { // handle logout
       }}
-      className="flex items-center w-full px-7 py-5 text-md font-inter font-medium text-green-300 hover:bg-green-600 hover:text-white transition-colors"
+      className="flex items-center w-full px-7 py-5 text-md font-inter font-medium text-green-300 hover:bg-green-600 hover:text-white cursor-pointer transition-colors"
     >
       <img
         className="w-6 h-6 mr-4"
