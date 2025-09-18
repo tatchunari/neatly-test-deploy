@@ -1,22 +1,43 @@
-import Layout from "@/components/admin/Layout"
+import Layout from "@/components/admin/Layout";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function index() {
-
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState("");
-  
-  // Pagination settings
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter rooms based on search query
+  const filteredRooms = rooms.filter((room) => {
+    if (!searchQuery) return true; // Show all rooms if no search query
+
+    const query = searchQuery.toLowerCase();
+
+    // Helper function to safely convert to string and check
+    const safeStringIncludes = (value) => {
+      return value && value.toString().toLowerCase().includes(query);
+    };
+
+    return (
+      safeStringIncludes(room.roomType) ||
+      safeStringIncludes(room.bedType) ||
+      safeStringIncludes(room.roomSize) ||
+      safeStringIncludes(room.price) ||
+      safeStringIncludes(room.promotionPrice)
+    );
+  });
+
+  // Pagination settings - USE FILTERED ROOMS
   const roomsPerPage = 6;
-  const totalPages = Math.ceil(rooms.length / roomsPerPage);
-  
-  // Calculate which rooms to display
+  const totalPages = Math.ceil(filteredRooms.length / roomsPerPage);
+
+  // Calculate which rooms to display - USE FILTERED ROOMS
   const startIndex = (currentPage - 1) * roomsPerPage;
   const endIndex = startIndex + roomsPerPage;
-  const currentRooms = rooms.slice(startIndex, endIndex);
+  const currentRooms = filteredRooms.slice(startIndex, endIndex);
 
   useEffect(() => {
     fetchRooms();
@@ -26,23 +47,29 @@ export default function index() {
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/mock-rooms');
+      const response = await fetch("/api/mock-rooms");
       const data = await response.json();
       setRooms(data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to fetch rooms data');
+      setError("Failed to fetch rooms data");
       setLoading(false);
     }
   };
 
+  // Handle search input
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
   // Handle page navigation
   const handlePreviousPage = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
   const handleNextPage = () => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
   const handlePageClick = (page) => {
@@ -53,7 +80,7 @@ export default function index() {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       // Show all pages if total is less than max visible
       for (let i = 1; i <= totalPages; i++) {
@@ -78,7 +105,7 @@ export default function index() {
         }
       }
     }
-    
+
     return pages;
   };
 
@@ -106,16 +133,22 @@ export default function index() {
     <Layout>
       <div className="flex-1">
         {/* Header */}
-        <div className="flex flex-row justify-between mt-10 mx-10">
+        <div className="flex flex-row justify-between border-b border-gray-400 pb-5 mt-10 mx-10">
           <p className="text-xl font-semibold">Room & Property</p>
           <div className="flex flex-row gap-3">
             <div className="flex items-center border pl-3 gap-2 bg-white border-gray-500/30 h-[46px] rounded-md overflow-hidden max-w-md w-full">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 30 30" fill="#6B7280">
-                <path d="M13 3C7.489 3 3 7.489 3 13s4.489 10 10 10a9.95 9.95 0 0 0 6.322-2.264l5.971 5.971a1 1 0 1 0 1.414-1.414l-5.97-5.97A9.95 9.95 0 0 0 23 13c0-5.511-4.489-10-10-10m0 2c4.43 0 8 3.57 8 8s-3.57 8-8 8-8-3.57-8-8 3.57-8 8-8"/>
-              </svg>
-              <input type="text" placeholder="Search..." className="w-full h-full outline-none text-gray-500 placeholder-gray-500 text-sm"/>
+              <img src="/assets/search.png" className="w-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="Search rooms..."
+                className="w-full h-full outline-none text-gray-500 placeholder-gray-500 text-sm"
+              />
             </div>
-            <button className="text-white font-semibold w-64 bg-orange-600 rounded-sm">+ Create Room</button>
+            <button className="text-white font-medium w-64 bg-orange-600 cursor-pointer rounded-sm">
+              <Link href="/admin/room-types/create">+ Create Room</Link>
+            </button>
           </div>
         </div>
 
@@ -123,7 +156,7 @@ export default function index() {
         <div className="max-w-7xl mt-10 mx-auto p-6 bg-gray-50 min-h-screen min-w-3">
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-7 gap-4 p-4 bg-gray-300 font-medium text-sm text-gray-700">
+            <div className="grid grid-cols-7 gap-5 p-4 bg-gray-300 font-medium text-sm text-gray-700">
               <div>Image</div>
               <div>Room type</div>
               <div>Price</div>
@@ -135,24 +168,33 @@ export default function index() {
 
             {/* Room Rows - Show only current page rooms */}
             {currentRooms.map((room) => (
-              <div key={room.id} className="grid grid-cols-7 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors items-center">
+              <div
+                key={room.id}
+                className="grid grid-cols-7 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors items-center"
+              >
                 {/* Image */}
-                <div className="w-20 h-16 rounded-lg overflow-hidden bg-gray-200">
-                  <img 
-                    src={room.imageUrl} 
+                <div className="w-28 h-16 rounded-md overflow-hidden bg-gray-200">
+                  <img
+                    src={room.imageUrl}
                     alt={room.roomType}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
                 {/* Room Type */}
-                <div className="text-sm text-gray-900 font-medium">{room.roomType}</div>
+                <div className="text-sm text-gray-900 font-medium">
+                  {room.roomType}
+                </div>
 
                 {/* Price */}
-                <div className="text-sm text-gray-900">{room.price}</div>
+                <div className="text-sm text-gray-900">
+                  {Number(room.price).toFixed(2)}
+                </div>
 
                 {/* Promotion Price */}
-                <div className="text-sm text-gray-900">{room.promotionPrice}</div>
+                <div className="text-sm text-gray-900">
+                  {Number(room.promotionPrice).toFixed(2)}
+                </div>
 
                 {/* Guests */}
                 <div className="text-sm text-gray-900">{room.guest}</div>
@@ -161,63 +203,68 @@ export default function index() {
                 <div className="text-sm text-gray-900">{room.bedType}</div>
 
                 {/* Room Size */}
-                <div className="text-sm text-gray-900">{room.roomSize}</div>
+                <div className="text-sm text-gray-900">{room.roomSize} sqm</div>
               </div>
             ))}
 
-            {/* Show message if no rooms on current page */}
-            {currentRooms.length === 0 && (
+            {/* Show message if no rooms found */}
+            {currentRooms.length === 0 && !loading && (
               <div className="p-8 text-center text-gray-500">
-                No rooms found for this page.
+                {searchQuery
+                  ? `No rooms found matching "${searchQuery}"`
+                  : "No rooms found."}
               </div>
             )}
 
             {/* Pagination */}
-            <div className="flex items-center justify-center p-6 border-t bg-gray-50">
+            <div className="flex items-center justify-center p-6 border-t border-gray-400 bg-gray-50">
               <div className="flex items-center space-x-2">
                 <button
                   className="p-2 rounded-md hover:bg-gray-200 disabled:opacity-50"
                   disabled={currentPage === 1}
                   onClick={handlePreviousPage}
                 >
-                  <img className="w-2" src="/assets/arrow-left.png" alt="Previous" />
+                  <img
+                    className="w-2"
+                    src="/assets/arrow-left.png"
+                    alt="Previous"
+                  />
                 </button>
-                
+
                 {getPageNumbers().map((page) => (
                   <button
                     key={page}
                     className={`px-3 py-1 rounded-md text-sm ${
                       page === currentPage
-                        ? 'bg-white text-gray-700 border border-gray-600'
-                        : 'text-gray-700 hover:bg-gray-200'
+                        ? "bg-white text-gray-700 border border-gray-600"
+                        : "text-gray-700 hover:bg-gray-200"
                     }`}
                     onClick={() => handlePageClick(page)}
                   >
                     {page}
                   </button>
                 ))}
-                
+
                 {totalPages > 5 && currentPage < totalPages - 2 && (
                   <span className="text-gray-400">...</span>
                 )}
-                
+
                 <button
                   className="p-2 rounded-md hover:bg-gray-200 disabled:opacity-50"
                   disabled={currentPage === totalPages}
                   onClick={handleNextPage}
                 >
-                  <img className="w-2" src="/assets/arrow-right.png" alt="Next" />
+                  <img
+                    className="w-2"
+                    src="/assets/arrow-right.png"
+                    alt="Next"
+                  />
                 </button>
-              </div>
-              
-              {/* Page info */}
-              <div className="ml-4 text-sm text-gray-600">
-                Showing {startIndex + 1}-{Math.min(endIndex, rooms.length)} of {rooms.length} rooms
               </div>
             </div>
           </div>
         </div>
       </div>
     </Layout>
-  )
+  );
 }
