@@ -1,6 +1,7 @@
 import Layout from "@/components/admin/Layout";
 import { ReorderableItem } from "@/components/admin/ReorderableItem";
-import { Reorder, useDragControls } from "motion/react";
+import { Reorder } from "motion/react";
+import { AmenityItem } from "@/components/admin/ReorderableItem";
 
 import { useRouter } from "next/router";
 import { useState } from "react";
