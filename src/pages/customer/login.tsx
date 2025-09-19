@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
+import Navbar from "@/components/login/Navbar";
 
 interface Errors {
   username: string;
@@ -92,6 +93,7 @@ export default function CustomerLoginPage() {
       <Head>
         <title>Log In — Neatly</title>
       </Head>
+      <Navbar />
 
  
       {/* MAIN */}
