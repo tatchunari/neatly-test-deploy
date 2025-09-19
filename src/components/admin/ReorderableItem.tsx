@@ -1,7 +1,6 @@
 import { Reorder, useDragControls } from "framer-motion";
-import { useState } from "react";
 
-interface AmenityItem {
+export interface AmenityItem {
   id: string;
   value: string;
 }
