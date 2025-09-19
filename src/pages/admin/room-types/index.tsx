@@ -22,9 +22,9 @@ export default function index() {
     };
 
     return (
-      safeStringIncludes(room.roomType) ||
-      safeStringIncludes(room.bedType) ||
-      safeStringIncludes(room.roomSize) ||
+      safeStringIncludes(room.room_type) ||
+      safeStringIncludes(room.bed_type) ||
+      safeStringIncludes(room.room_size) ||
       safeStringIncludes(room.price) ||
       safeStringIncludes(room.promotionPrice)
     );
@@ -43,16 +43,27 @@ export default function index() {
     fetchRooms();
   }, []);
 
-  // fetch data from mockData
+  // fetch rooms from database
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/mock-rooms");
+      const response = await fetch("/api/rooms"); // use the real API
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to fetch rooms");
+      }
+
       const data = await response.json();
-      setRooms(data);
-      setLoading(false);
-    } catch (err) {
-      setError("Failed to fetch rooms data");
+
+      if (data.success) {
+        setRooms(data.data); // your rooms array
+      } else {
+        throw new Error(data.message || "Failed to fetch rooms");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch rooms data");
+    } finally {
       setLoading(false);
     }
   };
@@ -112,8 +123,8 @@ export default function index() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-gray-600">Loading rooms...</div>
+        <div className="flex justify-center text-gray-600 items-center text-center w-250 bg-white z-50">
+          Loading rooms...
         </div>
       </Layout>
     );
@@ -175,15 +186,15 @@ export default function index() {
                 {/* Image */}
                 <div className="w-28 h-16 rounded-md overflow-hidden bg-gray-200">
                   <img
-                    src={room.imageUrl}
-                    alt={room.roomType}
+                    src={room.main_image_url}
+                    alt={room.room_type}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
                 {/* Room Type */}
                 <div className="text-sm text-gray-900 font-medium">
-                  {room.roomType}
+                  {room.room_type}
                 </div>
 
                 {/* Price */}
@@ -197,13 +208,15 @@ export default function index() {
                 </div>
 
                 {/* Guests */}
-                <div className="text-sm text-gray-900">{room.guest}</div>
+                <div className="text-sm text-gray-900">{room.guests}</div>
 
                 {/* Bed Type */}
-                <div className="text-sm text-gray-900">{room.bedType}</div>
+                <div className="text-sm text-gray-900">{room.bed_type}</div>
 
                 {/* Room Size */}
-                <div className="text-sm text-gray-900">{room.roomSize} sqm</div>
+                <div className="text-sm text-gray-900">
+                  {room.room_size} sqm
+                </div>
               </div>
             ))}
 

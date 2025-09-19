@@ -1,5 +1,6 @@
 import Layout from "@/components/admin/Layout";
-import { Reorder } from "motion/react";
+import { ReorderableItem } from "@/components/admin/ReorderableItem";
+import { Reorder, useDragControls } from "motion/react";
 
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -8,19 +9,23 @@ export default function create() {
   const [hasPromotion, setHasPromotion] = useState(false);
   const router = useRouter();
 
-  const [amenities, setAmenities] = useState([""]); // ✅ start with 1 default input
+  const [amenities, setAmenities] = useState<AmenityItem[]>([
+    { id: crypto.randomUUID(), value: "" },
+  ]);
 
-  const handleEditAmenity = (index: number, value: string) => {
-    setAmenities((prev) => prev.map((a, i) => (i === index ? value : a)));
+  const handleEditAmenity = (id: string, value: string) => {
+    setAmenities((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, value } : item))
+    );
   };
 
   const handleAddAmenity = () => {
-    setAmenities((prev) => [...prev, ""]);
+    setAmenities((prev) => [...prev, { id: crypto.randomUUID(), value: "" }]);
   };
 
-  const handleDeleteAmenity = (index: number) => {
+  const handleDeleteAmenity = (id: string) => {
     if (amenities.length > 1) {
-      setAmenities((prev) => prev.filter((_, i) => i !== index));
+      setAmenities((prev) => prev.filter((item) => item.id !== id));
     }
   };
 
@@ -213,58 +218,25 @@ export default function create() {
                 </h2>
 
                 {/* Amenity */}
-                <Reorder.Group
-                  axis="y"
-                  values={amenities}
-                  onReorder={setAmenities}
-                  className="space-y-2"
-                >
-                  {amenities.map((amenity, index) => (
-                    <Reorder.Item
-                      key={index}
-                      value={amenity}
-                      className="w-full"
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        {/* Drag handle */}
-                        <img
-                          src="/assets/drag-icon.png"
-                          alt="drag"
-                          className="w-4 cursor-grab shrink-0 mt-7"
-                        />
-
-                        {/* Editable input */}
-                        <div className="flex flex-col flex-1 gap-y-2 justify-center">
-                        <label>Amenity <span className="text-red">*</span></label>
-                        <input
-                          type="text"
-                          value={amenity}
-                          onChange={(e) =>
-                            handleEditAmenity(index, e.target.value)
-                          }
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md 
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter amenity"
-                        />
-                        </div>
-
-                        {/* Delete button (disabled if only one) */}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAmenity(index)}
-                          disabled={amenities.length === 1}
-                          className={`shrink-0 mt-7 ${
-                            amenities.length === 1
-                              ? "text-gray-400 cursor-not-allowed"
-                              : "text-red-500 hover:underline"
-                          }`}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </Reorder.Item>
-                  ))}
-                </Reorder.Group>
+                <div className="bg-white">
+                  <Reorder.Group
+                    axis="y"
+                    values={amenities}
+                    onReorder={setAmenities}
+                    className="space-y-2"
+                  >
+                    {amenities.map((amenity) => (
+                      <ReorderableItem
+                        key={amenity.id} // Use unique ID as key
+                        item={amenity}
+                        onChange={handleEditAmenity}
+                        onDelete={handleDeleteAmenity}
+                        disableDelete={amenities.length === 1}
+                        label="Amenity"
+                      />
+                    ))}
+                  </Reorder.Group>
+                </div>
 
                 {/* Add Amenity Button */}
                 <button
