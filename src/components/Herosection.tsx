@@ -181,7 +181,7 @@ export default function Herosection() {
                   height: 40,
                 }}
                 onClick={() => {
-                  router.push("/customer/search-result");
+                  router.push("/pages/customer/search-result");
                 }}
               >
                 Search 
