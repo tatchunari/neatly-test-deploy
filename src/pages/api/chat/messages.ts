@@ -60,6 +60,45 @@ export default async function handler(
         throw messageError;
       }
 
+      // If this is a user message (not bot), trigger bot response
+      if (!isBot) {
+        console.log('Triggering bot response for user message:', message);
+        
+        try {
+          // Call bot response API asynchronously with better error handling
+          const botResponseUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/chat/bot-response`;
+          
+          fetch(botResponseUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              sessionId: sessionId as string,
+              userMessage: message
+            })
+          })
+          .then(response => {
+            console.log('Bot response API call status:', response.status);
+            if (!response.ok) {
+              throw new Error(`Bot response API returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Bot response generated successfully:', data);
+          })
+          .catch(error => {
+            console.error('Error calling bot response API:', error);
+            console.error('Bot response URL:', botResponseUrl);
+            console.error('Request body:', { sessionId: sessionId as string, userMessage: message });
+          });
+          
+        } catch (error) {
+          console.error('Error triggering bot response:', error);
+        }
+      }
+
       // Return only the user message
       res.status(201).json({ message: newMessage });
     } catch (error) {
@@ -75,5 +114,3 @@ export default async function handler(
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
-
-// Bot response function removed - will be implemented separately
