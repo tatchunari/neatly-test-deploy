@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import axios from "axios";
+import { supabase } from "@/lib/supabaseClient";
 import type { ChatMessage, ChatSession } from "@/types/chat";
 
 export default function Chatbot() {
@@ -16,6 +17,12 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const [inputValue, setInputValue] = useState('');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isBotTyping, setIsBotTyping] = useState(false);
+  const subscriptionReadyPromise = useRef<Promise<void> | null>(null);
+  const subscriptionResolve = useRef<(() => void) | null>(null);
+  const displayedBotMessages = useRef<Set<string>>(new Set());
+  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -92,6 +99,100 @@ export default function Chatbot() {
     }
   }, [open]);
 
+  // Supabase Realtime subscription for new messages
+  useEffect(() => {
+    if (!currentSession?.id) return;
+
+    console.log('Setting up Realtime subscription for session:', currentSession.id);
+    
+    // Clear displayed bot messages for new session
+    displayedBotMessages.current.clear();
+    
+    // Create promise for subscription ready
+    subscriptionReadyPromise.current = new Promise<void>((resolve) => {
+      subscriptionResolve.current = resolve;
+    });
+
+    const channel = supabase
+      .channel(`chat:${currentSession.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chatbot_messages',
+          filter: `session_id=eq.${currentSession.id}`
+        },
+        async (payload) => {
+          console.log('New message received via Realtime:', payload);
+          const newMessage = payload.new as ChatMessage;
+          
+          // เพิ่มข้อความใหม่เข้า state
+          setMessages(prev => {
+            // ตรวจสอบว่าไม่มีข้อความนี้อยู่แล้ว (ป้องกัน duplicate)
+            const existsById = prev.some(msg => msg.id === newMessage.id);
+            const alreadyDisplayed = displayedBotMessages.current.has(newMessage.id);
+            
+            if (existsById || alreadyDisplayed) {
+              console.log('Message already exists, skipping:', newMessage.id);
+              return prev;
+            }
+            console.log('Adding new message to state:', newMessage.id);
+            
+            // Hide typing indicator if this is a bot message
+            if (newMessage.is_bot) {
+              setIsBotTyping(false);
+              displayedBotMessages.current.add(newMessage.id);
+              if (safetyTimeoutRef.current) {
+                clearTimeout(safetyTimeoutRef.current);
+                safetyTimeoutRef.current = null;
+              }
+              console.log('Bot response received, hiding typing indicator');
+            }
+            
+            return [...prev, newMessage];
+          });
+
+          // Auto scroll to bottom after adding message
+          setTimeout(() => {
+            if (messagesEndRef.current) {
+              messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
+        }
+      )
+      .subscribe(async (status) => {
+        console.log('Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime subscription active for session:', currentSession.id);
+          setIsSubscribed(true);
+          
+          // Resolve the promise when subscription is ready
+          if (subscriptionResolve.current) {
+            subscriptionResolve.current();
+            subscriptionResolve.current = null;
+          }
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Realtime subscription error for session:', currentSession.id);
+          setIsSubscribed(false);
+          
+          // Retry subscription after error
+          setTimeout(() => {
+            console.log('Retrying Realtime subscription...');
+            channel.subscribe();
+          }, 2000);
+        } else {
+          setIsSubscribed(false);
+        }
+      });
+
+    // Cleanup subscription
+    return () => {
+      console.log('Cleaning up Realtime subscription for session:', currentSession.id);
+      supabase.removeChannel(channel);
+    };
+  }, [currentSession?.id]);
+
   const createChatSession = async () => {
     try {
       // Use real API now that tables exist
@@ -142,7 +243,20 @@ export default function Chatbot() {
         const { data } = await axios.post('/api/chat/sessions');
         sessionToUse = data.session;
         setCurrentSession(sessionToUse);
+        
+        // Wait for subscription to be ready after creating new session
+        console.log('Waiting for Realtime subscription to be ready...');
+        if (subscriptionReadyPromise.current) {
+          await subscriptionReadyPromise.current;
+          console.log('✅ Realtime subscription is ready');
+          
+          // Additional wait to ensure subscription is fully established
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
+
+      // Show bot typing indicator
+      setIsBotTyping(true);
 
       // Send message using the session
       const { data } = await axios.post(`/api/chat/messages`, {
@@ -153,11 +267,71 @@ export default function Chatbot() {
       });
       
       // Replace temp message with real message from database
+      // Note: Realtime will also receive this message, but we replace it anyway
+      // to ensure we have the correct database ID and timestamp
       setMessages(prev => 
         prev.map(msg => 
           msg.id === tempMessage.id ? data.message : msg
         )
       );
+
+      console.log('Message sent successfully:', data.message);
+      
+      // Safety timeout: Hide typing indicator after 10 seconds if no bot response
+      safetyTimeoutRef.current = setTimeout(() => {
+        console.log('Safety timeout: Hiding typing indicator after 10 seconds');
+        setIsBotTyping(false);
+      }, 10000);
+
+      // Fallback: Check for bot response after a short delay if not received via Realtime
+      setTimeout(async () => {
+        try {
+          const { data: latestMessages } = await axios.get(`/api/chat/messages`, {
+            params: { sessionId: sessionToUse!.id }
+          });
+          
+          const latestBotMessage = latestMessages.messages
+            .filter((msg: ChatMessage) => msg.is_bot)
+            .sort((a: ChatMessage, b: ChatMessage) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+          
+          if (latestBotMessage) {
+            const messageExists = messages.some(msg => msg.id === latestBotMessage.id);
+            const alreadyDisplayed = displayedBotMessages.current.has(latestBotMessage.id);
+            
+            if (!messageExists && !alreadyDisplayed) {
+              console.log('Fallback: Adding bot message that was missed by Realtime:', latestBotMessage.id);
+              setMessages(prev => [...prev, latestBotMessage]);
+              displayedBotMessages.current.add(latestBotMessage.id);
+              setIsBotTyping(false);
+              if (safetyTimeoutRef.current) {
+                clearTimeout(safetyTimeoutRef.current);
+                safetyTimeoutRef.current = null;
+              }
+              console.log('Bot response received via fallback, hiding typing indicator');
+            } else {
+              console.log('Bot message already exists in UI, skipping fallback');
+              setIsBotTyping(false);
+              if (safetyTimeoutRef.current) {
+                clearTimeout(safetyTimeoutRef.current);
+                safetyTimeoutRef.current = null;
+              }
+              console.log('Bot response already exists, hiding typing indicator');
+            }
+          } else {
+            console.log('No bot message found in database');
+            setIsBotTyping(false);
+            if (safetyTimeoutRef.current) {
+              clearTimeout(safetyTimeoutRef.current);
+              safetyTimeoutRef.current = null;
+            }
+          }
+        } catch (error) {
+          console.error('Error in fallback message check:', error);
+        }
+      }, 2000); // Check after 2 seconds
+      
     } catch (error) {
       console.error('Error sending message:', error);
       
@@ -165,6 +339,9 @@ export default function Chatbot() {
       setMessages(prev => 
         prev.filter(msg => msg.id !== tempMessage.id)
       );
+    } finally {
+      // Don't hide typing indicator here - let it be hidden when bot response is received
+      // setIsBotTyping(false); // Removed - let bot response hide it
     }
   };
 
@@ -289,6 +466,19 @@ export default function Chatbot() {
                   </p>
                 </div>
               ))}
+              
+              {/* Bot Typing Indicator */}
+              {isBotTyping && (
+                <div key="bot-typing-indicator" className="flex flex-col items-start">
+                  <div className="w-12 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
+                    <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Invisible div for auto-scroll */}
               <div ref={messagesEndRef} />
