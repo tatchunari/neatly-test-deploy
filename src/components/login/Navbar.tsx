@@ -90,9 +90,10 @@ export default function Navbar() {
   );
 
   return (
-    <nav>
+    <nav className="bg-white border-b border-gray-300 flex justify-center items-center h-12 md:h-[100px] ">
       {/* === TOP BAR === */}
-      <div className="bg-white max-w-[1440px] mx-auto border-b border-gray-300 flex justify-between items-center h-12 md:h-[100px] px-4 md:px-[160px]">
+
+      <div className=" max-w-[1440px] mx-auto flex justify-between items-center w-full px-[160px] ">
         {/* ซ้าย: โลโก้ + เมนูเดสก์ท็อป */}
         <div className="flex justify-between gap-[48px] w-auto h-full md:w-[659px] md:h-[100px]">
           <div className="flex items-center justify-center">
