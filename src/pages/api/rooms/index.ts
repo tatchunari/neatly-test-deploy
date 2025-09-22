@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from '@supabase/supabase-js';
-import { mockRooms } from "../mock-rooms";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,46 +18,16 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   if (req.method === "GET") {
-    // ✅ Fetch rooms with optional filtering
+    // ✅ Fetch all rooms
     try {
-      const { guests, checkIn, checkOut } = req.query;
-      
-      // Build query with optional filters
-      let query = supabase.from("rooms").select("*");
-      
-      // Filter by guests if provided
-      if (guests && !isNaN(Number(guests))) {
-        query = query.gte('guests', Number(guests));
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.from("rooms").select("*");
 
       if (error) {
         console.error("❌ Error:", error.message);
-        // Fallback to mock data with filtering
-        let filteredRooms = mockRooms;
-        
-        // Apply guests filter to mock data
-        if (guests && !isNaN(Number(guests))) {
-          filteredRooms = mockRooms.filter(room => room.guest >= Number(guests));
-        }
-        
-        const mapped = filteredRooms.map((r) => ({
-          id: r.id,
-          name: r.roomType,
-          image: r.imageUrl,
-          price: r.promotionPrice ?? r.price,
-          price_before_discount: r.price,
-          guests: r.guest,
-          beds: /double/i.test(r.bedType) ? 2 : 1,
-          size: r.roomSize,
-          description: "",
-        }));
-
-        return res.status(200).json({
-          success: true,
-          message: "Rooms fetched from mock data",
-          data: mapped,
+        return res.status(400).json({
+          success: false,
+          message: "Failed to fetch rooms",
+          error: error.message,
         });
       }
 
@@ -68,31 +37,10 @@ export default async function handler(
         data,
       });
     } catch (error) {
-      // Final fallback to mock data on unexpected server error
-      const { guests } = req.query;
-      let filteredRooms = mockRooms;
-      
-      // Apply guests filter to mock data
-      if (guests && !isNaN(Number(guests))) {
-        filteredRooms = mockRooms.filter(room => room.guest >= Number(guests));
-      }
-      
-      const mapped = filteredRooms.map((r) => ({
-        id: r.id,
-        name: r.roomType,
-        image: r.imageUrl,
-        price: r.promotionPrice ?? r.price,
-        price_before_discount: r.price,
-        guests: r.guest,
-        beds: /double/i.test(r.bedType) ? 2 : 1,
-        size: r.roomSize,
-        description: "",
-      }));
-
-      return res.status(200).json({
-        success: true,
-        message: "Rooms fetched from mock data",
-        data: mapped,
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
