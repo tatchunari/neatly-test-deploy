@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/router";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { supabase } from "@/lib/supabaseClient";
 
 /**
  * Responsive Navbar
@@ -42,7 +42,6 @@ const defaultLogo = (
       className="object-contain"
       priority
     />
-    
   </div>
 );
 
@@ -52,13 +51,57 @@ const Navbar = ({
   logo = defaultLogo,
 }: NavbarProps) => {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user session from Supabase
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    let ignore = false;
+    const getSession = async () => {
+      if (!supabase) return;
+      setLoading(true);
+      const { data, error } = await supabase.auth.getUser();
+      if (!ignore) {
+        setUser(data?.user || null);
+        setLoading(false);
+      }
+    };
+    getSession();
+
+    // Listen for auth state changes
+    const { data: listener } = supabase?.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    // Close dropdown on outside click
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      ignore = true;
+      document.removeEventListener("mousedown", handleClickOutside);
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
 
   // Scroll to section function
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -69,11 +112,11 @@ const Navbar = ({
         key={item.label}
         className="text-[#4B5755] text-sm font-medium px-3 py-2 hover:text-[#F47A1F] transition-colors"
         onClick={() => {
-          if (item.path.startsWith('#')) {
+          if (item.path.startsWith("#")) {
             const sectionId = item.path.substring(1);
             scrollToSection(sectionId);
           } else {
-            router.push(item.path);
+            window.location.href = item.path;
           }
           if (onClick) onClick();
         }}
@@ -107,6 +150,65 @@ const Navbar = ({
     </button>
   );
 
+  // Logout handler
+  const handleLogout = async () => {
+    setOpen(false);
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    window.location.replace("/customer/login?logged_out=1");
+  };
+
+  // User menu for logged-in user and not-logged-in user
+  const UserMenu = () => {
+    if (loading) {
+      // กำลังโหลด session → กันจอว่าง
+      return <span className="text-gray-400 text-sm">Loading...</span>;
+    }
+
+    if (!user) {
+      // ยังไม่ล็อกอิน → แสดงปุ่ม Log in
+      return (
+        <a
+          href="/customer/login"
+          className="text-orange-500 text-sm font-semibold hover:underline"
+        >
+          Log in
+        </a>
+      );
+    }
+
+    // ล็อกอินแล้ว → แสดงเมนูผู้ใช้
+    return (
+      <div ref={menuRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="inline-flex items-center gap-2 text-orange-500 text-sm font-semibold hover:underline"
+        >
+          <img src="/images/avatar.png" className="w-6 h-6 rounded-full" alt="User avatar" />
+          <span className="hidden md:inline">{user.email}</span>
+          <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M5.23 7.21a.75.75 0 011.06.02L10 11.146l3.71-3.916a.75.75 0 111.08 1.04l-4.24 4.48a.75.75 0 01-1.08 0l-4.24-4.48a.75.75 0 01.02-1.06z"/>
+          </svg>
+        </button>
+
+        {open && (
+          <div className="absolute right-0 mt-2 w-44 rounded-lg border bg-white shadow-md z-50">
+            <a href="/account" className="block px-4 py-2 hover:bg-gray-50">Account</a>
+            <a href="/settings" className="block px-4 py-2 hover:bg-gray-50">Settings</a>
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Mobile menu (no close button, close by clicking hamburger again)
   const MobileMenu = (
     <div
@@ -119,16 +221,9 @@ const Navbar = ({
       </div>
       <nav className="flex flex-col px-6 py-4 space-y-2">
         {renderNavItems(() => setOpen(false))}
-        <button
-          className="mt-4 text-white font-semibold rounded px-4 py-2"
-          style={{ background: "#F47A1F" }}
-          onClick={() => {
-            router.push("/login");
-            setOpen(false);
-          }}
-        >
-          {loginLabel}
-        </button>
+        <div className="mt-4">
+          <UserMenu />
+        </div>
       </nav>
     </div>
   );
@@ -150,13 +245,10 @@ const Navbar = ({
           <nav className="hidden md:flex items-center space-x-2">
             {renderNavItems()}
           </nav>
-          {/* Desktop login button */}
-          <button
-            className="hidden md:inline-block text-[#F47A1F] font-semibold px-4 py-2 rounded transition-colors hover:bg-[#F47A1F]/10"
-            onClick={() => router.push("/login")}
-          >
-            {loginLabel}
-          </button>
+          {/* Desktop login/user button */}
+          <div className="hidden md:inline-block">
+            <UserMenu />
+          </div>
           {/* Hamburger for mobile */}
           <div className="md:hidden">{Hamburger}</div>
         </div>
