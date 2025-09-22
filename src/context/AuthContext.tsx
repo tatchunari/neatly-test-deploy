@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+<<<<<<< HEAD
 import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -69,10 +70,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setLoading(false);
       console.log("✅ AuthContext: loadSession completed");
+=======
+
+const AuthContext = createContext<any>(null);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSession = async () => {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setLoading(false);
+>>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
     };
 
     loadSession();
 
+<<<<<<< HEAD
     const { data: sub } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("🔄 AuthContext: onAuthStateChange triggered", {
@@ -195,17 +212,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
     );
+=======
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+>>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
 
     return () => sub.subscription.unsubscribe();
   }, []);
 
+<<<<<<< HEAD
   const isGuest = !user && !!anonymousId;
 
   return (
     <AuthContext.Provider value={{ user, loading, anonymousId, isGuest }}>
+=======
+  return (
+    <AuthContext.Provider value={{ user, loading }}>
+>>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
       {children}
     </AuthContext.Provider>
   );
 };
 
+<<<<<<< HEAD
 export const useAuth = () => useContext(AuthContext);
+=======
+export const useAuth = () => useContext(AuthContext);
+>>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)

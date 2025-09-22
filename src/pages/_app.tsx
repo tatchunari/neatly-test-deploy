@@ -2,10 +2,14 @@ import "@/styles/globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { HotelInfoProvider } from "@/context/HotelInfoContext";
 import type { AppProps } from "next/app";
+<<<<<<< HEAD
 import Script from "next/script";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import * as gtag from "../lib/gtag";
+=======
+import { AuthProvider } from "@/context/AuthContext";
+>>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -19,6 +23,7 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router.events]);
 
   return (
+<<<<<<< HEAD
     <>
       {/* GA Script */}
       <Script
@@ -40,4 +45,11 @@ export default function App({ Component, pageProps }: AppProps) {
       </AuthProvider>
     </>
   );
+=======
+  <AuthProvider>
+    <Component {...pageProps} />
+  </AuthProvider>
+  )
+  
+>>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
 }
