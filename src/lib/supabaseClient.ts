@@ -14,9 +14,11 @@ if (!supabaseAnonKey) {
 =======
 >>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { 
-      persistSession: true, // เก็บ session ค้างไว้ใน localStorage
-      autoRefreshToken: true // ต่ออายุ token ให้อัตโนมัติ
+    auth: { persistSession: true, autoRefreshToken: true },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
     },
 <<<<<<< HEAD
     realtime: {
