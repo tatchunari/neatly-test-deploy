@@ -11,6 +11,15 @@ function getTodayDateString(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// Helper to get today's date in yyyy-mm-dd format
+function getTodayDateString(): string {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function Herosection() {
   const router = useRouter();
 
@@ -157,7 +166,7 @@ export default function Herosection() {
                   height: 40,
                 }}
                 onClick={() => {
-                  router.push("/pages/customer/search-result");
+                  router.push("/customer/search-result");
                 }}
               >
                 Search 
