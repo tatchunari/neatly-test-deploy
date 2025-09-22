@@ -2,6 +2,15 @@ import Image from "next/image";
 import SearchBox from "./customer/searchbar/Searchbox";
 import { useRouter } from "next/router";
 
+// Helper to get today's date in yyyy-mm-dd format
+function getTodayDateString(): string {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function Herosection() {
   const router = useRouter();
 
@@ -98,6 +107,7 @@ export default function Herosection() {
                 type="date"
                 className="border rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300 w-full"
                 value={checkIn}
+                min={getTodayDateString()}
                 onChange={e => setCheckIn(e.target.value)}
                 placeholder="Check In"
               />
@@ -109,6 +119,7 @@ export default function Herosection() {
                 type="date"
                 className="border rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300 w-full"
                 value={checkOut}
+                min={checkIn || getTodayDateString()}
                 onChange={e => setCheckOut(e.target.value)}
                 placeholder="Check Out"
               />
@@ -146,7 +157,7 @@ export default function Herosection() {
                   height: 40,
                 }}
                 onClick={() => {
-                  router.push("/pages/customer/search-result");
+                  router.push("/customer/search-result");
                 }}
               >
                 Search 
