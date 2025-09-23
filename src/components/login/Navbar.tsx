@@ -18,26 +18,71 @@ export default function Navbar() {
     </a>
   );
 
+  // Calculate the offset so that the section is fully visible below the navbar
+  const getNavOffset = () => {
+    if (typeof window !== "undefined") {
+      // Match the navbar height in px for each screen size
+      if (window.innerWidth >= 768) return -100; // md and up (h-[100px])
+      return -48; // mobile (h-12 = 48px)
+    }
+    return -100;
+  };
+
+  // Scroll to section so that it is fully visible below the navbar
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    href: string,
+    onItemClick?: () => void
+  ) => {
+    if (href.startsWith("#") || href.startsWith("/#")) {
+      e.preventDefault();
+      const id = href.replace(/^\/?#/, "");
+      const el = document.getElementById(id);
+      if (el) {
+        const yOffset = getNavOffset();
+        // Ensure the section is fully visible by scrolling to its top minus the navbar height
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+      if (onItemClick) onItemClick();
+    } else if (onItemClick) {
+      onItemClick();
+    }
+  };
+
+  // Use page links instead of anchor links
   const renderNavItems = (onItemClick?: () => void) => (
     <>
       <a
         href="/about"
-        onClick={onItemClick}
-        className="text-black text-[14px] font-inter leading-[16px]"
+        onClick={e => {
+          e.preventDefault();
+          window.location.href = "/about";
+          if (onItemClick) onItemClick();
+        }}
+        className="text-black text-[14px] font-inter leading-[16px] px-2 py-1 hover:underline focus:underline transition"
       >
         About Neatly
       </a>
       <a
         href="/services"
-        onClick={onItemClick}
-        className="text-black text-[14px] font-inter leading-[16px]"
+        onClick={e => {
+          e.preventDefault();
+          window.location.href = "/services";
+          if (onItemClick) onItemClick();
+        }}
+        className="text-black text-[14px] font-inter leading-[16px] px-2 py-1 hover:underline focus:underline transition"
       >
         Service & Facilities
       </a>
       <a
         href="/rooms"
-        onClick={onItemClick}
-        className="text-black text-[14px] font-inter leading-[16px]"
+        onClick={e => {
+          e.preventDefault();
+          window.location.href = "/rooms";
+          if (onItemClick) onItemClick();
+        }}
+        className="text-black text-[14px] font-inter leading-[16px] px-2 py-1 hover:underline focus:underline transition"
       >
         Rooms & Suits
       </a>

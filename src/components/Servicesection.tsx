@@ -26,7 +26,7 @@ const services = [
     label: "Parking",
   },
   {
-    icon: "/icons/24h.png",
+    icon: "/icons/24hours.png",
     label: "24 hours operation",
   },
 ];
