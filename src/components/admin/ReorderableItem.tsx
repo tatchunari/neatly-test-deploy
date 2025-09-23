@@ -50,7 +50,7 @@ export function ReorderableItem({
             value={item.value}
             onChange={(e) => onChange(item.id, e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md 
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             placeholder={`Enter ${label.toLowerCase()}`}
           />
         </div>

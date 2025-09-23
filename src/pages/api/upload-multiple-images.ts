@@ -16,7 +16,7 @@ export const config = {
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   upload(req as any, res as any, async (err: any) => {
-    console.log(`Upload Gallery Image | headers: ${JSON.stringify(req.headers)} | body: ${JSON.stringify(req.body)}`)
+    // console.log(`Upload Gallery Image | headers: ${JSON.stringify(req.headers)} | body: ${JSON.stringify(req.body)}`)
     if (err) return res.status(500).json({ success: false, message: err.message });
 
     const file = (req as any).file;

@@ -5,8 +5,11 @@ import { AmenityItem } from "@/components/admin/ReorderableItem";
 
 import { useRouter } from "next/router";
 import { useState, useRef } from "react";
+import LoadingScreen from "@/components/admin/LoadingScreen";
 
 export default function create() {
+  type GalleryItem = { id: string; url: string };
+
   const [hasPromotion, setHasPromotion] = useState(false);
   
   const router = useRouter();
@@ -49,6 +52,7 @@ export default function create() {
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [galleryFileNames, setGalleryFileNames] = useState<string[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,24 +98,16 @@ export default function create() {
   };
 
   // Handle Multiple Image
-  const handleGalleryFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Start handle change:", galleryFiles)
+const handleGalleryFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const files = e.target.files;
   if (!files) return;
 
   const newFiles = Array.from(files);
-  setGalleryFiles((prev) => [...prev, ...newFiles]);
-  setGalleryFileNames((prev) => [...prev, ...newFiles.map(f => f.name)]);
+  const uploadedItems: GalleryItem[] = [];
 
-  console.log(`Upload file with newFiles:`, newFiles);
-
-
-  // Automatically upload each image
   for (const file of newFiles) {
     const formData = new FormData();
     formData.append("galleryImages", file);
-    console.log("galleryImages:", file)
-    console.log(formData)
 
     try {
       const res = await fetch("/api/upload-multiple-images", {
@@ -121,17 +117,27 @@ export default function create() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        console.log("Uploaded image URLs:", data);
+        // data.url should be your uploaded image URL
+        uploadedItems.push({ id: crypto.randomUUID(), url: data.url });
         setGalleryUrls((prev) => [...prev, data.url]);
       } else {
         throw new Error(data.error || data.message || "Upload failed");
       }
     } catch (err: any) {
       alert(`Image upload error: ${err.message}`);
-      }
     }
-    console.log("End handle change:", galleryFiles)
-  };
+  }
+
+  // Add successfully uploaded images to gallery state
+  setGalleryItems((prev) => [...prev, ...uploadedItems]);
+  setGalleryFiles((prev) => [...prev, ...newFiles]);
+  setGalleryFileNames((prev) => [...prev, ...newFiles.map((f) => f.name)]);
+
+  // Reset file input so user can re-upload same file if needed
+  if (fileInputRef.current) fileInputRef.current.value = "";
+};
+console.log("Gallery Items:", galleryItems);
+
 
 const removeGalleryFile = (index: number) => {
   setGalleryFiles((prev) => prev.filter((_, i) => i !== index));
@@ -189,7 +195,13 @@ const removeGalleryFile = (index: number) => {
 };
 
 // console.log("Gallery URLs:",galleryUrls);
-
+ if (isLoading) {
+    return (
+      <Layout>
+        <LoadingScreen />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -239,7 +251,7 @@ const removeGalleryFile = (index: number) => {
                   type="text"
                   value={roomType}
                   onChange={(e) => setRoomType(e.target.value)}
-                  className="w-200 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-200 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   placeholder="Enter room type"
                 />
               </div>
@@ -254,7 +266,7 @@ const removeGalleryFile = (index: number) => {
                     type="number"
                     value={roomSize}
                     onChange={(e) => setRoomSize(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="Enter room size"
                   />
                 </div>
@@ -264,7 +276,7 @@ const removeGalleryFile = (index: number) => {
                     Bed type <span className="text-red-500">*</span>
                   </label>
                   <select 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   value={bedType}
                   onChange={(e) => setBedType(e.target.value)}
                   >
@@ -286,7 +298,7 @@ const removeGalleryFile = (index: number) => {
                   type="number"
                   value={guests}
                   onChange={(e) => setGuests(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   min="1"
                   max="10"
                 />
@@ -303,7 +315,7 @@ const removeGalleryFile = (index: number) => {
                     type="number"
                     value={pricePerNight}
                     onChange={(e) => setPricePerNight(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="Enter price"
                     step="0.01"
                   />
@@ -333,9 +345,9 @@ const removeGalleryFile = (index: number) => {
                         disabled={!hasPromotion} // 🔑 disables until checked
                         value={promotionPrice}
                         onChange={(e) => setPromotionPrice(e.target.value)}
-                        className={`w-60 px-3 py-2 border border-gray-300 rounded-md focus:outline-none pr-20 ${
+                        className={`w-60 px-3 py-2 border border-gray-300 rounded-md focus:outline-none ${
                           hasPromotion
-                            ? "focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            ? "focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             : "bg-gray-100 cursor-not-allowed"
                         }`}
                       />
@@ -352,7 +364,7 @@ const removeGalleryFile = (index: number) => {
                     rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-200 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className="w-200 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                     placeholder="Enter room description"
                   />
                 </div>
@@ -409,24 +421,43 @@ const removeGalleryFile = (index: number) => {
                   </label>
                   <div className="space-y-2">
                   {/* Grid of uploaded images */}
-                  <div className="grid grid-cols-5 gap-x-25">
-                    {galleryUrls.map((url, index) => (
-                      <div
-                        key={index}
-                        className="w-42 h-42 rounded-md flex items-center justify-center relative bg-[#F1F2F6]"
+                 <Reorder.Group
+                    axis="x" // horizontal reorder
+                    values={galleryItems}
+                    onReorder={setGalleryItems} // directly update state
+                    className="flex gap-4 overflow-x-auto py-2"
+                  >
+                    {galleryItems.map((item, index) => (
+                      <Reorder.Item
+                        key={item.id} // make sure URL is unique
+                        value={item}
+                        className="w-42 h-42 rounded-md flex items-center justify-center relative bg-[#F1F2F6] cursor-grab"
                       >
                         {/* Remove button */}
                         <div
-                          className="absolute rounded-full text-orange-600 font-bold top-1 right-1 px-1 cursor-pointer"
-                          onClick={() => removeGalleryFile(index)}
+                          className="absolute rounded-full text-orange-600 font-bold top-1 right-1 px-1 cursor-pointer z-10"
+                          onClick={() => setGalleryItems((prev) => prev.filter((_, i) => i !== index))}
                         >
                           ✕
                         </div>
-                        <img src={url} alt="hotel-images"/>
-                        {/* File name */}
-                      </div>
+                        <img src={item.url} alt="hotel-images" className="object-contain w-full h-full rounded-md" />
+                      </Reorder.Item>
                     ))}
-                  </div>
+
+                    {/* Add Image Button
+                    <Reorder.Item value="add-button" className="w-42 h-42 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer">
+                      <p className="text-2xl text-orange-500">+</p>
+                      <p className="text-xs text-orange-500">Upload Photo</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleGalleryFilesChange}
+                      />
+                    </Reorder.Item> */}
+                  </Reorder.Group>
+
 
                   {/* File input */}
                   <label className="w-42 h-42 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer transition-colors">

@@ -1,4 +1,5 @@
 import Layout from "@/components/admin/Layout";
+import { RoomListSkeleton } from "@/components/admin/RoomListSkeleton";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -123,9 +124,7 @@ export default function index() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center text-gray-600 items-center text-center w-250 bg-white z-50">
-          Loading rooms...
-        </div>
+        <RoomListSkeleton/>
       </Layout>
     );
   }
