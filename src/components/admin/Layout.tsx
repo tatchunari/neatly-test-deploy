@@ -7,7 +7,7 @@ import { Toaster } from 'sonner';
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className='flex overflow-hidden'>
+    <div className='flex overflow-hidden min-h-screen'>
       <Sidebar/>
       <Toaster position="top-right" />
       {children}

@@ -65,6 +65,13 @@ export default async function handler(
         console.log('Triggering bot response for user message:', message);
         
         try {
+          // Get conversation history for context
+          const { data: messagesData } = await supabase
+            .from('chatbot_messages')
+            .select('*')
+            .eq('session_id', sessionId as string)
+            .order('created_at', { ascending: true });
+
           // Call bot response API asynchronously with better error handling
           const botResponseUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/chat/bot-response`;
           
@@ -75,7 +82,8 @@ export default async function handler(
             },
             body: JSON.stringify({
               sessionId: sessionId as string,
-              userMessage: message
+              userMessage: message,
+              conversationHistory: messagesData || []
             })
           })
           .then(response => {

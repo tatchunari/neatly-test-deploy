@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabaseClient';
 import { chatWithGemini } from '@/lib/chat';
+import { createEmbedding } from '@/lib/embedding';
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,39 +19,125 @@ export default async function handler(
       return res.status(400).json({ error: 'Session ID and user message are required' });
     }
 
-    // Generate immediate response first (for fast UI feedback)
+    // 1. Strict match: JOIN chatbot_faqs + chatbot_faq_aliases
     let botResponse = '';
-    
-    // Quick response for first message or simple queries
-    if (userMessage.toLowerCase().includes('สวัสดี') || userMessage.toLowerCase().includes('hello')) {
-      botResponse = 'สวัสดีครับ! ยินดีต้อนรับสู่โรงแรม Neatly ครับ มีอะไรให้ช่วยเหลือไหมครับ?';
-    } else if (userMessage.toLowerCase().includes('ห้อง') || userMessage.toLowerCase().includes('room')) {
-      botResponse = 'เรามีห้องพักหลากหลายประเภทครับ เช่น Superior, Deluxe, Suite และ Premier Sea View ครับ สนใจห้องประเภทไหนเป็นพิเศษไหมครับ?';
-    } else if (userMessage.toLowerCase().includes('ราคา') || userMessage.toLowerCase().includes('price')) {
-      botResponse = 'ราคาห้องพักขึ้นอยู่กับประเภทห้องและช่วงเวลา ครับ สามารถดูรายละเอียดและราคาได้ในหน้าจองห้องพักครับ';
-    } else if (userMessage.toLowerCase().includes('จอง') || userMessage.toLowerCase().includes('booking')) {
-      botResponse = 'สามารถจองห้องพักได้ผ่านเว็บไซต์ของเราเลยครับ หรือโทรมาที่หมายเลข 02-123-4567 ครับ';
-    } else {
-      // For complex queries, try Gemini AI with timeout
+    try {
+      const normalize = (s: string) => s.trim().toLowerCase().replace(/[^\w\s]/g, '');
+      const userQuery = normalize(userMessage);
+      console.log('🔍 STRICT MATCH DEBUG:', { userQuery, originalMessage: userMessage });
+
+      // Check FAQ questions first
+      const { data: faqMatches, error: faqError } = await supabase
+        .from('chatbot_faqs')
+        .select('question, answer')
+        .neq('question', '::greeting::')
+        .neq('question', '::fallback::');
+
+      if (!faqError && faqMatches) {
+        for (const faq of faqMatches) {
+          if (userQuery === normalize(faq.question)) {
+            botResponse = faq.answer;
+            break;
+          }
+        }
+      }
+
+      // If no FAQ match, check aliases
+      if (!botResponse) {
+        const { data: aliasMatches, error: aliasError } = await supabase
+          .from('chatbot_faq_aliases')
+          .select('alias, faq_id');
+
+        if (!aliasError && aliasMatches) {
+          console.log('🔍 ALIASES DEBUG:', aliasMatches.map(a => ({
+            alias: a.alias,
+            normalized: normalize(a.alias),
+            faq_id: a.faq_id
+          })));
+
+          for (const aliasMatch of aliasMatches) {
+            if (userQuery === normalize(aliasMatch.alias)) {
+              // Get FAQ answer by faq_id
+              const { data: faqData } = await supabase
+                .from('chatbot_faqs')
+                .select('answer')
+                .eq('id', aliasMatch.faq_id)
+                .single();
+
+              if (faqData?.answer) {
+                botResponse = faqData.answer;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (botResponse) {
+        console.log('✅ STRICT MATCH found:', botResponse);
+      } else {
+        // 2. Vector search: JOIN chatbot_faqs + chatbot_faq_aliases
+        try {
+          const queryEmbedding = await createEmbedding(userMessage);
+
+          const { data: matches, error: rpcError } = await supabase
+            .rpc('match_faqs_with_aliases', {
+              query_embedding: queryEmbedding,
+              match_threshold: 0.6,
+              match_count: 5
+            });
+
+          if (rpcError) {
+            console.error('Vector search error:', rpcError);
+          } else if (matches && matches.length > 0) {
+            const bestMatch = matches[0];
+            botResponse = bestMatch.answer;
+            console.log('🔍 VECTOR MATCH found:', {
+              source: bestMatch.source,
+              similarity: bestMatch.similarity,
+              answer: bestMatch.answer
+            });
+          }
+        } catch (err) {
+          console.error('Vector RPC search failed, using fallback:', err);
+          const { data: fallbackFaqs } = await supabase
+            .from('chatbot_faqs')
+            .select('question,answer')
+            .eq('question', '::fallback::');
+          const fallbackMsg = (fallbackFaqs && fallbackFaqs[0]?.answer)
+            || 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
+          botResponse = fallbackMsg;
+          console.log('⚠️ FALLBACK MESSAGE:', fallbackMsg);
+        }
+      }
+    } catch (error) {
+      console.error('Error during strict FAQ matching:', error);
+    }
+
+    // 3. AI chat by context (if no FAQ/alias match found)
+    if (!botResponse) {
       try {
-        const context = `
-        - คุณคือพนักงานโรงแรม Neatly
-        - ตอบคำถามด้วยภาษาที่ถามอย่างเป็นมิตรและมืออาชีพ
-        - ตอบทุกคำถาม
-        - ตอบสั้น ๆ
-        `;
-        
-        // Add timeout for Gemini API call (3 seconds)
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Gemini API timeout')), 3000)
-        );
-        
-        const geminiPromise = chatWithGemini(userMessage, context);
-        botResponse = await Promise.race([geminiPromise, timeoutPromise]) as string;
-        
-      } catch (error) {
-        console.log('Gemini API failed, using fallback response:', error);
-        botResponse = 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถโทรมาที่หมายเลข 02-123-4567 หรือส่งอีเมลมาที่ info@neatlyhotel.com ครับ';
+        console.log('🤖 Using Gemini AI for context-based response...');
+        // ดึงประวัติล่าสุด (ให้ lib จัดการ slicing)
+        const { data: recentMessages } = await supabase
+          .from('chatbot_messages')
+          .select('message, is_bot')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        botResponse = await chatWithGemini(userMessage, recentMessages?.reverse() || []);
+        console.log('🤖 GEMINI RESPONSE:', botResponse);
+      } catch (geminiError) {
+        console.error('Gemini AI failed:', geminiError);
+        // Fallback to default message
+        const { data: fallbackFaqs } = await supabase
+          .from('chatbot_faqs')
+          .select('question,answer')
+          .eq('question', '::fallback::');
+        botResponse = (fallbackFaqs && fallbackFaqs[0]?.answer)
+          || 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
+        console.log('⚠️ FALLBACK MESSAGE (after Gemini failed):', botResponse);
       }
     }
 
@@ -100,7 +187,6 @@ export default async function handler(
         await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
       }
     }
-
 
     res.status(201).json({ 
       message: botMessage,

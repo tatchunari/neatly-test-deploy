@@ -19,6 +19,8 @@ export default function Chatbot() {
   const [inputValue, setInputValue] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
+  const [greetingMessage, setGreetingMessage] = useState<string>('');
+  const [suggestionFAQs, setSuggestionFAQs] = useState<any[]>([]);
   const subscriptionReadyPromise = useRef<Promise<void> | null>(null);
   const subscriptionResolve = useRef<(() => void) | null>(null);
   const displayedBotMessages = useRef<Set<string>>(new Set());
@@ -99,6 +101,13 @@ export default function Chatbot() {
     }
   }, [open]);
 
+  // ดึง FAQs เมื่อเปิด chatbot
+  useEffect(() => {
+    if (open) {
+      fetchFAQs();
+    }
+  }, [open]);
+
   // Supabase Realtime subscription for new messages
   useEffect(() => {
     if (!currentSession?.id) return;
@@ -132,6 +141,19 @@ export default function Chatbot() {
             // ตรวจสอบว่าไม่มีข้อความนี้อยู่แล้ว (ป้องกัน duplicate)
             const existsById = prev.some(msg => msg.id === newMessage.id);
             const alreadyDisplayed = displayedBotMessages.current.has(newMessage.id);
+            
+            // ตรวจสอบ user messages ด้วย (ป้องกัน duplicate user messages)
+            if (!newMessage.is_bot) {
+              const duplicateUserMessage = prev.some(msg => 
+                !msg.is_bot && 
+                msg.message === newMessage.message && 
+                Math.abs(new Date(msg.created_at).getTime() - new Date(newMessage.created_at).getTime()) < 2000
+              );
+              if (duplicateUserMessage) {
+                console.log('Duplicate user message detected, skipping:', newMessage.message);
+                return prev;
+              }
+            }
             
             if (existsById || alreadyDisplayed) {
               console.log('Message already exists, skipping:', newMessage.id);
@@ -218,11 +240,35 @@ export default function Chatbot() {
     }
   };
 
-  const sendMessage = async () => {
-    if (!inputValue.trim()) return;
+  const fetchFAQs = async () => {
+    try {
+      const { data } = await axios.get('/api/chat/faqs');
+      const faqs = data.faqs || [];
+      
+      // หา greeting message
+      const greetingFaq = faqs.find((faq: any) => faq.question === '::greeting::');
+      if (greetingFaq) {
+        setGreetingMessage(greetingFaq.answer);
+      }
+      
+      // หา suggestion FAQs (ไม่รวม greeting และ fallback)
+      const suggestions = faqs.filter((faq: any) => 
+        faq.question !== '::greeting::' && faq.question !== '::fallback::'
+      );
+      setSuggestionFAQs(suggestions);
+      
+    } catch (error) {
+      console.error('Error fetching FAQs:', error);
+    }
+  };
 
-    const userMessage = inputValue.trim();
-    setInputValue('');
+  const sendMessage = async (overrideText?: string) => {
+    const userMessage = overrideText || inputValue.trim();
+    if (!userMessage) return;
+    
+    if (!overrideText) {
+      setInputValue('');
+    }
 
     // Optimistic UI: Show message immediately
     const tempMessage: ChatMessage = {
@@ -269,11 +315,26 @@ export default function Chatbot() {
       // Replace temp message with real message from database
       // Note: Realtime will also receive this message, but we replace it anyway
       // to ensure we have the correct database ID and timestamp
-      setMessages(prev => 
-        prev.map(msg => 
+      setMessages(prev => {
+        const updated = prev.map(msg => 
           msg.id === tempMessage.id ? data.message : msg
-        )
-      );
+        );
+        
+        // ตรวจสอบและลบ duplicate messages
+        const uniqueMessages = updated.filter((msg, index) => {
+          // หาข้อความที่ซ้ำกัน
+          const duplicateIndex = updated.findIndex((otherMsg, otherIndex) => 
+            otherIndex < index && 
+            !msg.is_bot && !otherMsg.is_bot && 
+            msg.message === otherMsg.message &&
+            Math.abs(new Date(msg.created_at).getTime() - new Date(otherMsg.created_at).getTime()) < 2000
+          );
+          
+          return duplicateIndex === -1; // ไม่ซ้ำ
+        });
+        
+        return uniqueMessages;
+      });
 
       console.log('Message sent successfully:', data.message);
       
@@ -302,7 +363,21 @@ export default function Chatbot() {
             
             if (!messageExists && !alreadyDisplayed) {
               console.log('Fallback: Adding bot message that was missed by Realtime:', latestBotMessage.id);
-              setMessages(prev => [...prev, latestBotMessage]);
+              setMessages(prev => {
+                // ตรวจสอบว่าไม่มี bot message ซ้ำกัน
+                const hasDuplicateBot = prev.some(msg => 
+                  msg.is_bot && 
+                  msg.message === latestBotMessage.message && 
+                  Math.abs(new Date(msg.created_at).getTime() - new Date(latestBotMessage.created_at).getTime()) < 2000
+                );
+                
+                if (hasDuplicateBot) {
+                  console.log('Duplicate bot message detected in fallback, skipping');
+                  return prev;
+                }
+                
+                return [...prev, latestBotMessage];
+              });
               displayedBotMessages.current.add(latestBotMessage.id);
               setIsBotTyping(false);
               if (safetyTimeoutRef.current) {
@@ -444,6 +519,33 @@ export default function Chatbot() {
             onScrollCapture={handleScroll}
           >
             <div className="space-y-4">
+              {/* Greeting message */}
+              {messages.length === 0 && greetingMessage && (
+                <div className="flex flex-col items-start">
+                  <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800 shadow-sm">
+                    <p className="text-sm">{greetingMessage}</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Suggestion buttons */}
+              {messages.length === 0 && suggestionFAQs.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {suggestionFAQs.map((faq) => (
+                    <Button
+                      key={faq.id}
+                      onClick={() => sendMessage(faq.question)}
+                      variant="outline"
+                      size="sm"
+                      className="px-3 py-1.5 rounded-full border border-green-300 bg-green-50 text-green-700 text-sm shadow-sm hover:bg-green-100 cursor-pointer"
+                    >
+                      {faq.question}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Messages */}
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -496,7 +598,7 @@ export default function Chatbot() {
                 className="flex-1 border-gray-200 focus:ring-orange-500 focus:border-orange-500 rounded-full px-4 py-2"
               />
               <Button 
-                onClick={sendMessage}
+                onClick={() => sendMessage()}
                 disabled={!inputValue.trim()}
                 className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 rounded-full p-2 w-10 h-10 flex items-center justify-center"
               >
