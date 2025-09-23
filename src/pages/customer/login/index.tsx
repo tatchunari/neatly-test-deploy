@@ -1,5 +1,5 @@
 import Head from "next/head";
-import Navbar from "@/components/login/Navbar";
+import Navbar from "@/components/Navbar";
 import LoginForm from "@/components/login/LoginForm";
 
 
