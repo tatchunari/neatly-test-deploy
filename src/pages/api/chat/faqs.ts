@@ -51,50 +51,26 @@ export default async function handler(
   } else if (req.method === 'POST') {
     try {
       // Create new FAQ entry
-      const { question, answer, embedding } = req.body;
+      const { question, answer } = req.body;
 
       if (!question || !answer) {
         return res.status(400).json({ error: 'Question and answer are required' });
       }
 
-      console.log('Creating FAQ entry:', { 
-        question, 
-        answer, 
-        hasEmbedding: !!embedding,
-        embeddingLength: embedding?.length || 0
+      console.log('Creating FAQ entry:', { question, answer });
+
+      // Create embedding for the question
+      const { createEmbedding } = await import('@/lib/embedding');
+      const embedding = await createEmbedding(question);
+      
+      console.log('Generated embedding length:', embedding.length);
+
+      // Use RPC function to insert FAQ with embedding
+      const { data: faqEntry, error } = await supabase.rpc('insert_faq_with_embedding', {
+        p_question: question,
+        p_answer: answer,
+        p_embedding: embedding
       });
-
-      let faqEntry, error;
-
-      if (embedding && Array.isArray(embedding)) {
-        // Use RPC function for embedding - send as array directly
-        console.log('Using RPC function with embedding array length:', embedding.length);
-        console.log('First 5 values:', embedding.slice(0, 5));
-        
-        const { data, error: rpcError } = await supabase.rpc('insert_faq_with_embedding', {
-          p_question: question,
-          p_answer: answer,
-          p_embedding: embedding // ส่ง array โดยตรง ไม่ต้องแปลงเป็น string
-        });
-        
-        faqEntry = data;
-        error = rpcError;
-      } else {
-        // Use normal insert without embedding
-        const { data, error: insertError } = await supabase
-          .from('chatbot_faqs')
-          .insert({
-            question,
-            answer,
-            embedding: null,
-            created_by: null
-          })
-          .select()
-          .single();
-        
-        faqEntry = data;
-        error = insertError;
-      }
 
       if (error) {
         console.error('Error creating FAQ entry:', error);
@@ -104,8 +80,16 @@ export default async function handler(
 
       console.log('FAQ entry created:', faqEntry);
 
+      // RPC function returns an array, get the first item
+      const createdFAQ = Array.isArray(faqEntry) ? faqEntry[0] : faqEntry;
+      
+      if (!createdFAQ || !createdFAQ.id) {
+        console.error('RPC function did not return valid FAQ with ID');
+        throw new Error('RPC function did not return valid FAQ with ID');
+      }
+
       res.status(201).json({ 
-        faq: faqEntry,
+        faq: createdFAQ,
         success: true 
       });
 
@@ -123,7 +107,7 @@ export default async function handler(
         return res.status(400).json({ error: 'FAQ ID is required for update' });
       }
 
-      const { question, answer, embedding } = req.body;
+      const { question, answer } = req.body;
 
       if (!question || !answer) {
         return res.status(400).json({ error: 'Question and answer are required' });
@@ -131,24 +115,18 @@ export default async function handler(
 
       console.log('Updating FAQ entry:', { id, question, answer });
 
-      // Convert embedding array to vector string format
-      let embeddingString = null;
-      if (embedding && Array.isArray(embedding)) {
-        embeddingString = `[${embedding.join(',')}]::vector(1536)`;
-        console.log('Embedding string format for update:', embeddingString.substring(0, 50) + '...');
-      }
+      // Create embedding for the updated question
+      const { createEmbedding } = await import('@/lib/embedding');
+      const embedding = await createEmbedding(question);
+      
+      console.log('Generated embedding length for update:', embedding.length);
 
-      const { data: updatedFaq, error } = await supabase
-        .from('chatbot_faqs')
-        .update({
-          question,
-          answer,
-          embedding: embeddingString,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id as string)
-        .select()
-        .single();
+      // Use RPC function to update FAQ with embedding
+      const { data: updatedFaq, error } = await supabase.rpc('insert_faq_with_embedding', {
+        p_question: question,
+        p_answer: answer,
+        p_embedding: embedding
+      });
 
       if (error) {
         console.error('Error updating FAQ:', error);
@@ -157,8 +135,16 @@ export default async function handler(
 
       console.log('FAQ entry updated:', updatedFaq);
 
+      // RPC function returns an array, get the first item
+      const createdFAQ = Array.isArray(updatedFaq) ? updatedFaq[0] : updatedFaq;
+      
+      if (!createdFAQ || !createdFAQ.id) {
+        console.error('RPC function did not return valid FAQ with ID');
+        throw new Error('RPC function did not return valid FAQ with ID');
+      }
+
       res.status(200).json({ 
-        faq: updatedFaq,
+        faq: createdFAQ,
         success: true 
       });
 
