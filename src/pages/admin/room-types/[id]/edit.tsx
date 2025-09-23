@@ -4,62 +4,72 @@ import { Reorder } from "motion/react";
 import { AmenityItem } from "@/components/admin/ReorderableItem";
 
 import { useRouter } from "next/router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import LoadingScreen from "@/components/admin/LoadingScreen";
+import { useQuery } from "@/hooks/useQuery";
 
-export default function create() {
-  type GalleryItem = { id: string; url: string };
+export default function EditRoomRoute() {
+   const router = useRouter(); 
+  const roomId = router.query.id;
 
-  const [hasPromotion, setHasPromotion] = useState(false);
-  
-  const router = useRouter();
-
-  const [amenities, setAmenities] = useState<AmenityItem[]>([
-    { id: crypto.randomUUID(), value: "" },
-  ]);
-
-  const handleEditAmenity = (id: string, value: string) => {
-    setAmenities((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, value } : item))
+  if (!roomId) {
+    return (
+      <Layout>
+        <LoadingScreen/>
+      </Layout>
     );
-  };
+  }
 
-  const handleAddAmenity = () => {
-    setAmenities((prev) => [...prev, { id: crypto.randomUUID(), value: "" }]);
-  };
+  return (
+    <EditRoomPage id={roomId} />
+  )
 
-  const handleDeleteAmenity = (id: string) => {
-    if (amenities.length > 1) {
-      setAmenities((prev) => prev.filter((item) => item.id !== id));
-    }
-  };
+}
 
-  // Set state for each field
-  const [roomType, setRoomType] = useState("");
-  const [roomSize, setRoomSize] = useState("");
-  const [bedType, setBedType] = useState("Single bed");
-  const [guests, setGuests] = useState("");
-  const [pricePerNight, setPricePerNight] = useState("");
-  const [promotionPrice, setPromotionPrice] = useState("");
-  const [description, setDescription] = useState("");
+function EditRoomPage({ id }) {
+  const { data: roomResponse, error, loading } = useQuery(`/api/rooms/${id}`);
+   if (loading) {
+    return (
+      <Layout>
+        <LoadingScreen/>
+      </Layout>
+    );
+  }
 
-  // State for Single Main Img
+  return (
+    <EditRoomForm
+      room={roomResponse?.data}
+     />
+  )
+}
+
+interface RoomMainImageProps {
+  name: string;
+  value?: string;
+}
+
+const RoomMainImage = ({ name, value } : RoomMainImageProps) => {
   const [mainImgName, setMainImgName] = useState<string | null>(null);
   const [mainImg, setMainImg] = useState<File | null>(null);
-  const [mainImgUrl, setMainImgUrl] = useState<string | null>(null);
-
-  // State for Multiple Gallery Image
-  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
-  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  const [galleryFileNames, setGalleryFileNames] = useState<string[]>([]);
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
-
-  const [isLoading, setIsLoading] = useState(false);
+  const [mainImgUrl, setMainImgUrl] = useState<string | null>(value || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { register, setValue } = useForm();
+
+  console.log(`RoomMainImage.mainImgUrl: `, mainImgUrl);
+
+  const removeFile = () => {
+    setMainImgName(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; 
+    setMainImg(null);
+    setMainImgUrl(null);
+    setValue(name, null);
+  };
+}
 
 
-  // Handle Single Img file input
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
   if (!file) return;
 
@@ -69,6 +79,8 @@ export default function create() {
   // Automatically upload the image
   const formData = new FormData();
   formData.append("mainImage", file);
+  
+  // console.log("FormData:", file)
 
   try {
     const res = await fetch("/api/upload-room-image", {
@@ -85,19 +97,204 @@ export default function create() {
     }
   } catch (err: any) {
     alert(`Image upload error: ${err.message}`);
-    removeFile(); // optional: clear file if upload failed
   }
 };
 
-  const removeFile = () => {
-    setMainImgName(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // ✅ reset the input
-    }
-    setMainImg(null);
-  };
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Main Image <span className="text-red-500">*</span>
+      </label>
 
-  // Handle Multiple Image
+          <div>
+          <input type="text" value={mainImgUrl || ""} {...register(name)}  />
+          </div>
+      <div className="relative w-60 h-60">
+        {/* Uploaded file preview (on top if exists) */}
+        {mainImgUrl && (
+          <div className="absolute inset-0 z-10 border border-gray-300 rounded-md flex items-center justify-center bg-white shadow">
+            {mainImgUrl && mainImgUrl.trim() !== "" && (
+              <img src={mainImgUrl} alt="uploaded image" />
+            )}
+            <button
+              type="button"
+              onClick={removeFile}
+              className="absolute top-2 right-3 text-red-500 font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* File input box */}
+        <label className='w-60 h-60 border-gray-300 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer transition-colors'>
+          <p className="text-2xl text-orange-500">+</p>
+          <p className="text-sm text-orange-500">Upload Image</p>
+          <input 
+            type="file" 
+            className="hidden" 
+            accept="image/*"
+            onChange={handleFileChange}
+            ref={fileInputRef}
+          />
+        </label>
+
+      </div>
+
+    </div>
+  );
+}
+
+interface RoomGalleryImagesProps {
+  name: string;
+  value: string[];
+}
+
+const RoomGalleryImages = ({ name, value } : RoomGalleryImagesProps) => {
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(value?.map((url, idx) => {
+    return { id: idx.toString(), url: url } as GalleryItem
+  }) || []);
+  const { register } = useForm();
+    const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [galleryFileNames, setGalleryFileNames] = useState<string[]>([]);
+
+  const handleGalleryFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (!files) return;
+
+  const newFiles = Array.from(files);
+  const uploadedItems: GalleryItem[] = [];
+
+  for (const file of newFiles) {
+      const formData = new FormData();
+      formData.append("galleryImages", file);
+
+      try {
+        const res = await fetch("/api/upload-multiple-images", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          // data.url should be your uploaded image URL
+          uploadedItems.push({ id: crypto.randomUUID(), url: data.url });
+          setGalleryUrls((prev) => [...prev, data.url]);
+        } else {
+          throw new Error(data.error || data.message || "Upload failed");
+        }
+      } catch (err: any) {
+        alert(`Image upload error: ${err.message}`);
+      }
+    }
+
+  // Add successfully uploaded images to gallery state
+  setGalleryItems((prev) => [...prev, ...uploadedItems]);
+  setGalleryFiles((prev) => [...prev, ...newFiles]);
+  setGalleryFileNames((prev) => [...prev, ...newFiles.map((f) => f.name)]);
+
+};
+
+  return (
+             <>
+             <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Image Gallery(At least 4 pictures){" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div className="space-y-2">
+                  {/* Grid of uploaded images */}
+                 <Reorder.Group
+                    axis="x" 
+                    values={galleryItems}
+                    onReorder={setGalleryItems} 
+                    className="flex gap-4 overflow-x-auto py-2"
+                  >
+                  
+                    {galleryItems.map((item, index) => (
+                      <Reorder.Item
+                        key={item.id} 
+                        value={item}
+                        className="w-42 h-42 rounded-md flex items-center justify-center relative bg-[#F1F2F6] cursor-grab"
+                      >
+                        {/* Remove button */}
+                        <div
+                          className="absolute rounded-full text-orange-600 font-bold top-1 right-1 px-1 cursor-pointer z-10"
+                          onClick={() => setGalleryItems((prev) => prev.filter((_, i) => i !== index))}
+                        >
+                          ✕
+                        </div>
+                        <img src={item.url} alt="hotel-images" className="object-contain w-full h-full rounded-md" />
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
+                  
+
+
+                  {/* File input */}
+                  <label className="w-42 h-42 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer transition-colors">
+                    <p className="text-2xl text-orange-500">+</p>
+                    <p className="text-xs text-orange-500">Upload Photo</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleGalleryFilesChange}
+                    />
+                  </label>
+                </div>
+                </div>
+              <div>
+                {value?.map(url => {
+                    return <input type="text" value={url} {...register(name)} />
+                })}
+              
+              </div>
+              </>
+  );
+}
+  type GalleryItem = { id: string; url: string };
+
+function EditRoomForm({ room }) {
+
+  const router = useRouter();
+  const roomId = router.query.id;
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Gallery Image State
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [galleryFileNames, setGalleryFileNames] = useState<string[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+
+  const [hasPromotion, setHasPromotion] = useState(false);
+  const [amenities, setAmenities] = useState<AmenityItem[]>([
+    { id: crypto.randomUUID(), value: "" },
+  ]);
+
+
+  // Main Image State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      roomType: room.room_type,
+      roomSize: room.room_size,
+      bedType: room.bed_type,
+      guests: room.guests,
+      pricePerNight: room.price,
+      promotionPrice: room.promotion_price || null,
+      description: room.description,
+      mainImgUrl: room.main_image_url[0],
+
+    }
+  });
+
+// Upload Gallery Image Handler
 const handleGalleryFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const files = e.target.files;
   if (!files) return;
@@ -136,28 +333,18 @@ const handleGalleryFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) 
   // Reset file input so user can re-upload same file if needed
   if (fileInputRef.current) fileInputRef.current.value = "";
 };
-console.log("Gallery Items:", galleryItems);
+
+console.log("Gallery Image:", room.gallery_images)
 
 
-const removeGalleryFile = (index: number) => {
-  setGalleryFiles((prev) => prev.filter((_, i) => i !== index));
-  setGalleryUrls((prev) => prev.filter((_, i) => i !== index));
-  setGalleryFileNames((prev) => prev.filter((_, i) => i !== index));
-};
-
-  // Submit handler
-  const handleSubmit = async () => {
-  // Basic validation
-  if (!roomType || !roomSize || !bedType || !guests || !pricePerNight || !description) {
+  const onSubmit = async (hookFormData) => {
+    alert('on Submit!!');
+    const {roomType, roomSize, bedType, guests, mainImgUrl, pricePerNight, description, promotionPrice } = hookFormData;
+    if (!roomType || !roomSize || !bedType || !guests || !pricePerNight || !description || !mainImgUrl || !galleryUrls || !amenities) {
     alert("Please fill in all required fields.");
-    setIsLoading(false);
     return;
   }
-
-  if (!mainImgUrl) {
-    alert("Please upload a main image first.");
-    return;
-  }
+  setIsLoading(true);
 
   const payload = {
     room_type: roomType,
@@ -168,21 +355,27 @@ const removeGalleryFile = (index: number) => {
     promotion_price: hasPromotion ? Number(promotionPrice) : null,
     description,
     amenities: amenities.map((a) => a.value).filter((v) => v.trim() !== ""), 
-    main_image_url: [mainImgUrl], // use the uploaded image URL here
+    main_image_url: [mainImgUrl],
     gallery_images: galleryUrls,
   };
 
+  console.log("Payload: ",payload);
+
   try {
-    const response = await fetch("/api/rooms", {
-      method: "POST",
+    const response = await fetch(`/api/rooms/${roomId}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
+    console.log("Response: ", response)
+
     const data = await response.json();
 
+    console.log("Data:" , data);
+
     if (response.ok && data.success) {
-      alert("Room created successfully!");
+      alert("Room updated successfully!");
       router.push("/admin/room-types");
     } else {
       throw new Error(data.error || data.message || "Failed to create room");
@@ -192,34 +385,34 @@ const removeGalleryFile = (index: number) => {
   } finally {
     setIsLoading(false);
   }
-};
+    };
 
-// console.log("Gallery URLs:",galleryUrls);
- if (isLoading) {
-    return (
-      <Layout>
-        <LoadingScreen/>
-      </Layout>
+  const handleEditAmenity = (id: string, value: string) => {
+    setAmenities((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, value } : item))
     );
-  }
+  };
+
+  const handleAddAmenity = () => {
+    setAmenities((prev) => [...prev, { id: crypto.randomUUID(), value: "" }]);
+  };
+
+  const handleDeleteAmenity = (id: string) => {
+    if (amenities.length > 1) {
+      setAmenities((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
 
   return (
     <Layout>
-      <div className="flex-1">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex-1">
         {/* Header */}
         <div className="flex flex-row justify-between border-b border-gray-400 pb-5 mt-10 mx-10">
-          <p className="text-xl font-semibold">Create New Room</p>
+          <p className="text-xl font-semibold">{room.room_type}</p>
           <div className="flex justify-end gap-2 h-[46px] rounded-md overflow-hidden max-w-md w-full">
             <button
-              className="text-orange-500 border px-8 border-orange-500 rounded-sm font-medium"
-              onClick={() => router.push("/admin/room-types")}
-            >
-              Cancel
-            </button>
-            <button
               className="text-white font-medium w-30 cursor-pointer bg-orange-600 rounded-sm"
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               disabled={isLoading}
             >
               {isLoading && (
@@ -228,7 +421,7 @@ const removeGalleryFile = (index: number) => {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                 </svg>
               )}
-               {isLoading ? "Creating..." : "Create Room"}
+               {isLoading ? "Updating..." : "Update"}
             </button>
           </div>
         </div>
@@ -248,9 +441,8 @@ const removeGalleryFile = (index: number) => {
                   Room Type <span className="text-red-500">*</span>
                 </label>
                 <input
+                  {...register("roomType")}
                   type="text"
-                  value={roomType}
-                  onChange={(e) => setRoomType(e.target.value)}
                   className="w-200 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   placeholder="Enter room type"
                 />
@@ -263,9 +455,8 @@ const removeGalleryFile = (index: number) => {
                     Room size(sqm) <span className="text-red-500">*</span>
                   </label>
                   <input
+                    {...register("roomSize")}
                     type="number"
-                    value={roomSize}
-                    onChange={(e) => setRoomSize(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="Enter room size"
                   />
@@ -276,14 +467,12 @@ const removeGalleryFile = (index: number) => {
                     Bed type <span className="text-red-500">*</span>
                   </label>
                   <select 
+                  {...register("bedType")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  value={bedType}
-                  onChange={(e) => setBedType(e.target.value)}
                   >
                     <option value="Single bed">Single bed</option>
                     <option value="Double bed">Double bed</option>
-                    <option value="Queen bed">Queen bed</option>
-                    <option value="King bed">King bed</option>
+                    <option value="King bed">Double bed (King size)</option>
                     <option value="Twin beds">Twin beds</option>
                   </select>
                 </div>
@@ -295,9 +484,8 @@ const removeGalleryFile = (index: number) => {
                   Guest(s) <span className="text-red-500">*</span>
                 </label>
                 <input
+                  {...register("guests")}
                   type="number"
-                  value={guests}
-                  onChange={(e) => setGuests(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   min="1"
                   max="10"
@@ -312,9 +500,8 @@ const removeGalleryFile = (index: number) => {
                     <span className="text-red-500">*</span>
                   </label>
                   <input
+                  {...register("pricePerNight")}
                     type="number"
-                    value={pricePerNight}
-                    onChange={(e) => setPricePerNight(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="Enter price"
                     step="0.01"
@@ -341,10 +528,9 @@ const removeGalleryFile = (index: number) => {
 
                     <div className="relative mt-2">
                       <input
+                      {...register("promotionPrice")}
                         type="number"
                         disabled={!hasPromotion} // 🔑 disables until checked
-                        value={promotionPrice}
-                        onChange={(e) => setPromotionPrice(e.target.value)}
                         className={`w-60 px-3 py-2 border border-gray-300 rounded-md focus:outline-none ${
                           hasPromotion
                             ? "focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -361,9 +547,9 @@ const removeGalleryFile = (index: number) => {
                     Room Description <span className="text-red-500">*</span>
                   </label>
                   <textarea
+                  {...register("description")}
+                  name="description"
                     rows={4}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
                     className="w-200 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                     placeholder="Enter room description"
                   />
@@ -377,104 +563,17 @@ const removeGalleryFile = (index: number) => {
                 </h2>
 
                 {/* Main Image */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Main Image <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative w-60 h-60">
-                    {/* Uploaded file preview (on top if exists) */}
-                    {mainImgName && (
-                      <div className="absolute inset-0 z-10 border border-gray-300 rounded-md flex items-center justify-center bg-white shadow">
-                        {mainImgUrl && mainImgUrl.trim() !== "" && (
-                          <img src={mainImgUrl} alt="uploaded image" />
-                        )}
-                        <button
-                          onClick={removeFile}
-                          className="absolute top-2 right-3 text-red-500 font-bold"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    )}
-
-                    {/* File input box */}
-                    <label className={`w-60 h-60 border-gray-300 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer transition-colors ${mainImgName ? "opacity-50" : ""}`}>
-                      <p className="text-2xl text-orange-500">+</p>
-                      <p className="text-sm text-orange-500">Upload Image</p>
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                  </div>
-
-                </div>
+                <RoomMainImage
+                    name="mainImgUrl"
+                    value={room?.main_image_url && room.main_image_url[0]}
+                 />
 
                 {/* Image Gallery */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image Gallery(At least 4 pictures){" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <div className="space-y-2">
-                  {/* Grid of uploaded images */}
-                 <Reorder.Group
-                    axis="x" // horizontal reorder
-                    values={galleryItems}
-                    onReorder={(x) => {
-                      console.log(`on reorder: `, x);
-                    }} // directly update state
-                    className="flex gap-4 overflow-x-auto py-2"
-                  >
-                    {galleryItems.map((item, index) => (
-                      <Reorder.Item
-                        key={item.id} // make sure URL is unique
-                        value={item}
-                        className="w-42 h-42 rounded-md flex items-center justify-center relative bg-[#F1F2F6] cursor-grab"
-                      >
-                        {/* Remove button */}
-                        <div
-                          className="absolute rounded-full text-orange-600 font-bold top-1 right-1 px-1 cursor-pointer z-10"
-                          onClick={() => setGalleryItems((prev) => prev.filter((_, i) => i !== index))}
-                        >
-                          ✕
-                        </div>
-                        <img src={item.url} alt="hotel-images" className="object-contain w-full h-full rounded-md" />
-                      </Reorder.Item>
-                    ))}
+               <RoomGalleryImages
+                  name="galleryImageUrls"
+                  value={room?.gallery_images}
+                />
 
-                    {/* Add Image Button
-                    <Reorder.Item value="add-button" className="w-42 h-42 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer">
-                      <p className="text-2xl text-orange-500">+</p>
-                      <p className="text-xs text-orange-500">Upload Photo</p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleGalleryFilesChange}
-                      />
-                    </Reorder.Item> */}
-                  </Reorder.Group>
-
-
-                  {/* File input */}
-                  <label className="w-42 h-42 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer transition-colors">
-                    <p className="text-2xl text-orange-500">+</p>
-                    <p className="text-xs text-orange-500">Upload Photo</p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={handleGalleryFilesChange}
-                    />
-                  </label>
-                </div>
-                </div>
               </div>
               <div className="space-y-6 mt-5">
                 <h2 className="text-lg font-medium text-gray-700 border-t pt-5 border-gray-200 pb-2">
@@ -516,7 +615,7 @@ const removeGalleryFile = (index: number) => {
             </div>
           </div>
         </div>
-      </div>
+      </form>
     </Layout>
   );
 }
