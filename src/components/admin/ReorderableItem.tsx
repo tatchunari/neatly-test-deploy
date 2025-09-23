@@ -1,4 +1,5 @@
 import { Reorder, useDragControls } from "framer-motion";
+import { useForm } from "react-hook-form";
 
 export interface AmenityItem {
   id: string;
@@ -21,6 +22,8 @@ export function ReorderableItem({
   label = "Item",
 }: ReorderableItemProps) {
   const controls = useDragControls();
+
+  const { register } = useForm();
   
   return (
     <Reorder.Item

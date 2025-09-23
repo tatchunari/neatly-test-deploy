@@ -178,6 +178,9 @@ export default function index() {
 
             {/* Room Rows - Show only current page rooms */}
             {currentRooms.map((room) => (
+              <div key={room.id}>
+                <Link href={`/admin/room-types/${room.id}/edit`}>
+              <div>
               <div
                 key={room.id}
                 className="grid grid-cols-7 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors items-center"
@@ -216,6 +219,9 @@ export default function index() {
                 <div className="text-sm text-gray-900">
                   {room.room_size} sqm
                 </div>
+              </div>
+              </div>
+              </Link>
               </div>
             ))}
 
