@@ -251,7 +251,7 @@ const Navbar = ({
     navItems.map((item) => (
       <button
         key={item.label}
-        className="text-[#4B5755] text-sm font-medium px-0 py-2 text-left hover:text-[#F47A1F] transition-colors"
+        className="text-[#4B5755] text-sm font-medium px-0 py-2 text-left hover:text-[#F47A1F] transition-colors whitespace-nowrap"
         style={{ width: "100%" }}
         onClick={() => {
           scrollToSection(item.path);
@@ -315,7 +315,7 @@ const Navbar = ({
             {navItems.map((item, idx) => (
               <button
                 key={item.label}
-                className="text-[#222] text-sm font-normal py-2 text-left hover:text-[#F47A1F] transition-colors"
+                className="text-[#222] text-sm font-normal py-2 text-left hover:text-[#F47A1F] transition-colors whitespace-nowrap"
                 style={{ width: "100%" }}
                 onClick={() => {
                   scrollToSection(item.path);
