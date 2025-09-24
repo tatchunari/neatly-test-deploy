@@ -12,6 +12,13 @@ interface FAQ {
   aliases?: Array<{ id: string; alias: string }>;
 }
 
+interface Context {
+  id: string;
+  content: string;
+  created_at: string;
+  created_by?: string;
+}
+
 export default function ChatbotAdmin() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,9 +37,15 @@ export default function ChatbotAdmin() {
   const [newAliasInput, setNewAliasInput] = useState<string>('');
   const [showAliases, setShowAliases] = useState(false);
 
-  // Load FAQs on component mount
+  // Context states
+  const [contexts, setContexts] = useState<Context[]>([]);
+  const [newContext, setNewContext] = useState({ content: '' });
+  const [editingContext, setEditingContext] = useState<Context | null>(null);
+
+  // Load FAQs and Contexts on component mount
   useEffect(() => {
     fetchFAQs();
+    fetchContexts();
   }, []);
 
   const fetchFAQs = async () => {
@@ -290,6 +303,101 @@ export default function ChatbotAdmin() {
     }
   };
 
+  // Context Management Functions
+  const fetchContexts = async () => {
+    try {
+      const response = await fetch('/api/chat/contexts');
+      const data = await response.json();
+      setContexts(data.contexts || []);
+    } catch (error) {
+      console.error('Error fetching contexts:', error);
+    }
+  };
+
+  const handleCreateContext = async () => {
+    if (!newContext.content.trim()) {
+      alert('Please enter context content');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/chat/contexts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: newContext.content
+        })
+      });
+
+      if (response.ok) {
+        setNewContext({ content: '' });
+        fetchContexts();
+        alert('Context created successfully');
+      } else {
+        alert('Failed to create context');
+      }
+    } catch (error) {
+      console.error('Error creating context:', error);
+      alert('Error creating context');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateContext = async () => {
+    if (!editingContext || !editingContext.content.trim()) {
+      alert('Please enter context content');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/chat/contexts?id=${editingContext.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: editingContext.content
+        })
+      });
+
+      if (response.ok) {
+        setEditingContext(null);
+        fetchContexts();
+        alert('Context updated successfully');
+      } else {
+        alert('Failed to update context');
+      }
+    } catch (error) {
+      console.error('Error updating context:', error);
+      alert('Error updating context');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteContext = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this context?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/chat/contexts?id=${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        fetchContexts();
+        alert('Context deleted successfully');
+      } else {
+        alert('Failed to delete context');
+      }
+    } catch (error) {
+      console.error('Error deleting context:', error);
+      alert('Error deleting context');
+    }
+  };
+
   return (
     <Layout>
       <div className="bg-gray-100" style={{ minHeight: '100vh' }}>
@@ -544,6 +652,73 @@ export default function ChatbotAdmin() {
                 </div>
               )}
             </div>
+
+
+            {/* Thick Gray Divider */}
+            <div className="border-t-4 border-gray-300 my-6"></div>
+            {/* Context Management Section */}
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold text-gray-600 mb-4">Context Management</h2>
+
+              {/* Create New Context */}
+              <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-100">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Context Content</label>
+                    <textarea
+                      value={newContext.content}
+                      onChange={(e) => setNewContext({ ...newContext, content: e.target.value })}
+                      placeholder="Enter additional context information for chatbot responses..."
+                      className="w-full bg-white p-3 border border-gray-300 rounded-md resize-none"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleCreateContext}
+                    disabled={loading}
+                    className="bg-orange-500 hover:bg-orange-600 cursor-pointer"
+                  >
+                    {loading ? 'Creating...' : 'Create Context'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Context List */}
+              <div className="space-y-4">
+                <h3 className="text-md font-medium text-gray-900">Existing Contexts ({contexts.length})</h3>
+                {contexts.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {contexts.map((context) => (
+                      <div
+                        key={context.id}
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg border"
+                      >
+                        <span className="max-w-xs truncate" title={context.content}>
+                          {context.content}
+                        </span>
+                        <button
+                          onClick={() => setEditingContext(context)}
+                          className="text-blue-500 hover:text-blue-700 cursor-pointer text-xs"
+                          title="Edit"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteContext(context.id)}
+                          className="text-red-500 hover:text-red-700 cursor-pointer text-xs"
+                          title="Delete"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No contexts found. Create your first context above.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         
@@ -586,6 +761,42 @@ export default function ChatbotAdmin() {
                     setEditingFAQ(null);
                     setEditAliasesUI(['']);
                   }}
+                  variant="outline"
+                  className="cursor-pointer"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Context Modal */}
+      {editingContext && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
+            <h3 className="text-lg font-semibold mb-4">Edit Context</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Context Content</label>
+                <textarea
+                  value={editingContext.content}
+                  onChange={(e) => setEditingContext({ ...editingContext, content: e.target.value })}
+                  placeholder="Enter context information..."
+                  className="w-full bg-white p-3 border border-gray-300 rounded-md h-32 resize-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleUpdateContext}
+                  disabled={loading}
+                  className="bg-orange-500 hover:bg-orange-600 cursor-pointer"
+                >
+                  {loading ? 'Saving...' : 'Save'}
+                </Button>
+                <Button 
+                  onClick={() => setEditingContext(null)}
                   variant="outline"
                   className="cursor-pointer"
                 >
