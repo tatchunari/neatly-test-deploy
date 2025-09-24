@@ -1,164 +1,104 @@
-import { forwardRef, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import React, { useCallback, useState, useEffect } from "react";
 import { PlusIcon } from "@/components/customer/icons/PlusIcon";
 import { CloseIcon } from "@/components/customer/icons/CloseIcon";
 
-
 interface FileUploadProps {
-  onFileSelect: (files: File[]) => void;
+  onFileSelect: (file: File | null) => void;
   error?: boolean;
-  currentImages?: string[];
-  accept?: string;
-  multiple?: boolean;
-  maxFiles?: number;
 }
 
-export const FileUpload = forwardRef<HTMLInputElement, FileUploadProps>(
-  (
-    {
-      onFileSelect,
-      error,
-      currentImages = [],
-      accept = "image/*",
-      multiple = true,
-      maxFiles = 5,
-      ...props
-    },
-    ref
-  ) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [previewImages, setPreviewImages] = useState<string[]>(currentImages);
+export const FileUpload: React.FC<FileUploadProps> = React.memo(
+  ({ onFileSelect, error = false }) => {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-    const handleContainerClick = () => {
-      fileInputRef.current?.click();
-    };
+    // สร้าง preview URL เมื่อมีไฟล์ที่เลือก
+    useEffect(() => {
+      if (selectedFile) {
+        const objectUrl = URL.createObjectURL(selectedFile);
+        setPreviewUrl(objectUrl);
+
+        return () => URL.revokeObjectURL(objectUrl); // cleanup
+      } else {
+        setPreviewUrl(null);
+      }
+    }, [selectedFile]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
+      const file = event.target.files?.[0] || null; // รับแค่ไฟล์เดียว
+      setSelectedFile(file);
+      onFileSelect(file);
 
-      if (files.length > 0) {
-        if (files.length > maxFiles) {
-          alert(`สามารถอัปโหลดได้สูงสุด ${maxFiles} ไฟล์`);
-          return;
-        }
-
-        const newPreviewImages: string[] = [];
-        files.forEach((file) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            newPreviewImages.push(reader.result as string);
-            if (newPreviewImages.length === files.length) {
-              setPreviewImages((prev) => [...prev, ...newPreviewImages]);
-            }
-          };
-          reader.readAsDataURL(file);
-        });
-
-        onFileSelect(files);
-      }
+      // reset input (เลือกไฟล์เดิมได้ซ้ำ)
+      event.target.value = "";
     };
 
-    const handleRemoveImage = (index: number) => {
-      const newImages = previewImages.filter((_, i) => i !== index);
-      setPreviewImages(newImages);
-    };
+    const handleRemoveImage = useCallback(
+      (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        setSelectedFile(null);
+        onFileSelect(null);
+      },
+      [onFileSelect]
+    );
 
     return (
-      <div className="space-y-2">
-        {/* Container ใหญ่ - Background #F7F7FD */}
-        <div className="bg-[#F7F7FD] p-4 rounded">
-          {/* Upload Area */}
-          <div
-            className={cn(
-              // Base styles from design system
-              "w-[167px] h-[167px] border-t rounded",
-              "bg-gray-200 cursor-pointer",
-              "flex flex-col items-center justify-center",
-              "transition-colors duration-200",
+      <div className="w-full">
+        <div
+          className={`bg-[var(--color-gray-200)] relative w-[167px] h-[167px] rounded-[4px] text-center transition-colors cursor-pointer group ${
+            error
+              ? "border-[var(--color-red-300)] bg-[var(--color-red-50)]"
+              : "border-[var(--color-gray-300)] bg-[var(--color-gray-50)] hover:border-[var(--color-gray-400)]"
+          }`}
+          style={{ overflow: "visible" }}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          />
 
-              // Error state
-              error ? "border-t-red-500" : "border-t-gray-300",
-
-              // Hover state
-              !error && "hover:border-t-gray-400"
-            )}
-            onClick={handleContainerClick}
-          >
-            {previewImages.length > 0 ? (
-              // แสดงรูปที่อัปโหลดแล้ว
-              <div className="w-full h-full relative">
-                <img
-                  src={previewImages[0]}
-                  alt="Profile"
-                  className="w-full h-full object-cover rounded"
-                />
-                {previewImages.length > 1 && (
-                  <div className="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">
-                    +{previewImages.length - 1}
-                  </div>
-                )}
+          {previewUrl ? (
+            <>
+              <img
+                src={previewUrl}
+                alt="Profile Preview"
+                className="absolute inset-0 w-full h-full object-cover rounded-[4px]"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="absolute bg-[var(--color-red)] text-[var(--color-white)] rounded-full flex items-center justify-center z-30
+                  transition-opacity duration-200"
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  top: "-8px",
+                  right: "-8px",
+                  borderRadius: "99px",
+                  boxShadow: "2px 2px 12px 0px rgba(64, 50, 133, 0.12)",
+                }}
+                aria-label="Remove image"
+              >
+                <CloseIcon className="w-3 h-3" />
+              </button>
+            </>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3 z-0">
+              <PlusIcon size={24} className="text-[var(--color-orange-500)]" />
+              <div className="w-[91px] h-[21px] text-[var(--color-orange-500)] font-medium text-sm leading-[150%] tracking-[0%] font-inter text-center">
+                Upload photo
               </div>
-            ) : (
-              // แสดง icon + และข้อความ
-              <div className="flex flex-col items-center text-gray-400">
-                <PlusIcon size={32} className="mb-2 text-gray-400" />
-                <span className="text-sm font-medium">Upload photos</span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* แสดงรูปทั้งหมด (ถ้ามีมากกว่า 1 รูป) */}
-        {previewImages.length > 1 && (
-          <div className="flex flex-wrap gap-2">
-            {previewImages.map((image, index) => (
-              <div key={index} className="relative w-16 h-16">
-                <img
-                  src={image}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-full object-cover rounded border"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(index)}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600"
-                >
-                  <CloseIcon size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Hidden File Input */}
-        <input
-          type="file"
-          ref={(el) => {
-            if (el) {
-              fileInputRef.current = el;
-            }
-            if (typeof ref === "function") {
-              ref(el);
-            } else if (ref) {
-              ref.current = el;
-            }
-          }}
-          onChange={handleFileChange}
-          accept={accept}
-          multiple={multiple}
-          className="hidden"
-          {...props}
-        />
-
-        {/* Error Message */}
         {error && (
-          <p className="text-sm text-red-500">กรุณาอัปโหลดรูปโปรไฟล์</p>
+          <p className="mt-2 text-sm text-[var(--color-red-600)]">
+            Please select a valid image file
+          </p>
         )}
-
-        {/* ข้อมูลเพิ่มเติม */}
-        <p className="text-xs text-gray-500">
-          สามารถอัปโหลดได้สูงสุด {maxFiles} ไฟล์
-        </p>
       </div>
     );
   }

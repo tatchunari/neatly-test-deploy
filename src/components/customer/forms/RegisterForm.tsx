@@ -1,0 +1,194 @@
+import React from "react";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { FormField } from "./form-fields/FormField";
+import { Input } from "./form-fields/Input";
+import { Select } from "./form-fields/Select";
+import { DatePicker } from "./form-fields/DatePicker";
+import { FileUpload } from "./form-fields/FileUpload";
+import { Button } from "@/components/ui/Button";
+
+const COUNTRY_OPTIONS = [
+  { value: "thailand", label: "Thailand" },
+  { value: "singapore", label: "Singapore" },
+  { value: "malaysia", label: "Malaysia" },
+  { value: "indonesia", label: "Indonesia" },
+  { value: "philippines", label: "Philippines" },
+  { value: "vietnam", label: "Vietnam" },
+  { value: "other", label: "Other" },
+];
+
+export const RegisterForm = () => {
+  const { form, errors, isLoading, error, success, onSubmit } =
+    useFormValidation();
+
+  if (success) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-[var(--color-green-600)] text-lg font-semibold mb-2">
+          Registration successful!
+        </div>
+        <p className="text-[var(--color-gray-600)]">
+          Please check your email to confirm your account
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="space-y-8 customer-forms bg-[var(--color-bg)] rounded-lg"
+    >
+      {/* Basic Information Section */}
+      <div className="space-y-6">
+        <h3 className="font-inter font-semibold text-[20px] leading-[150%] tracking-[-2%] text-[var(--color-gray-600)]">
+          Basic Information
+        </h3>
+
+        {/* First Row: First Name & Last Name */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField label="First name" error={errors.firstName} required>
+            <Input
+              {...form.register("firstName")}
+              error={!!errors.firstName}
+              placeholder="Enter your first name"
+            />
+          </FormField>
+
+          <FormField label="Last name" error={errors.lastName} required>
+            <Input
+              {...form.register("lastName")}
+              error={!!errors.lastName}
+              placeholder="Enter your last name"
+            />
+          </FormField>
+        </div>
+
+        {/* Second Row: Username & Email */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField label="Username" error={errors.username} required>
+            <Input
+              {...form.register("username")}
+              error={!!errors.username}
+              placeholder="Enter your username"
+            />
+          </FormField>
+
+          <FormField label="Email" error={errors.email} required>
+            <Input
+              {...form.register("email")}
+              type="email"
+              error={!!errors.email}
+              placeholder="Enter your email"
+            />
+          </FormField>
+        </div>
+
+        {/* Third Row: Password & Confirm Password */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField label="Password" error={errors.password} required>
+            <Input
+              {...form.register("password")}
+              type="password"
+              error={!!errors.password}
+              placeholder="Enter your password"
+            />
+          </FormField>
+
+          <FormField
+            label="Confirm password"
+            error={errors.confirmPassword}
+            required
+          >
+            <Input
+              {...form.register("confirmPassword")}
+              type="password"
+              error={!!errors.confirmPassword}
+              placeholder="Confirm your password"
+            />
+          </FormField>
+        </div>
+
+        {/* Fourth Row: Phone Number & Date of Birth */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField label="Phone number" error={errors.phoneNumber} required>
+            <Input
+              {...form.register("phoneNumber")}
+              type="tel"
+              error={!!errors.phoneNumber}
+              placeholder="Enter your phone number"
+            />
+          </FormField>
+
+          <FormField label="Date of Birth" error={errors.dateOfBirth} required>
+            <DatePicker
+              {...form.register("dateOfBirth")}
+              error={!!errors.dateOfBirth}
+              placeholder="Select your date of birth"
+            />
+          </FormField>
+        </div>
+
+        {/* Fifth Row: Country - Half Width */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-1">
+            <FormField label="Country" error={errors.country} required>
+              <Select
+                {...form.register("country")}
+                error={!!errors.country}
+                options={COUNTRY_OPTIONS}
+                placeholder="Select your country"
+              />
+            </FormField>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Picture Section */}
+      <div className="space-y-6 border-t border-gray-300 pt-[20px]">
+        <h3 className="font-inter font-semibold text-[20px] leading-[150%] tracking-[-2%] text-[var(--color-gray-600)]">
+          Profile Picture
+        </h3>
+
+        <FormField label="" error={errors.profilePicture}>
+          <FileUpload
+            onFileSelect={(file) => {
+              if (file) {
+                form.setValue("profilePicture", file);
+              } else {
+                // ถ้าไม่มีไฟล์ ให้ set เป็น undefined
+                form.setValue("profilePicture", undefined);
+              }
+            }}
+            error={!!errors.profilePicture}
+            multiple={false}
+            maxFiles={1}
+          />
+        </FormField>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-[var(--color-red)] border border-[var(--color-red)] rounded-md p-4">
+          <p className="text-sm text-[var(--color-red)]">{error}</p>
+        </div>
+      )}
+
+      {/* Submit Button - Half Width */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="md:col-span-1">
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            loading={isLoading}
+            className="w-full"
+          >
+            {isLoading ? "Registering..." : "Register"}
+          </Button>
+        </div>
+        <div></div> {/* Empty div to fill the second column */}
+      </div>
+    </form>
+  );
+};
