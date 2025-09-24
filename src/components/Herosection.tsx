@@ -6,8 +6,9 @@ import { useRouter } from "next/router";
 export default function Herosection() {
   const router = useRouter();
 
-  const handleSearch = () => {
-    router.push("/customer/search-result");
+  const handleSearch = (params: { checkIn: string; checkOut: string; room: string }) => {
+    const query = new URLSearchParams(params as any).toString();
+    router.push(`/customer/search-result?${query}`);
   };
 
   return (
