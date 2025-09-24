@@ -83,7 +83,7 @@ const Aboutsection = () => {
         }}
       >
         <h2
-          className="font-serif text-[#2F3E35] text-[40px] md:text-[48px] leading-[48px] md:leading-[56px] font-normal mb-6 text-center"
+          className="font-serif text-[#2F3E35] text-[40px] md:text-[48px] leading-[48px] md:leading-[56px] font-Noto mb-6 text-center"
           style={{
             marginTop: 0,
             marginBottom: 0,
@@ -93,7 +93,7 @@ const Aboutsection = () => {
           Neatly Hotel
         </h2>
         <div
-          className="text-[#4B5755] text-[16px] md:text-[18px] leading-[26px] md:leading-[30px] font-normal text-center w-full max-w-[700px] mb-0"
+          className="text-[#4B5755] text-[16px] md:text-[18px] leading-[26px] md:leading-[30px] font-Noto text-center w-full max-w-[700px] mb-0"
           style={{
             marginTop: 0,
             marginBottom: 0,

@@ -1,11 +1,4 @@
-import React, { useState } from "react";
-
-// Room options for the dropdown
-const roomOptions = [
-  { value: "1-2", label: "1 room, 2 guests" },
-  { value: "2-4", label: "2 rooms, 4 guests" },
-  { value: "3-6", label: "3 rooms, 6 guests" },
-];
+import React, { useState, useRef } from "react";
 
 // Helper to get today's date in yyyy-mm-dd format
 function getTodayDateString() {
@@ -16,14 +9,60 @@ function getTodayDateString() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-interface SearchBoxProps {
-  onSearch?: () => void;
+interface SearchParams {
+  checkIn: string;
+  checkOut: string;
+  room: string; // format "rooms-guests" e.g. "1-2"
 }
 
-export default function SearchBox({ onSearch }: SearchBoxProps) {
-  const [checkIn, setCheckIn] = useState<string>(getTodayDateString());
-  const [checkOut, setCheckOut] = useState<string>(getTodayDateString());
-  const [room, setRoom] = useState(roomOptions[0].value);
+interface SearchBoxProps {
+  onSearch?: (params: SearchParams) => void;
+  defaultValues?: Partial<SearchParams>;
+}
+
+export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
+  // Parse default room/guest from defaultValues?.room (format "1-2")
+  let defaultRoom = 1, defaultGuest = 2;
+  if (defaultValues?.room) {
+    const [r, g] = defaultValues.room.split("-").map(Number);
+    if (!isNaN(r)) defaultRoom = r;
+    if (!isNaN(g)) defaultGuest = g;
+  }
+
+  const [checkIn, setCheckIn] = useState<string>(defaultValues?.checkIn || getTodayDateString());
+  const [checkOut, setCheckOut] = useState<string>(defaultValues?.checkOut || getTodayDateString());
+  const [room, setRoom] = useState<number>(defaultRoom);
+  const [guest, setGuest] = useState<number>(defaultGuest);
+
+  // For dropdown
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
+
+  // Label for the selector
+  const roomGuestLabel = `${room} room${room > 1 ? "s" : ""}, ${guest} guest${guest > 1 ? "s" : ""}`;
+
+  // Minimums
+  const minRoom = 1;
+  const minGuest = 1;
+
+  // Maximums (arbitrary, can adjust)
+  const maxRoom = 10;
+  const maxGuest = 20;
 
   return (
     <div
@@ -77,8 +116,7 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
               max-height: 48px !important;
               align-self: flex-end !important;
             }
-            .searchbox-input,
-            .searchbox-select {
+            .searchbox-input {
               width: 343px !important;
               min-width: 343px !important;
               max-width: 343px !important;
@@ -105,7 +143,7 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
         onSubmit={e => { 
           e.preventDefault(); 
           if (onSearch) {
-            onSearch();
+            onSearch({ checkIn, checkOut, room: `${room}-${guest}` });
           }
         }}
       >
@@ -203,6 +241,7 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
             searchbox-field
             flex flex-col
             justify-end
+            relative
           `}
           style={{
             width: "446px",
@@ -210,33 +249,103 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
             minWidth: "200px",
             height: "48px",
           }}
+          ref={dropdownRef}
         >
-          <label className="text-xs text-gray-500 mb-1" htmlFor="room">
+          <label className="text-xs text-gray-500 mb-1" htmlFor="roomguest">
             Rooms & Guests
           </label>
           <div className="relative h-full">
-            <select
-              id="room"
-              className="searchbox-select w-full h-[48px] border border-gray-200 rounded-md px-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 appearance-none"
-              value={room}
-              onChange={(e) => setRoom(e.target.value)}
+            <button
+              id="roomguest"
+              type="button"
+              className="searchbox-select w-full h-[48px] border border-gray-200 rounded-md px-3 pr-8 text-sm text-left bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 appearance-none flex items-center"
               style={{
                 height: "48px",
                 minHeight: "48px",
                 maxHeight: "48px",
               }}
+              onClick={() => setDropdownOpen((v) => !v)}
+              tabIndex={0}
             >
-              {roomOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-              <svg width="16" height="16" fill="none" viewBox="0 0 20 20">
-                <path d="M6 8l4 4 4-4" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </span>
+              {roomGuestLabel}
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <svg width="16" height="16" fill="none" viewBox="0 0 20 20">
+                  <path d="M6 8l4 4 4-4" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+            </button>
+            {/* Dropdown */}
+            {dropdownOpen && (
+              <div
+                className="absolute left-0 mt-2 bg-white rounded-lg shadow-lg py-3 px-4 z-20 w-full min-w-[240px] max-w-[320px]"
+                style={{
+                  boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08)",
+                }}
+              >
+                {/* Room */}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-700">Room</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition disabled:opacity-50"
+                      onClick={() => setRoom((r) => Math.max(minRoom, r - 1))}
+                      disabled={room <= minRoom}
+                      aria-label="Decrease room"
+                    >
+                      <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
+                        <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
+                        <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                      </svg>
+                    </button>
+                    <span className="w-5 text-center text-base text-gray-700">{room}</span>
+                    <button
+                      type="button"
+                      className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition"
+                      onClick={() => setRoom((r) => Math.min(maxRoom, r + 1))}
+                      aria-label="Increase room"
+                    >
+                      <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
+                        <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
+                        <rect x="8.25" y="5" width="1.5" height="8" rx="0.75" fill="#F47A1F"/>
+                        <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                {/* Guest */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">Guest</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition disabled:opacity-50"
+                      onClick={() => setGuest((g) => Math.max(minGuest, g - 1))}
+                      disabled={guest <= minGuest}
+                      aria-label="Decrease guest"
+                    >
+                      <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
+                        <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
+                        <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                      </svg>
+                    </button>
+                    <span className="w-5 text-center text-base text-gray-700">{guest}</span>
+                    <button
+                      type="button"
+                      className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition"
+                      onClick={() => setGuest((g) => Math.min(maxGuest, g + 1))}
+                      aria-label="Increase guest"
+                    >
+                      <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
+                        <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
+                        <rect x="8.25" y="5" width="1.5" height="8" rx="0.75" fill="#F47A1F"/>
+                        <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {/* Search Button */}
