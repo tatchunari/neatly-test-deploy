@@ -11,17 +11,17 @@ interface FormFieldProps {
 export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
   ({ label, error, children, required = false }, ref) => (
     <div ref={ref} className="space-y-2">
-      {/* Label - Properties ที่แสดงในรูป */}
-      <label className="block text-base font-normal leading-6 tracking-normal font-inter text-gray-900">
+      {/* Label - Properties */}
+      <label className="block text-base font-normal leading-6 tracking-normal font-inter text-[var(--color-gray-900)]">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-[var(--color-red)] ml-1"></span>}
       </label>
 
       {/* Input Component */}
       {children}
 
       {/* Error Message */}
-      {error && <p className="text-sm text-red-500">{error.message}</p>}
+      {error && <p className="text-sm text-[var(--color-red)]">{error.message}</p>}
     </div>
   )
 );

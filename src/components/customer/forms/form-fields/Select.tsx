@@ -14,17 +14,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       className={cn(
         // Base styles from design system
         "w-full h-12 pt-3 pr-4 pb-3 pl-3 border rounded",
-        "bg-white border-gray-400",
-        "focus:outline-none focus:ring-2 focus:ring-blue-500",
+        "bg-[var(--color-white)] border-[var(--color-gray-400)]",
+        "focus:outline-none focus:ring-2 focus:ring-[var(--color-blue-500)]",
         "transition-colors duration-200",
 
         // Typography from design system
         "font-inter text-base font-normal leading-6 tracking-normal",
-        "text-gray-900", // Text color เมื่อเลือก
-        "placeholder:text-gray-600", // Placeholder text color
+        "text-[var(--color-gray-900)]", // Text color เมื่อเลือก
 
         // Error state
-        error && "border-red-500 focus:ring-red-500",
+        error && "border-[var(--color-red)] focus:ring-[var(--color-red)]",
 
         // Custom className
         className
@@ -32,7 +31,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       {...props}
     >
       {placeholder && (
-        <option value="" disabled>
+        <option value="" disabled className="text-[var(--color-gray-600)]">
           {placeholder}
         </option>
       )}
@@ -44,3 +43,5 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     </select>
   )
 );
+
+Select.displayName = "Select";

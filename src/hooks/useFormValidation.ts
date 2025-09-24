@@ -3,11 +3,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterFormData } from "@/utils/validation";
 import { AuthService } from "@/services/authService";
+import { useRouter } from "next/router";
 
 export const useFormValidation = () => {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -32,16 +35,19 @@ export const useFormValidation = () => {
     setValue,
   } = form;
 
-  // ตรวจสอบ username availability
+  // ตรวจสอบ username availability พร้อม loading state
   const checkUsername = async (username: string) => {
     if (username.length < 3) return true;
 
+    setIsCheckingUsername(true);
     try {
       const isAvailable = await AuthService.checkUsernameAvailability(username);
       return isAvailable;
     } catch (error) {
       console.error("Error checking username:", error);
       return false;
+    } finally {
+      setIsCheckingUsername(false);
     }
   };
 
@@ -57,7 +63,7 @@ export const useFormValidation = () => {
       if (!isUsernameAvailable) {
         form.setError("username", {
           type: "manual",
-          message: "ชื่อผู้ใช้นี้มีอยู่แล้ว",
+          message: "This username is already taken", // ชื่อผู้ใช้นี้มีอยู่แล้ว
         });
         return;
       }
@@ -70,11 +76,16 @@ export const useFormValidation = () => {
 
       // Reset form
       form.reset();
+
+      // Redirect ไปหน้า login หลังจาก 5 วินาที
+      setTimeout(() => {
+        router.push("/customer/login");
+      }, 5000);
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "เกิดข้อผิดพลาดในการสมัครสมาชิก";
+          : "An error occurred during registration"; // เกิดข้อผิดพลาดในการสมัครสมาชิก
       setError(errorMessage);
       console.error("Registration error:", error);
     } finally {
@@ -95,5 +106,6 @@ export const useFormValidation = () => {
     checkUsername,
     watchedValues,
     setValue,
+    isCheckingUsername,
   };
 };

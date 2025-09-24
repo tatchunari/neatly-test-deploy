@@ -1,52 +1,50 @@
 /* Font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap");
 
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @theme {
-
   /* Font */
   --font-noto: "Noto Serif", serif;
   --font-inter: "Inter", sans-serif;
 
   /* Green */
-  --color-green-100: #F1F5F3;
-  --color-green-200: #E6EBE9;
-  --color-green-300: #D5DFDA;
-  --color-green-400: #ABC0B4;
-  --color-green-500: #81A08F;
-  --color-green-600: #5D7B6A;
-  --color-green-700: #465C50;
-  --color-green-800: #2F3E35;
-  --color-green-900: #171F1B; 
+  --color-green-100: #f1f5f3;
+  --color-green-200: #e6ebe9;
+  --color-green-300: #d5dfda;
+  --color-green-400: #abc0b4;
+  --color-green-500: #81a08f;
+  --color-green-600: #5d7b6a;
+  --color-green-700: #465c50;
+  --color-green-800: #2f3e35;
+  --color-green-900: #171f1b;
 
   /* Orange */
-  --color-orange-100: #FAEDE8;
-  --color-orange-200: #F9DACE;
-  --color-orange-300: #F3B59C;
-  --color-orange-400: #ED906B;
-  --color-orange-500: #E76B39;
-  --color-orange-600: #C14817;
+  --color-orange-100: #faede8;
+  --color-orange-200: #f9dace;
+  --color-orange-300: #f3b59c;
+  --color-orange-400: #ed906b;
+  --color-orange-500: #e76b39;
+  --color-orange-600: #c14817;
   --color-orange-700: #803010;
-  --color-orange-800: #631F04;
+  --color-orange-800: #631f04;
   --color-orange-900: #401808;
 
   /* Gray */
-  --color-gray-100: #F6F7FC;
-  --color-gray-200: #F1F2F6;
-  --color-gray-300: #E4E6ED;
-  --color-gray-400: #D6D9E4;
-  --color-gray-500: #C8CCDB;
-  --color-gray-600: #9AA1B9;
-  --color-gray-700: #646D89;
-  --color-gray-800: #424C6B;
-  --color-gray-900: #2A2E3F;
+  --color-gray-100: #f6f7fc;
+  --color-gray-200: #f1f2f6;
+  --color-gray-300: #e4e6ed;
+  --color-gray-400: #d6d9e4;
+  --color-gray-500: #c8ccdb;
+  --color-gray-600: #9aa1b9;
+  --color-gray-700: #646d89;
+  --color-gray-800: #424c6b;
+  --color-gray-900: #2a2e3f;
 
-  --color-white: #FFFFFF;
+  --color-white: #ffffff;
   --color-black: #000000;
-  --color-red: #B61515;
-  --color-bg: #F7F7FB;
-
-
+  --color-red: #b61515;
+  --color-bg: #f7f7fb;
 }
+
