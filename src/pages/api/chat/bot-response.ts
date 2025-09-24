@@ -114,11 +114,12 @@ export default async function handler(
       console.error('Error during strict FAQ matching:', error);
     }
 
-    // 3. AI chat by context (if no FAQ/alias match found)
+    // 3. Intent Classification + Handle Intent (if no FAQ/alias match found)
     if (!botResponse) {
       try {
-        console.log('🤖 Using Gemini AI for context-based response...');
-        // ดึงประวัติล่าสุด (ให้ lib จัดการ slicing)
+        console.log('🎯 Starting intent classification...');
+        
+        // ดึงประวัติล่าสุดสำหรับ context
         const { data: recentMessages } = await supabase
           .from('chatbot_messages')
           .select('message, is_bot')
@@ -126,18 +127,66 @@ export default async function handler(
           .order('created_at', { ascending: false })
           .limit(10);
 
-        botResponse = await chatWithGemini(userMessage, recentMessages?.reverse() || []);
-        console.log('🤖 GEMINI RESPONSE:', botResponse);
-      } catch (geminiError) {
-        console.error('Gemini AI failed:', geminiError);
-        // Fallback to default message
-        const { data: fallbackFaqs } = await supabase
-          .from('chatbot_faqs')
-          .select('question,answer')
-          .eq('question', '::fallback::');
-        botResponse = (fallbackFaqs && fallbackFaqs[0]?.answer)
-          || 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
-        console.log('⚠️ FALLBACK MESSAGE (after Gemini failed):', botResponse);
+        // Step 3: Gemini Classify Intent
+        const intentResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/chat/intent-classification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userQuestion: userMessage
+          })
+        });
+
+        if (!intentResponse.ok) {
+          throw new Error(`Intent classification failed: ${intentResponse.status}`);
+        }
+
+        const { intent } = await intentResponse.json();
+        console.log('🎯 CLASSIFIED INTENT:', intent);
+
+        // Step 4: Handle Intent
+        const handleIntentResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/chat/handle-intent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            intent,
+            userQuestion: userMessage,
+            conversationHistory: recentMessages?.reverse() || []
+          })
+        });
+
+        if (!handleIntentResponse.ok) {
+          throw new Error(`Handle intent failed: ${handleIntentResponse.status}`);
+        }
+
+        const { response: intentResponse_text } = await handleIntentResponse.json();
+        botResponse = intentResponse_text;
+        
+        console.log('🎯 INTENT HANDLED:', { intent, responseLength: botResponse.length });
+
+      } catch (error) {
+        console.error('Intent classification/handling failed:', error);
+         // Fallback to FAQ table
+         try {
+           const { data: fallbackContext, error: contextError } = await supabase
+             .from('chatbot_faqs')
+             .select('answer')
+             .eq('question', '::fallback::')
+             .single();
+
+           if (!contextError && fallbackContext) {
+             botResponse = fallbackContext.answer;
+           } else {
+             botResponse = 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
+           }
+         } catch (fallbackError) {
+           console.error('Fallback context failed:', fallbackError);
+           botResponse = 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
+         }
+        console.log('⚠️ FALLBACK MESSAGE (after intent handling failed):', botResponse);
       }
     }
 
