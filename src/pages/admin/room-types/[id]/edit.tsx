@@ -2,6 +2,7 @@ import Layout from "@/components/admin/Layout";
 import { ReorderableItem } from "@/components/admin/ReorderableItem";
 import { Reorder } from "motion/react";
 import { AmenityItem } from "@/components/admin/ReorderableItem";
+import { ArrowLeft } from 'lucide-react';
 
 import { useRouter } from "next/router";
 import { useState, useRef, useEffect } from "react";
@@ -107,7 +108,7 @@ const RoomMainImage = ({ name, value } : RoomMainImageProps) => {
       </label>
 
           <div>
-          <input type="text" value={mainImgUrl || ""} {...register(name)}  />
+          <input type="hidden" value={mainImgUrl || ""} {...register(name)}  />
           </div>
       <div className="relative w-60 h-60">
         {/* Uploaded file preview (on top if exists) */}
@@ -155,7 +156,7 @@ const RoomGalleryImages = ({ name, value } : RoomGalleryImagesProps) => {
     return { id: idx.toString(), url: url } as GalleryItem
   }) || []);
   const { register } = useForm();
-    const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [galleryFileNames, setGalleryFileNames] = useState<string[]>([]);
 
@@ -197,65 +198,147 @@ const RoomGalleryImages = ({ name, value } : RoomGalleryImagesProps) => {
 };
 
   return (
-             <>
-             <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image Gallery(At least 4 pictures){" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <div className="space-y-2">
-                  {/* Grid of uploaded images */}
-                 <Reorder.Group
-                    axis="x" 
-                    values={galleryItems}
-                    onReorder={setGalleryItems} 
-                    className="flex gap-4 overflow-x-auto py-2"
-                  >
-                  
-                    {galleryItems.map((item, index) => (
-                      <Reorder.Item
-                        key={item.id} 
-                        value={item}
-                        className="w-42 h-42 rounded-md flex items-center justify-center relative bg-[#F1F2F6] cursor-grab"
+            <>
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Image Gallery(At least 4 pictures){" "}
+                  <span className="text-red-500">*</span>
+                </label>
+                <div className="space-y-2">
+                {/* Grid of uploaded images */}
+                <Reorder.Group
+                  axis="x" 
+                  values={galleryItems}
+                  onReorder={setGalleryItems} 
+                  className="flex gap-4 overflow-x-auto py-2"
+                >
+                
+                  {galleryItems.map((item, index) => (
+                    <Reorder.Item
+                      key={item.id} 
+                      value={item}
+                      className="w-42 h-42 rounded-md flex items-center justify-center relative bg-[#F1F2F6] cursor-grab"
+                    >
+                      {/* Remove button */}
+                      <div
+                        className="absolute rounded-full text-orange-600 font-bold top-1 right-1 px-1 cursor-pointer z-10"
+                        onClick={() => setGalleryItems((prev) => prev.filter((_, i) => i !== index))}
                       >
-                        {/* Remove button */}
-                        <div
-                          className="absolute rounded-full text-orange-600 font-bold top-1 right-1 px-1 cursor-pointer z-10"
-                          onClick={() => setGalleryItems((prev) => prev.filter((_, i) => i !== index))}
-                        >
-                          ✕
-                        </div>
-                        <img src={item.url} alt="hotel-images" className="object-contain w-full h-full rounded-md" />
-                      </Reorder.Item>
-                    ))}
-                  </Reorder.Group>
-                  
+                        ✕
+                      </div>
+                      <img src={item.url} alt="hotel-images" className="object-contain w-full h-full rounded-md" />
+                    </Reorder.Item>
+                  ))}
+                </Reorder.Group>
+                
 
 
-                  {/* File input */}
-                  <label className="w-42 h-42 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer transition-colors">
-                    <p className="text-2xl text-orange-500">+</p>
-                    <p className="text-xs text-orange-500">Upload Photo</p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={handleGalleryFilesChange}
-                    />
-                  </label>
-                </div>
-                </div>
-              <div>
-                {value?.map(url => {
-                    return <input type="text" value={url} {...register(name)} />
-                })}
-              
+                {/* File input */}
+                <label className="w-42 h-42 rounded-md flex flex-col items-center justify-center bg-[#F1F2F6] hover:bg-gray-100 cursor-pointer transition-colors">
+                  <p className="text-2xl text-orange-500">+</p>
+                  <p className="text-xs text-orange-500">Upload Photo</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleGalleryFilesChange}
+                  />
+                </label>
               </div>
-              </>
+              </div>
+            <div>
+              {/* For debugging */}
+              {value?.map((url, index) => {
+                  return <input key={index} type="hidden" value={url} {...register(name)} />
+              })}
+            
+            </div>
+            </>
   );
 }
-  type GalleryItem = { id: string; url: string };
+type GalleryItem = { id: string; url: string };
+
+interface AmenitiesItem { name: string; value?: string[] }
+
+type AmenitiesItemsProps = {
+  name: string;
+  value?: string[]; // ✅ initial values from form
+};
+
+const AmenitiesItems = ({ name, value }: AmenitiesItemsProps) => {
+  const [amenities, setAmenities] = useState<AmenityItem[]>(
+    value?.map((val) => ({
+      id: crypto.randomUUID(),
+      value: val,
+    })) || [{ id: crypto.randomUUID(), value: "" }]
+  );
+
+  const { register } = useForm(); 
+
+  const handleEditAmenity = (id: string, newValue: string) => {
+    setAmenities((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, value: newValue } : item))
+    );
+  };
+
+  const handleAddAmenity = () => {
+    setAmenities((prev) => [...prev, { id: crypto.randomUUID(), value: "" }]);
+  };
+
+  const handleDeleteAmenity = (id: string) => {
+    if (amenities.length > 1) {
+      setAmenities((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  return (
+    <>
+      <div className="bg-white">
+        <Reorder.Group
+          axis="y"
+          values={amenities}
+          onReorder={setAmenities}
+          className="space-y-2"
+        >
+          {amenities.map((amenity, index) => (
+            <ReorderableItem
+              key={amenity.id}
+              item={amenity}
+              onChange={handleEditAmenity}
+              onDelete={handleDeleteAmenity}
+              disableDelete={amenities.length === 1}
+              label={`Amenity ${index + 1}`}
+            />
+          ))}
+        </Reorder.Group>
+      </div>
+
+      {/* Add Amenity Button */}
+      <button
+        type="button"
+        onClick={handleAddAmenity}
+        className="mt-3 flex items-center gap-2 px-4 py-2 
+          text-orange-600 border border-orange-600 rounded-md 
+          hover:bg-orange-50 transition-colors"
+      >
+        + Add Amenity
+      </button>
+
+      {/* Hidden inputs so values go into the form */}
+      <div>
+        {amenities.map((item, index) => (
+          <input
+            key={item.id}
+            type="hidden"
+            value={item.value}
+            {...register(`${name}.${index}`)}
+          />
+        ))}
+      </div>
+    </>
+  );
+};
 
 function EditRoomForm({ room }) {
 
@@ -271,12 +354,7 @@ function EditRoomForm({ room }) {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
 
   const [hasPromotion, setHasPromotion] = useState(false);
-  const [amenities, setAmenities] = useState<AmenityItem[]>([
-    { id: crypto.randomUUID(), value: "" },
-  ]);
 
-
-  // Main Image State
   const fileInputRef = useRef<HTMLInputElement>(null);
 
 
@@ -387,28 +465,16 @@ console.log("Gallery Image:", room.gallery_images)
   }
     };
 
-  const handleEditAmenity = (id: string, value: string) => {
-    setAmenities((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, value } : item))
-    );
-  };
-
-  const handleAddAmenity = () => {
-    setAmenities((prev) => [...prev, { id: crypto.randomUUID(), value: "" }]);
-  };
-
-  const handleDeleteAmenity = (id: string) => {
-    if (amenities.length > 1) {
-      setAmenities((prev) => prev.filter((item) => item.id !== id));
-    }
-  };
-
   return (
     <Layout>
       <form onSubmit={handleSubmit(onSubmit)} className="flex-1">
         {/* Header */}
         <div className="flex flex-row justify-between border-b border-gray-400 pb-5 mt-10 mx-10">
-          <p className="text-xl font-semibold">{room.room_type}</p>
+          
+          <div className="text-xl gap-3 font-semibold flex flex-row">
+             <ArrowLeft className="w-5 mt-1 cursor-pointer" onClick={() => router.push('/admin/room-types')}/> 
+              <p>{room.room_type}</p>
+             </div>
           <div className="flex justify-end gap-2 h-[46px] rounded-md overflow-hidden max-w-md w-full">
             <button
               className="text-white font-medium w-30 cursor-pointer bg-orange-600 rounded-sm"
@@ -422,6 +488,13 @@ console.log("Gallery Image:", room.gallery_images)
                 </svg>
               )}
                {isLoading ? "Updating..." : "Update"}
+            </button>
+            <button
+              className="text-orange-600 font-medium w-30 cursor-pointer border-1 border-orange-600 rounded-sm"
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>
@@ -581,36 +654,7 @@ console.log("Gallery Image:", room.gallery_images)
                 </h2>
 
                 {/* Amenity */}
-                <div className="bg-white">
-                  <Reorder.Group
-                    axis="y"
-                    values={amenities}
-                    onReorder={setAmenities}
-                    className="space-y-2"
-                  >
-                    {amenities.map((amenity) => (
-                      <ReorderableItem
-                        key={amenity.id} // Use unique ID as key
-                        item={amenity}
-                        onChange={handleEditAmenity}
-                        onDelete={handleDeleteAmenity}
-                        disableDelete={amenities.length === 1}
-                        label="Amenity"
-                      />
-                    ))}
-                  </Reorder.Group>
-                </div>
-
-                {/* Add Amenity Button */}
-                <button
-                  type="button"
-                  onClick={handleAddAmenity}
-                  className="mt-3 flex items-center gap-2 px-4 py-2 
-                   text-orange-600 border border-orange-600 rounded-md 
-                   hover:bg-orange-50 transition-colors"
-                >
-                  + Add Amenity
-                </button>
+                <AmenitiesItems name="amenities" value={room?.amenities} />
               </div>
             </div>
           </div>
