@@ -54,7 +54,7 @@ const Roomwrapper = () => {
         className="
           text-[#2D5A27]
           text-[28px] md:text-[36px]
-          font-normal
+          font-Noto
           text-center
           mb-8 md:mb-14
         "
@@ -85,7 +85,7 @@ const Roomwrapper = () => {
             sizes="(max-width: 768px) 359px, 1200px"
           />
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-2xl font-normal mb-2 drop-shadow">
+            <span className="text-white text-lg md:text-2xl font-Noto mb-2 drop-shadow">
               {rooms[0].name}
             </span>
             <a
@@ -107,7 +107,7 @@ const Roomwrapper = () => {
             sizes="(max-width: 768px) 359px, 588px"
           />
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-normal mb-2 drop-shadow">
+            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[1].name}
             </span>
             <a
@@ -128,7 +128,7 @@ const Roomwrapper = () => {
             sizes="(max-width: 768px) 359px, 588px"
           />
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-normal mb-2 drop-shadow">
+            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[2].name}
             </span>
             <a
@@ -150,7 +150,7 @@ const Roomwrapper = () => {
             sizes="(max-width: 768px) 359px, 588px"
           />
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-normal mb-2 drop-shadow">
+            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[3].name}
             </span>
             <a
@@ -171,7 +171,7 @@ const Roomwrapper = () => {
             sizes="(max-width: 768px) 359px, 588px"
           />
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-normal mb-2 drop-shadow">
+            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[4].name}
             </span>
             <a
@@ -192,7 +192,7 @@ const Roomwrapper = () => {
             sizes="(max-width: 768px) 359px, 1200px"
           />
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-normal mb-2 drop-shadow">
+            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[5].name}
             </span>
             <a
