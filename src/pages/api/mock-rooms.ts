@@ -123,6 +123,67 @@ export const mockRooms = [
         roomSize: 32,
         imageUrl: "https://picsum.photos/seed/s9OoJHPN/3274/1293"
     },
+    // Additional rooms with different guest capacities
+    {
+        id: 13,
+        roomType: "Family Room",
+        price: 4000,
+        promotionPrice: 3500,
+        guest: 4,
+        bedType: "Double Bed + Single Bed",
+        roomSize: 45,
+        imageUrl: "https://picsum.photos/seed/family1/400/300"
+    },
+    {
+        id: 14,
+        roomType: "Executive Suite",
+        price: 5000,
+        promotionPrice: 4500,
+        guest: 3,
+        bedType: "King Bed",
+        roomSize: 55,
+        imageUrl: "https://picsum.photos/seed/executive1/400/300"
+    },
+    {
+        id: 15,
+        roomType: "Presidential Suite",
+        price: 8000,
+        promotionPrice: 7000,
+        guest: 6,
+        bedType: "King Bed + Double Bed",
+        roomSize: 80,
+        imageUrl: "https://picsum.photos/seed/presidential1/400/300"
+    },
+    {
+        id: 16,
+        roomType: "Single Room",
+        price: 2000,
+        promotionPrice: 1800,
+        guest: 1,
+        bedType: "Single Bed",
+        roomSize: 25,
+        imageUrl: "https://picsum.photos/seed/single1/400/300"
+    },
+    {
+        id: 17,
+        roomType: "Twin Room",
+        price: 2800,
+        promotionPrice: 2500,
+        guest: 2,
+        bedType: "Twin Beds",
+        roomSize: 30,
+        imageUrl: "https://picsum.photos/seed/twin1/400/300"
+    },
+    {
+        id: 18,
+        roomType: "Triple Room",
+        price: 3600,
+        promotionPrice: 3200,
+        guest: 3,
+        bedType: "Triple Beds",
+        roomSize: 40,
+        imageUrl: "https://picsum.photos/seed/triple1/400/300"
+    },
   ];
 
   export default function handler(req: NextApiRequest, res: NextApiResponse) {

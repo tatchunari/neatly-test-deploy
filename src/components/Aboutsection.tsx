@@ -1,8 +1,8 @@
 import Image from "next/image";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const Aboutsection = () => {
-  // Slider logic
+  // Carousel images
   const images = [
     { src: "/image/deluxe.jpg", alt: "Deluxe" },
     { src: "/image/premiersea.jpg", alt: "Premier Sea View" },
@@ -11,14 +11,15 @@ const Aboutsection = () => {
     { src: "/image/superiorgarden.jpg", alt: "Superior Garden View" },
     { src: "/image/supreme.jpg", alt: "Supreme" },
   ];
-  const [current, setCurrent] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Always show 5 images on desktop (per design), 1 on mobile
+  // Responsive: 6 images on desktop, 1 on mobile
   const [slidesToShow, setSlidesToShow] = useState(1);
+  const [current, setCurrent] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     function handleResize() {
-      if (window.innerWidth >= 1024) setSlidesToShow(5);
+      if (window.innerWidth >= 1024) setSlidesToShow(6);
       else setSlidesToShow(1);
     }
     handleResize();
@@ -26,37 +27,41 @@ const Aboutsection = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ปิดการเลื่อนอัตโนมัติเพื่อไม่ให้หน้าเลื่อนเองโดยไม่ตั้งใจ
-  // หากต้องการเปิดอีกครั้ง ให้เพิ่ม effect ที่ตั้ง interval กลับเข้าไป
+  // Auto play (Image Carousel)
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % images.length);
+    }, 3500);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [images.length]);
 
+  // Manual navigation
   function goLeft() {
-    setCurrent((prev) => {
-      if (prev === 0) {
-        // วนไปภาพขวาสุด
-        return images.length - slidesToShow;
-      }
-      return prev - 1;
-    });
+    setCurrent((prev) => (prev - 1 + images.length) % images.length);
   }
   function goRight() {
-    setCurrent((prev) => {
-      if (prev >= images.length - slidesToShow) {
-        // วนกลับไปภาพแรก
-        return 0;
-      }
-      return prev + 1;
-    });
+    setCurrent((prev) => (prev + 1) % images.length);
   }
 
-  // เลื่อนภายในสไลเดอร์ในแนวนอนเท่านั้น เพื่อป้องกันการเลื่อนทั้งหน้า
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const child = container.children[current] as HTMLElement | undefined;
-    if (!child) return;
-    const left = child.offsetLeft;
-    container.scrollTo({ left, behavior: "smooth" });
-  }, [current, slidesToShow]);
+  // For desktop, show 6 images in a row, highlight current
+  // For mobile, show only current image
+  function getVisibleImages() {
+    if (slidesToShow === 1) {
+      return [images[current]];
+    } else {
+      // Show 6 images, current in the middle if possible
+      let start = current - Math.floor(slidesToShow / 2);
+      if (start < 0) start = 0;
+      if (start > images.length - slidesToShow) start = images.length - slidesToShow;
+      if (images.length <= slidesToShow) start = 0;
+      return images.slice(start, start + slidesToShow);
+    }
+  }
+
+  const visibleImages = getVisibleImages();
 
   return (
     <section
@@ -110,32 +115,31 @@ const Aboutsection = () => {
           </p>
         </div>
       </div>
-      {/* Image Row (Slider) */}
+      {/* Image Carousel */}
       <div
         className="relative w-full flex flex-col items-center"
         style={{
-          maxWidth: "100vw",
+          maxWidth: "1440px",
           margin: "0 auto",
           marginTop: "48px",
+          height: "500px",
         }}
       >
         {/* Left Button */}
         <button
           aria-label="Previous"
           onClick={goLeft}
-          disabled={current === 0}
           className={`
-            absolute left-[-32px] top-1/2 -translate-y-1/2 z-10
+            absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-20
             bg-white/80 hover:bg-white text-[#2F3E35] rounded-full shadow
-            w-10 h-10 flex items-center justify-center
+            w-10 h-10 md:w-12 md:h-12 flex items-center justify-center
             border border-gray-200
             transition
-            ${current === 0 ? "opacity-50 cursor-not-allowed" : ""}
-            hidden lg:flex
+            flex
           `}
           style={{ outline: "none" }}
         >
-          <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+          <svg width="20" height="20" fill="none" viewBox="0 0 20 20" className="md:w-6 md:h-6">
             <path d="M13 16l-5-6 5-6" stroke="#2F3E35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
@@ -143,72 +147,99 @@ const Aboutsection = () => {
         <button
           aria-label="Next"
           onClick={goRight}
-          disabled={current >= images.length - slidesToShow}
           className={`
-            absolute right-[-32px] top-1/2 -translate-y-1/2 z-10
+            absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-20
             bg-white/80 hover:bg-white text-[#2F3E35] rounded-full shadow
-            w-10 h-10 flex items-center justify-center
+            w-10 h-10 md:w-12 md:h-12 flex items-center justify-center
             border border-gray-200
             transition
-            ${current >= images.length - slidesToShow ? "opacity-50 cursor-not-allowed" : ""}
-            hidden lg:flex
+            flex
           `}
           style={{ outline: "none" }}
         >
-          <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+          <svg width="20" height="20" fill="none" viewBox="0 0 20 20" className="md:w-6 md:h-6">
             <path d="M7 4l5 6-5 6" stroke="#2F3E35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        {/* Slider */}
+        {/* Carousel Images */}
         <div
-          ref={containerRef}
           className={`
-            flex items-center overflow-x-auto overflow-y-hidden
-            gap-0
-            scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent
-            scroll-smooth
-            rounded-none
-            shadow-none
-            px-0
-            w-full
-            bg-[#F7F7FA]
+            flex items-center justify-center
+            w-full h-full bg-[#F7F7FA]
+            relative
+            overflow-hidden
           `}
           style={{
-            WebkitOverflowScrolling: "touch",
-            scrollBehavior: "smooth",
-            height: "260px",
-            minHeight: "260px",
+            height: "500px",
+            minHeight: "500px",
+            maxWidth: "1440px",
             marginTop: "0px",
             marginBottom: "0px",
-            justifyContent: "center",
           }}
         >
-          {images.map((img, idx) => (
+          {slidesToShow === 1 ? (
+            // Mobile: show only current image
             <div
-              key={img.alt}
               className="flex-shrink-0 relative"
               style={{
-                width: slidesToShow > 1 ? "20vw" : "100vw",
-                maxWidth: slidesToShow > 1 ? "272px" : "100vw",
-                minWidth: slidesToShow > 1 ? "200px" : "100vw",
-                height: "260px",
+                width: "100vw",
+                maxWidth: "100vw",
+                minWidth: "100vw",
+                height: "500px",
                 border: "none",
                 background: "#f7f7fa",
                 margin: "0",
                 overflow: "hidden",
                 borderRadius: 0,
+                transition: "all 0.5s",
               }}
             >
               <Image
-                src={img.src}
-                alt={img.alt}
+                src={images[current].src}
+                alt={images[current].alt}
                 fill
                 style={{ objectFit: "cover" }}
-                sizes="(min-width: 1024px) 20vw, 100vw"
-                priority={idx === 0}
+                sizes="100vw"
+                priority
               />
             </div>
-          ))}
+          ) : (
+            // Desktop: show 6 images, highlight current
+            visibleImages.map((img, idx) => {
+              // Find the index in the original images array
+              let imgIdx = images.findIndex((i) => i.alt === img.alt);
+              const isActive = imgIdx === current;
+              return (
+                <div
+                  key={img.alt}
+                  className="flex-shrink-0 relative"
+                  style={{
+                    width: "400px",
+                    maxWidth: "400px",
+                    minWidth: "400px",
+                    height: "500px",
+                    border: isActive ? "4px solid #F47A1F" : "none",
+                    background: "#f7f7fa",
+                    margin: "0",
+                    overflow: "hidden",
+                    borderRadius: isActive ? "12px" : 0,
+                    boxShadow: isActive ? "0 4px 24px 0 rgba(244,122,31,0.10)" : "none",
+                    opacity: isActive ? 1 : 0.7,
+                    transition: "all 0.3s",
+                  }}
+                >
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    style={{ objectFit: "cover" }}
+                    sizes="400px"
+                    priority={imgIdx === 0}
+                  />
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </section>
