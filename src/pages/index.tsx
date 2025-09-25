@@ -1,4 +1,3 @@
-import type { AppProps } from "next/app";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Herosection from "@/components/Herosection";
@@ -11,7 +10,7 @@ import Testimonial from "@/components/Testimonial";
 // ใน return จะมี div ที่กำหนด padding-top ด้านบน (pt-12 สำหรับ mobile, md:pt-[100px] สำหรับหน้าจอขนาดกลางขึ้นไป)
 // ภายใน div จะเรียกใช้ <NavBar /> เพื่อแสดงแถบนำทางด้านบน และ <Component {...pageProps} /> เพื่อแสดงเนื้อหาของแต่ละหน้า
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function HomePage() {
   return (
     <div className="pt-12 md:pt-[100px]">
       <Navbar />
