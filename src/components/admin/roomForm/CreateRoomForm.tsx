@@ -1,11 +1,10 @@
-"use client"
+"use client";
 import Layout from "@/components/admin/Layout";
-import { ArrowLeft } from "lucide-react";
 
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { updateRoom, deleteRoom } from "@/services/roomService";
+import { createRoom } from "@/services/roomService";
 
 import { RoomMainImage } from "@/components/admin/roomForm/RoomMainImage";
 import { RoomGalleryImages } from "@/components/admin/roomForm/RoomGalleryImages";
@@ -13,67 +12,48 @@ import { AmenityItems } from "@/components/admin/roomForm/AmenityItems";
 import { Button } from "@/components/admin/ui/Button";
 import { TextInput } from "@/components/admin/ui/TextInput";
 import { TextArea } from "@/components/admin/ui/TextArea";
-import { ConfirmDeleteModal } from "../ui/ConfirmDeleteModal";
 import { DropDownInput } from "../ui/DropdownInput";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
-
-export function EditRoomForm({ room }) {
+export function CreateRoomForm({ room }: { room?: any }) {
   const router = useRouter();
   const roomId = router.query.id as string;
-  const [isLoading, setIsLoading] = useState(false);
 
-  const [hasPromotion, setHasPromotion] = useState(!!room.promotion_price);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasPromotion, setHasPromotion] = useState(!!room?.promotion_price);
 
   const methods = useForm({
     defaultValues: {
-      roomType: room.room_type,
-      roomSize: room.room_size,
-      bedType: room.bed_type,
-      guests: room.guests,
-      pricePerNight: room.price,
-      promotionPrice: room.promotion_price || null,
-      description: room.description,
-      mainImgUrl: room.main_image_url[0],
-      galleryImageUrls: room.gallery_images || [],
+      roomType: room?.room_type || "",
+      roomSize: room?.room_size || "",
+      bedType: room?.bed_type || "",
+      guests: room?.guests || 1,
+      pricePerNight: room?.price || "",
+      promotionPrice: room?.promotion_price || null,
+      description: room?.description || "",
+      mainImgUrl: room?.main_image_url?.[0] || null,
+      galleryImageUrls: room?.gallery_images || [],
+      amenities: room?.amenities || [],
     },
   });
 
   const { register, handleSubmit, setValue } = methods;
 
-  // console.log("Gallery Image:", room.gallery_images);
-
   const onSubmit = async (formData) => {
     setIsLoading(true);
     try {
-      await updateRoom(roomId, formData, hasPromotion);
-      toast.success(`Room "${formData.roomType}" updated successfully!`);
+      await createRoom(formData, hasPromotion);
+      toast.success(`Room "${formData.roomType}" created successfully!`);
       setTimeout(() => {
         router.push("/admin/room-types");
       }, 1000);
     } catch (err: any) {
-      toast.error(`Failed to update room: ${err.message}`);
+      toast.error(`Failed to create room: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
-    console.log("Form Data:", formData)
-  };
-
-  // Handle Delete Room
-  const handleDelete = async () => {
-    setIsLoading(true);
-    try {
-      await deleteRoom(roomId);
-      alert("Room deleted successfully!");
-      router.push("/admin/room-types");
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-      setIsDeleteModalOpen(false);
-    }
-  };
+    console.log("formData:", formData)
+   };
 
   return (
     <Layout>
@@ -82,38 +62,27 @@ export function EditRoomForm({ room }) {
           {/* Header */}
           <div className="flex flex-row justify-between border-b border-gray-400 pb-5 mt-10 mx-10">
             <div className="text-xl gap-3 font-semibold flex flex-row">
-              <ArrowLeft
-                className="w-5 mt-1 cursor-pointer"
-                onClick={() => router.push("/admin/room-types")}
-              />
-              <p>{room.room_type}</p>
+              <p className="text-xl font-semibold">Create New Room</p>
             </div>
             <div className="flex justify-end gap-2 h-[46px] rounded-md overflow-hidden max-w-md w-full">
               <Button
                 loading={isLoading}
-                text={isLoading ? "Updating..." : "Update"}
-                type="submit"
-                className=" text-white bg-orange-600 hover:bg-orange-700"
+                text="Cancel"
+                type="button"
+                onClick={() => router.push("/admin/room-types")}
+                className=" text-orange-600 border border-orange-600 hover:bg-orange-700 hover:text-white"
               />
               <Button
                 loading={isLoading}
-                text="Delete"
-                type="button"
-                onClick={() => setIsDeleteModalOpen(true)}
-                className=" text-orange-600 border border-orange-600 hover:bg-orange-700 hover:text-white"
-              />
-              {/* Confirm Delete Alert */}
-              <ConfirmDeleteModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleDelete}
-                roomType={room?.room_type}
+                text={isLoading ? "Creating..." : "Create"}
+                type="submit"
+                className="text-white bg-orange-600 hover:bg-orange-700"
               />
             </div>
           </div>
 
           {/* Create Form */}
-          <div className="max-w-2xl mx-auto p-6 bg-white">
+          <div className="max-w-4xl mx-auto p-6 bg-white">
             <div className="space-y-8 flex justify-center items-center flex-col">
               {/* Basic Information Section */}
               <div className="space-y-6">
@@ -147,6 +116,8 @@ export function EditRoomForm({ room }) {
                     defaultValue={room?.bed_type}
                     label="Bed Type"
                   />
+
+
                 </div>
 
                 {/* Guest Count */}
@@ -204,7 +175,7 @@ export function EditRoomForm({ room }) {
                     required
                     placeholder="Enter room description"
                     register={register("description")}
-                    className="w-180"
+                    className="w-212"
                   />
                 </div>
 
