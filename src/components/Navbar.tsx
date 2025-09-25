@@ -205,8 +205,8 @@ function scrollToSection(id: string) {
   const sectionId = id.replace(/^#/, "");
   const el = document.getElementById(sectionId);
   if (el) {
-    // ปรับ offset ให้เลื่อนหลัง navbar (100px สำหรับ desktop, 48px สำหรับ mobile)
-    const yOffset = window.innerWidth >= 768 ? -100 : -48;
+    // ปรับ offset ให้เลื่อนหลัง navbar (100px สำหรับ desktop, 80px สำหรับ mobile เพื่อให้เห็นข้อมูลครบ)
+    const yOffset = window.innerWidth >= 768 ? -100 : -80;
     const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
     window.scrollTo({ top: y, behavior: "smooth" });
   }

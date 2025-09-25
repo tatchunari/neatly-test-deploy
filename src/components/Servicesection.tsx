@@ -41,7 +41,7 @@ const Servicesection = () => {
         flex flex-col
         items-center
         justify-center
-        py-12 md:py-0
+        pt-16 pb-12 md:py-0
         min-h-[690px] md:min-h-[480px]
         "
       style={{
@@ -58,7 +58,8 @@ const Servicesection = () => {
           text-white
           text-[32px] md:text-[48px]
           leading-[40px] md:leading-[60px]
-          font-normal
+          font-serif
+          mt-4 md:mt-0
           mb-12 md:mb-16
           text-center
         "
@@ -71,8 +72,8 @@ const Servicesection = () => {
           w-full
           flex flex-wrap
           justify-center
-          gap-y-10
-          gap-x-6 md:gap-x-16
+          gap-y-8 md:gap-y-10
+          gap-x-4 md:gap-x-16
           px-4 md:px-0
         "
         style={{
@@ -83,19 +84,35 @@ const Servicesection = () => {
           <div
             key={service.label}
             className="flex flex-col items-center w-1/3 md:w-auto mb-2"
-            style={{ minWidth: 90, maxWidth: 140 }}
+            style={{ minWidth: 80, maxWidth: 140 }}
           >
-            <div className="mb-3">
-              <Image
-                src={service.icon}
-                alt={service.label}
-                width={48}
-                height={48}
-                className="object-contain"
-                priority
-              />
+            <div className="mb-2 md:mb-3">
+              {/* 
+                Mobile: 40x40 
+                Desktop (md+): 48x48 
+              */}
+              <div className="block md:hidden">
+                <Image
+                  src={service.icon}
+                  alt={service.label}
+                  width={20}
+                  height={20}
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <div className="hidden md:block">
+                <Image
+                  src={service.icon}
+                  alt={service.label}
+                  width={48}
+                  height={48}
+                  className="object-contain"
+                  priority
+                />
+              </div>
             </div>
-            <span className="text-white text-xs md:text-sm text-center font-normal">
+            <span className="text-white text-xs md:text-sm text-center font-normal leading-tight">
               {service.label}
             </span>
           </div>
