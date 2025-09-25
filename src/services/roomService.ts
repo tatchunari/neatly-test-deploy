@@ -41,3 +41,26 @@ export async function deleteRoom(roomId: string) {
     throw error;
   }
 }
+
+// services/roomService.ts
+export async function createRoom(formData: any, hasPromotion: boolean) {
+  const payload = buildRoomPayload(formData, hasPromotion);
+
+  try {
+    const response = await fetch(`/api/rooms`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || data.message || "Failed to create room");
+    }
+
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
