@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className='flex overflow-hidden'>
+    <div>
       <Navbar/>
       {children}
     </div>
