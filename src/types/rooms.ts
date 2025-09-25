@@ -41,15 +41,15 @@ export interface AmenityItem {
 
 export type BedType = 'Single bed' | 'Double bed' | 'Queen bed' | 'King bed' | 'Twin beds';
 
-export interface RoomCreatePayload {
-  room_type: string;
-  room_size: number;
-  bed_type: BedType;
-  guests: number;
-  price: number;
-  promotion_price?: number;
+export interface RoomFormValues {
+  roomType: string;
+  roomSize: number | string;
+  bedType: string;
+  guests: number | string;
+  pricePerNight: number | string;
+  promotionPrice?: number | string | null;
   description: string;
-  main_image_url: string[];
-  gallery_images: string[];
-  amenities: string[];
+  mainImgUrl: string;
+  galleryImageUrls: string[];
+  amenities?: string[];
 }
