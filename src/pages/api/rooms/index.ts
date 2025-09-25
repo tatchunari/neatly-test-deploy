@@ -19,14 +19,31 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   if (req.method === "GET") {
-    // ✅ Fetch all rooms
+    // ✅ Fetch rooms with optional filtering
     try {
-      const { data, error } = await supabase.from("rooms").select("*");
+      const { guests, checkIn, checkOut } = req.query;
+      
+      // Build query with optional filters
+      let query = supabase.from("rooms").select("*");
+      
+      // Filter by guests if provided
+      if (guests && !isNaN(Number(guests))) {
+        query = query.gte('guests', Number(guests));
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("❌ Error:", error.message);
-        // Fallback to mock data in a compatible shape for the client
-        const mapped = mockRooms.map((r) => ({
+        // Fallback to mock data with filtering
+        let filteredRooms = mockRooms;
+        
+        // Apply guests filter to mock data
+        if (guests && !isNaN(Number(guests))) {
+          filteredRooms = mockRooms.filter(room => room.guest >= Number(guests));
+        }
+        
+        const mapped = filteredRooms.map((r) => ({
           id: r.id,
           name: r.roomType,
           image: r.imageUrl,
@@ -52,7 +69,15 @@ export default async function handler(
       });
     } catch (error) {
       // Final fallback to mock data on unexpected server error
-      const mapped = mockRooms.map((r) => ({
+      const { guests } = req.query;
+      let filteredRooms = mockRooms;
+      
+      // Apply guests filter to mock data
+      if (guests && !isNaN(Number(guests))) {
+        filteredRooms = mockRooms.filter(room => room.guest >= Number(guests));
+      }
+      
+      const mapped = filteredRooms.map((r) => ({
         id: r.id,
         name: r.roomType,
         image: r.imageUrl,

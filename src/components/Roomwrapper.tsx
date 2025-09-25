@@ -63,11 +63,12 @@ const Roomwrapper = () => {
       </h2>
       <div
         className="
-          w-[359px] md:w-[1200px]
+          w-full max-w-[359px] md:max-w-[1200px]
           grid
           grid-cols-1
           md:grid-cols-2
           gap-4 md:gap-6
+          px-4 md:px-0
         "
         style={{
           minHeight: "1440px",
@@ -75,16 +76,16 @@ const Roomwrapper = () => {
         }}
       >
         {/* First row: 1 big image */}
-        <div className="col-span-1 md:col-span-2 relative h-[200px] md:h-[400px] rounded-xl overflow-hidden shadow">
+        <div className="col-span-1 md:col-span-2 relative h-[250px] md:h-[400px] rounded-xl overflow-hidden shadow">
           <Image
             src={rooms[0].image}
             alt={rooms[0].name}
             fill
             className="object-cover"
             priority
-            sizes="(max-width: 768px) 359px, 1200px"
+            sizes="(max-width: 768px) 100vw, 1200px"
           />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
+          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
             <span className="text-white text-lg md:text-2xl font-Noto mb-2 drop-shadow">
               {rooms[0].name}
             </span>
@@ -97,17 +98,17 @@ const Roomwrapper = () => {
           </div>
         </div>
         {/* Second row: 2 images */}
-        <div className="relative h-[140px] md:h-[220px] rounded-xl overflow-hidden shadow">
+        <div className="relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
           <Image
             src={rooms[1].image}
             alt={rooms[1].name}
             fill
             className="object-cover"
             priority
-            sizes="(max-width: 768px) 359px, 588px"
+            sizes="(max-width: 768px) 100vw, 588px"
           />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
+          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[1].name}
             </span>
             <a
@@ -118,17 +119,17 @@ const Roomwrapper = () => {
             </a>
           </div>
         </div>
-        <div className="relative h-[140px] md:h-[220px] rounded-xl overflow-hidden shadow">
+        <div className="relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
           <Image
             src={rooms[2].image}
             alt={rooms[2].name}
             fill
             className="object-cover"
             priority
-            sizes="(max-width: 768px) 359px, 588px"
+            sizes="(max-width: 768px) 100vw, 588px"
           />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
+          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[2].name}
             </span>
             <a
@@ -140,17 +141,17 @@ const Roomwrapper = () => {
           </div>
         </div>
         {/* Third row: 3 images (Premier Sea View, Supreme, Suite) */}
-        <div className="col-span-1 md:col-span-1 relative h-[140px] md:h-[220px] rounded-xl overflow-hidden shadow">
+        <div className="col-span-1 md:col-span-1 relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
           <Image
             src={rooms[3].image}
             alt={rooms[3].name}
             fill
             className="object-cover"
             priority
-            sizes="(max-width: 768px) 359px, 588px"
+            sizes="(max-width: 768px) 100vw, 588px"
           />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
+          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[3].name}
             </span>
             <a
@@ -161,17 +162,17 @@ const Roomwrapper = () => {
             </a>
           </div>
         </div>
-        <div className="col-span-1 md:col-span-1 relative h-[140px] md:h-[220px] rounded-xl overflow-hidden shadow">
+        <div className="col-span-1 md:col-span-1 relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
           <Image
             src={rooms[4].image}
             alt={rooms[4].name}
             fill
             className="object-cover"
             priority
-            sizes="(max-width: 768px) 359px, 588px"
+            sizes="(max-width: 768px) 100vw, 588px"
           />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
+          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[4].name}
             </span>
             <a
@@ -182,17 +183,17 @@ const Roomwrapper = () => {
             </a>
           </div>
         </div>
-        <div className="col-span-1 md:col-span-2 relative h-[140px] md:h-[220px] rounded-xl overflow-hidden shadow">
+        <div className="col-span-1 md:col-span-2 relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
           <Image
             src={rooms[5].image}
             alt={rooms[5].name}
             fill
             className="object-cover"
             priority
-            sizes="(max-width: 768px) 359px, 1200px"
+            sizes="(max-width: 768px) 100vw, 1200px"
           />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6">
-            <span className="text-white text-lg md:text-xl font-Noto mb-2 drop-shadow">
+          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[5].name}
             </span>
             <a

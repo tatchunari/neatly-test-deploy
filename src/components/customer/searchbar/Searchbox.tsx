@@ -12,7 +12,8 @@ function getTodayDateString() {
 interface SearchParams {
   checkIn: string;
   checkOut: string;
-  room: string; // format "rooms-guests" e.g. "1-2"
+  room: string; // number of rooms
+  guests: string; // number of guests
 }
 
 interface SearchBoxProps {
@@ -21,13 +22,9 @@ interface SearchBoxProps {
 }
 
 export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
-  // Parse default room/guest from defaultValues?.room (format "1-2")
-  let defaultRoom = 1, defaultGuest = 2;
-  if (defaultValues?.room) {
-    const [r, g] = defaultValues.room.split("-").map(Number);
-    if (!isNaN(r)) defaultRoom = r;
-    if (!isNaN(g)) defaultGuest = g;
-  }
+  // Parse default values
+  const defaultRoom = defaultValues?.room ? Number(defaultValues.room) : 1;
+  const defaultGuest = defaultValues?.guests ? Number(defaultValues.guests) : 2;
 
   const [checkIn, setCheckIn] = useState<string>(defaultValues?.checkIn || getTodayDateString());
   const [checkOut, setCheckOut] = useState<string>(defaultValues?.checkOut || getTodayDateString());
@@ -143,7 +140,7 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
         onSubmit={e => { 
           e.preventDefault(); 
           if (onSearch) {
-            onSearch({ checkIn, checkOut, room: `${room}-${guest}` });
+            onSearch({ checkIn, checkOut, room: room.toString(), guests: guest.toString() });
           }
         }}
       >

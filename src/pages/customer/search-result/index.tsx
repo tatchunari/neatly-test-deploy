@@ -17,11 +17,12 @@ function SearchResultPage() {
       setLoading(true)
       setError(null)
       // read query params for filtering
-      const { checkIn, checkOut, room } = router.query as { [key: string]: string }
+      const { checkIn, checkOut, room, guests } = router.query as { [key: string]: string }
       const searchParams = new URLSearchParams()
       if (checkIn) searchParams.set("checkIn", checkIn)
       if (checkOut) searchParams.set("checkOut", checkOut)
       if (room) searchParams.set("room", room)
+      if (guests) searchParams.set("guests", guests)
       const qs = searchParams.toString()
       const response = await fetch(`/api/rooms${qs ? `?${qs}` : ""}`)
       if (!response.ok) {
@@ -55,6 +56,7 @@ function SearchResultPage() {
               checkIn: (router.query.checkIn as string) || undefined,
               checkOut: (router.query.checkOut as string) || undefined,
               room: (router.query.room as string) || undefined,
+              guests: (router.query.guests as string) || undefined,
             }}
             onSearch={(params) => {
               const q = new URLSearchParams(params as any).toString()
