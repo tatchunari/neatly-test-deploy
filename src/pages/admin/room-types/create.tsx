@@ -6,6 +6,8 @@ import { AmenityItem } from "@/components/admin/ReorderableItem";
 import { useRouter } from "next/router";
 import { useState, useRef } from "react";
 import LoadingScreen from "@/components/admin/LoadingScreen";
+import { Toaster, toast } from 'sonner';
+
 
 export default function create() {
   type GalleryItem = { id: string; url: string };
