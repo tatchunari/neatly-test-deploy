@@ -33,15 +33,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Initialize anonymous ID
-    const anonId = getOrCreateAnonymousId();
-    console.log('🔑 AuthContext: Initialized anonymous ID:', anonId);
-    setAnonymousId(anonId);
-
     const loadSession = async () => {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
+      
+      // Only initialize anonymous ID if user is not logged in
+      if (!session?.user) {
+        const anonId = getOrCreateAnonymousId();
+        console.log('🔑 AuthContext: Initialized anonymous ID for guest:', anonId);
+        setAnonymousId(anonId);
+      } else {
+        // User is logged in, clear any existing anonymous ID
+        localStorage.removeItem('neatly_anonymous_id');
+        setAnonymousId(null);
+        console.log('🔑 AuthContext: User logged in, cleared anonymous ID');
+      }
+      
       setLoading(false);
     };
 
@@ -52,27 +60,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
 
       // Handle session linking when user logs in
-      if (event === 'SIGNED_IN' && session?.user && anonId) {
-        try {
-          // Link guest session to user account
-          await fetch('/api/chat/link-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ anonymousId: anonId })
-          });
-          console.log('Guest session linked to user account');
-          
-          // Clear anonymous ID after successful linking
-          localStorage.removeItem('neatly_anonymous_id');
-          setAnonymousId(null);
-        } catch (error) {
-          console.error('Error linking guest session:', error);
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Get current anonymous ID from localStorage
+        const currentAnonId = localStorage.getItem('neatly_anonymous_id');
+        
+        if (currentAnonId) {
+          try {
+            // Link guest session to user account
+            await fetch('/api/chat/link-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ anonymousId: currentAnonId })
+            });
+            console.log('Guest session linked to user account');
+          } catch (error) {
+            console.error('Error linking guest session:', error);
+          }
         }
+        
+        // Clear anonymous ID after login
+        localStorage.removeItem('neatly_anonymous_id');
+        setAnonymousId(null);
+        console.log('🔑 AuthContext: User signed in, cleared anonymous ID');
+        
       } else if (event === 'SIGNED_OUT') {
         // Clear user data and regenerate anonymous ID
         setUser(null);
         const newAnonId = getOrCreateAnonymousId();
         setAnonymousId(newAnonId);
+        console.log('🔑 AuthContext: User signed out, created new anonymous ID:', newAnonId);
       }
     });
 
@@ -81,14 +97,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isGuest = !user && !!anonymousId;
   
-  console.log('🔍 AuthContext state:', { 
-    user: !!user, 
-    userId: user?.id,
-    anonymousId, 
-    isGuest, 
-    loading,
-    authStatus: user ? 'authenticated' : (anonymousId ? 'guest' : 'none')
-  });
 
   return (
     <AuthContext.Provider value={{ user, loading, anonymousId, isGuest }}>

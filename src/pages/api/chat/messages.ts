@@ -3,7 +3,6 @@ import { supabase } from '@/lib/supabaseClient';
 
 // Helper function to verify session access
 async function verifySessionAccess(sessionId: string, anonymousId?: string, customerId?: string) {
-  console.log('🔍 Verifying session access:', { sessionId, anonymousId, customerId });
   
   // Get session details
   const { data: session, error } = await supabase
@@ -17,17 +16,11 @@ async function verifySessionAccess(sessionId: string, anonymousId?: string, cust
     throw new Error('Session not found');
   }
 
-  console.log('📋 Session details:', { 
-    id: session.id, 
-    customer_id: session.customer_id, 
-    anonymous_id: session.anonymous_id 
-  });
 
   // Check access permissions
   if (session.customer_id) {
     // Session belongs to a user
     if (customerId && session.customer_id === customerId) {
-      console.log('✅ User owns this session');
       return true; // User owns this session
     }
     console.error('❌ Access denied: Session belongs to another user', { 
@@ -38,7 +31,6 @@ async function verifySessionAccess(sessionId: string, anonymousId?: string, cust
   } else if (session.anonymous_id) {
     // Session belongs to a guest
     if (anonymousId && session.anonymous_id === anonymousId) {
-      console.log('✅ Guest owns this session');
       return true; // Guest owns this session
     }
     console.error('❌ Access denied: Session belongs to another guest', { 

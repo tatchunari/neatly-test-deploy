@@ -98,10 +98,12 @@ export default async function handler(
             .from('chatbot_faqs')
             .select('question,answer')
             .eq('question', '::fallback::');
-          const fallbackMsg = (fallbackFaqs && fallbackFaqs[0]?.answer)
-            || 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
-          botResponse = fallbackMsg;
-          console.log('⚠️ FALLBACK MESSAGE:', fallbackMsg);
+          if (fallbackFaqs && fallbackFaqs[0]?.answer) {
+            botResponse = fallbackFaqs[0].answer;
+          } else {
+            throw new Error('No fallback message found in database');
+          }
+          console.log('⚠️ FALLBACK MESSAGE:', botResponse);
         }
       }
     } catch (error) {
@@ -128,7 +130,8 @@ export default async function handler(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userQuestion: userMessage
+            userQuestion: userMessage,
+            conversationHistory: recentMessages?.reverse() || []
           })
         });
 
@@ -171,15 +174,15 @@ export default async function handler(
              .eq('question', '::fallback::')
              .single();
 
-           if (!contextError && fallbackContext) {
-             botResponse = fallbackContext.answer;
-           } else {
-             botResponse = 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
-           }
-         } catch (fallbackError) {
-           console.error('Fallback context failed:', fallbackError);
-           botResponse = 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
-         }
+          if (!contextError && fallbackContext) {
+            botResponse = fallbackContext.answer;
+          } else {
+            throw new Error('No fallback message found in database');
+          }
+        } catch (fallbackError) {
+          console.error('Fallback context failed:', fallbackError);
+          throw fallbackError;
+        }
         console.log('⚠️ FALLBACK MESSAGE (after intent handling failed):', botResponse);
       }
     }
