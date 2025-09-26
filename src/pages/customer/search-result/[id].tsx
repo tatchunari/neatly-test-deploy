@@ -22,18 +22,18 @@ type RoomDetail = {
 
 function Roomdetailpage() {
   const router = useRouter()
-  const { id } = router.query
+  const roomId = router.query.id as string;
   const [room, setRoom] = useState<RoomDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!router.isReady || !id) return
+    if (!router.isReady || !roomId) return
     const fetchDetail = async () => {
       try {
         setLoading(true)
         setError(null)
-        const res = await fetch(`/api/rooms/${id}`)
+        const res = await fetch(`/api/rooms/${roomId}`)
         if (!res.ok) throw new Error("Failed to fetch room detail")
         const data = await res.json()
         // API returns { success, data }
@@ -60,15 +60,16 @@ function Roomdetailpage() {
       }
     }
     fetchDetail()
-  }, [router.isReady, id])
+  }, [router.isReady, roomId])
 
   // derive amenities list (string or array → array)
   const amenities: string[] = (() => {
     if (!room?.amenities) return []
     if (Array.isArray(room.amenities)) return room.amenities
+
     return room.amenities.split(",").map((s) => s.trim()).filter(Boolean)
   })()
-
+console.log("Room", room);
   return (
     <div className="bg-[#F7F7FA] min-h-screen">
       <Navbar />
@@ -85,17 +86,17 @@ function Roomdetailpage() {
             <div className="w-full grid grid-cols-6 gap-2 p-2 md:p-4 bg-white">
               <div className="relative col-span-1 h-[110px] md:h-[180px] rounded-md overflow-hidden bg-gray-100">
                 {room.gallery_images && room.gallery_images[0] ? (
-                  <Image src={room.gallery_images[0]} alt="thumb-left" fill sizes="200px" style={{ objectFit: "cover" }} />
+                  <img src={room.gallery_images[0]} alt="thumb-left" fill sizes="200px" style={{ objectFit: "cover" }} />
                 ) : null}
               </div>
               <div className="relative col-span-4 h-[220px] md:h-[380px] rounded-md overflow-hidden bg-gray-100">
                 {room.image ? (
-                  <Image src={room.image} alt={room.name || "Room"} fill sizes="900px" style={{ objectFit: "cover" }} />
+                  <img src={room.image} alt={room.name || "Room"} fill sizes="900px" style={{ objectFit: "cover" }} />
                 ) : null}
               </div>
               <div className="relative col-span-1 h-[110px] md:h-[180px] rounded-md overflow-hidden bg-gray-100">
                 {room.gallery_images && room.gallery_images[1] ? (
-                  <Image src={room.gallery_images[1]} alt="thumb-right" fill sizes="200px" style={{ objectFit: "cover" }} />
+                  <img src={room.gallery_images[1]} alt="thumb-right" fill sizes="200px" style={{ objectFit: "cover" }} />
                 ) : null}
               </div>
             </div>

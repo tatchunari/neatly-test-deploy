@@ -11,7 +11,7 @@ function SearchResultPage() {
   const [rooms, setRooms] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
+  
   // ดึงข้อมูลห้องพักจาก API
   const fetchRooms = async () => {
     try {
@@ -48,11 +48,12 @@ function SearchResultPage() {
   }, [router.isReady, router.query])
 
   // ฟังก์ชันเมื่อกดปุ่ม Room Detail
-  const handleRoomDetailClick = (id: string | number) => {
+  // แก้ไขให้รับ id แทน room object
+  const handleRoomDetailClick = (id: any) => {
     if (!id) return
-    router.push(`/customer/search-result/room-detail?id=${encodeURIComponent(String(id))}`)
+    router.push(`/customer/search-result/${id}`)
   }
-
+  console.log("Rooms", rooms);
   return (
     <div className="bg-[#F7F7FA] min-h-screen">
       <Navbar />
@@ -93,10 +94,10 @@ function SearchResultPage() {
                 >
                   {/* Room Image */}
                   <div className="relative w-[260px] h-[170px] flex-shrink-0 m-6 mr-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                    {room.image ? (
-                      <Image
-                        src={room.image}
-                        alt={room.name || "Room image"}
+                    {room.main_image_url ? (
+                      <img
+                        src={room.main_image_url}
+                        alt={room.room_type || "Room image"}
                         fill
                         style={{ objectFit: "cover" }}
                         sizes="260px"
@@ -119,16 +120,16 @@ function SearchResultPage() {
                         </span>
                         <span className="mx-1">·</span>
                         <span>
-                          {room.beds ?? 1} {room.beds > 1 ? "Beds" : "Bed"}
+                          {room.bed_type ?? 1} {room.bed_type > 1 ? "Beds" : "Bed"}
                         </span>
                         <span className="mx-1">·</span>
                         <span>
-                          {room.size ? `${room.size} sqm` : "32 sqm"}
+                          {room.room_size ? `${room.room_size} sqm` : "32 sqm"}
                         </span>
-                        {room.view && (
+                        {room.room_type && (
                           <>
                             <span className="mx-1">·</span>
-                            <span>{room.view}</span>
+                            <span>{room.room_type}</span>
                           </>
                         )}
                       </div>

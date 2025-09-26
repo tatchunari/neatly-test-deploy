@@ -177,6 +177,12 @@ function UserMenu() {
   }
 
   // ล็อกอินแล้ว → แสดงเมนูผู้ใช้
+  // เปลี่ยนให้แสดงชื่อ username (full_name) แทน email
+  const displayName =
+    user?.user_metadata?.full_name?.trim() ||
+    user?.user_metadata?.username?.trim() ||
+    user?.email;
+
   return (
     <div ref={ref} className="relative">
       <button
