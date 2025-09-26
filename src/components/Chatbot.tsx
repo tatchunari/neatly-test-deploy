@@ -5,9 +5,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import axios from "axios";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/context/AuthContext";
 import type { ChatMessage, ChatSession } from "@/types/chat";
 
 export default function Chatbot() {
+  const auth = useAuth();
+  const { user, anonymousId, isGuest } = auth || {};
+  
+  // Debug auth state
+  console.log('🤖 Chatbot auth state:', {
+    hasAuth: !!auth,
+    user: !!user,
+    userId: user?.id,
+    anonymousId,
+    isGuest,
+    authStatus: user ? 'authenticated' : (anonymousId ? 'guest' : 'none')
+  });
   const [open, setOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -21,6 +34,7 @@ export default function Chatbot() {
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [greetingMessage, setGreetingMessage] = useState<string>('');
   const [suggestionFAQs, setSuggestionFAQs] = useState<any[]>([]);
+  const [isLoadingSession, setIsLoadingSession] = useState(false);
   const subscriptionReadyPromise = useRef<Promise<void> | null>(null);
   const subscriptionResolve = useRef<(() => void) | null>(null);
   const displayedBotMessages = useRef<Set<string>>(new Set());
@@ -101,12 +115,13 @@ export default function Chatbot() {
     }
   }, [open]);
 
-  // ดึง FAQs เมื่อเปิด chatbot
+  // ดึง FAQs และ session ที่มีอยู่เมื่อเปิด chatbot
   useEffect(() => {
     if (open) {
       fetchFAQs();
+      loadExistingSession();
     }
-  }, [open]);
+  }, [open, user, anonymousId]);
 
   // Supabase Realtime subscription for new messages
   useEffect(() => {
@@ -133,7 +148,12 @@ export default function Chatbot() {
           filter: `session_id=eq.${currentSession.id}`
         },
         async (payload) => {
-          console.log('New message received via Realtime:', payload);
+          console.log('📡 New message received via Realtime:', {
+            id: payload.new?.id,
+            is_bot: payload.new?.is_bot,
+            message: payload.new?.message?.substring(0, 50) + '...',
+            created_at: payload.new?.created_at
+          });
           const newMessage = payload.new as ChatMessage;
           
           // เพิ่มข้อความใหม่เข้า state
@@ -163,13 +183,14 @@ export default function Chatbot() {
             
             // Hide typing indicator if this is a bot message
             if (newMessage.is_bot) {
+              console.log('🤖 Bot message detected via Realtime, hiding typing indicator');
               setIsBotTyping(false);
               displayedBotMessages.current.add(newMessage.id);
               if (safetyTimeoutRef.current) {
                 clearTimeout(safetyTimeoutRef.current);
                 safetyTimeoutRef.current = null;
               }
-              console.log('Bot response received, hiding typing indicator');
+              console.log('🤖 Bot response received via Realtime, hiding typing indicator');
             }
             
             return [...prev, newMessage];
@@ -215,24 +236,94 @@ export default function Chatbot() {
     };
   }, [currentSession?.id]);
 
+  const loadExistingSession = async () => {
+    try {
+      setIsLoadingSession(true);
+      console.log('🔍 Loading existing session for:', {
+        user: !!user,
+        userId: user?.id,
+        anonymousId,
+        isGuest
+      });
+
+      if (!user && !anonymousId) {
+        console.log('❌ No user ID or anonymous ID available');
+        setIsLoadingSession(false);
+        return;
+      }
+
+      // Check for existing sessions
+      const params: any = {};
+      if (user?.id) {
+        params.customerId = user.id;
+      } else if (anonymousId) {
+        params.anonymousId = anonymousId;
+      }
+
+      const { data } = await axios.get('/api/chat/sessions', { params });
+      
+      if (data.sessions && data.sessions.length > 0) {
+        const existingSession = data.sessions[0]; // Get the most recent session
+        console.log('✅ Found existing session:', existingSession.id);
+        setCurrentSession(existingSession);
+        
+        // Fetch existing messages for this session
+        await fetchMessages(existingSession.id);
+      } else {
+        console.log('ℹ️ No existing session found, will create new one when needed');
+      }
+    } catch (error) {
+      console.error('Error loading existing session:', error);
+    } finally {
+      setIsLoadingSession(false);
+    }
+  };
+
   const createChatSession = async () => {
     try {
-      // Use real API now that tables exist
-      const { data } = await axios.post('/api/chat/sessions');
+      setIsLoadingSession(true);
+      console.log('🔄 Creating chat session with auth:', {
+        user: !!user,
+        userId: user?.id,
+        anonymousId,
+        isGuest
+      });
+
+      if (!user && !anonymousId) {
+        console.error('❌ No user ID or anonymous ID available');
+        setIsLoadingSession(false);
+        return;
+      }
+
+      // Use real API with appropriate ID
+      const sessionData: any = {};
+      if (user?.id) {
+        sessionData.customerId = user.id;
+      } else if (anonymousId) {
+        sessionData.anonymousId = anonymousId;
+      }
+
+      const { data } = await axios.post('/api/chat/sessions', sessionData);
       setCurrentSession(data.session);
       
       // Fetch existing messages for this session
-      fetchMessages(data.session.id);
+      await fetchMessages(data.session.id);
     } catch (error) {
       console.error('Error creating chat session:', error);
+    } finally {
+      setIsLoadingSession(false);
     }
   };
 
   const fetchMessages = async (sessionId: string) => {
     try {
-      // Use real API now that tables exist
+      // Use real API with authentication
       const { data } = await axios.get(`/api/chat/messages`, {
-        params: { sessionId }
+        params: { 
+          sessionId,
+          anonymousId: isGuest ? anonymousId : undefined,
+          customerId: user?.id || undefined
+        }
       });
       setMessages(data.messages || []);
     } catch (error) {
@@ -286,9 +377,25 @@ export default function Chatbot() {
       // Create session if it doesn't exist (first message)
       let sessionToUse = currentSession;
       if (!sessionToUse) {
-        const { data } = await axios.post('/api/chat/sessions');
+        setIsLoadingSession(true);
+        console.log('🔄 Creating new session for first message:', {
+          user: !!user,
+          userId: user?.id,
+          anonymousId,
+          isGuest
+        });
+
+        const sessionData: any = {};
+        if (user?.id) {
+          sessionData.customerId = user.id;
+        } else if (anonymousId) {
+          sessionData.anonymousId = anonymousId;
+        }
+
+        const { data } = await axios.post('/api/chat/sessions', sessionData);
         sessionToUse = data.session;
         setCurrentSession(sessionToUse);
+        setIsLoadingSession(false);
         
         // Wait for subscription to be ready after creating new session
         console.log('Waiting for Realtime subscription to be ready...');
@@ -301,13 +408,23 @@ export default function Chatbot() {
         }
       }
 
-      // Show bot typing indicator
+      // Show bot typing indicator immediately
       setIsBotTyping(true);
+      console.log('🤖 Bot typing indicator shown');
 
-      // Send message using the session
+      // Send message using the session with authentication
+      console.log('📤 Sending message with auth:', { 
+        anonymousId, 
+        customerId: user?.id, 
+        isGuest, 
+        sessionId: sessionToUse!.id 
+      });
+      
       const { data } = await axios.post(`/api/chat/messages`, {
         message: userMessage,
-        isBot: false
+        isBot: false,
+        anonymousId: isGuest ? anonymousId : undefined,
+        customerId: user?.id || undefined
       }, {
         params: { sessionId: sessionToUse!.id }
       });
@@ -338,18 +455,26 @@ export default function Chatbot() {
 
       console.log('Message sent successfully:', data.message);
       
-      // Safety timeout: Hide typing indicator after 10 seconds if no bot response
+      // Safety timeout: Hide typing indicator after 15 seconds if no bot response
       safetyTimeoutRef.current = setTimeout(() => {
-        console.log('Safety timeout: Hiding typing indicator after 10 seconds');
+        console.log('🤖 Safety timeout: Hiding typing indicator after 15 seconds');
         setIsBotTyping(false);
-      }, 10000);
+      }, 15000);
 
-      // Fallback: Check for bot response after a short delay if not received via Realtime
+      // Fallback: Check for bot response after intent classification completes
+      // Wait longer to account for intent classification time (4-5 seconds)
       setTimeout(async () => {
         try {
+          console.log('🔍 Fallback check: Looking for bot message in database...');
           const { data: latestMessages } = await axios.get(`/api/chat/messages`, {
-            params: { sessionId: sessionToUse!.id }
+            params: { 
+              sessionId: sessionToUse!.id,
+              anonymousId: isGuest ? anonymousId : undefined,
+              customerId: user?.id || undefined
+            }
           });
+          
+          console.log('🔍 Fallback check: Found', latestMessages.messages?.length || 0, 'total messages');
           
           const latestBotMessage = latestMessages.messages
             .filter((msg: ChatMessage) => msg.is_bot)
@@ -357,9 +482,17 @@ export default function Chatbot() {
               new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             )[0];
           
+          console.log('🔍 Fallback check: Latest bot message:', latestBotMessage ? {
+            id: latestBotMessage.id,
+            message: latestBotMessage.message.substring(0, 50) + '...',
+            created_at: latestBotMessage.created_at
+          } : 'None found');
+          
           if (latestBotMessage) {
             const messageExists = messages.some(msg => msg.id === latestBotMessage.id);
             const alreadyDisplayed = displayedBotMessages.current.has(latestBotMessage.id);
+            
+            console.log('🔍 Fallback check: Message exists in UI:', messageExists, 'Already displayed:', alreadyDisplayed);
             
             if (!messageExists && !alreadyDisplayed) {
               console.log('Fallback: Adding bot message that was missed by Realtime:', latestBotMessage.id);
@@ -384,7 +517,7 @@ export default function Chatbot() {
                 clearTimeout(safetyTimeoutRef.current);
                 safetyTimeoutRef.current = null;
               }
-              console.log('Bot response received via fallback, hiding typing indicator');
+              console.log('🤖 Bot response received via fallback, hiding typing indicator');
             } else {
               console.log('Bot message already exists in UI, skipping fallback');
               setIsBotTyping(false);
@@ -392,20 +525,16 @@ export default function Chatbot() {
                 clearTimeout(safetyTimeoutRef.current);
                 safetyTimeoutRef.current = null;
               }
-              console.log('Bot response already exists, hiding typing indicator');
+              console.log('🤖 Bot response already exists, hiding typing indicator');
             }
           } else {
-            console.log('No bot message found in database');
-            setIsBotTyping(false);
-            if (safetyTimeoutRef.current) {
-              clearTimeout(safetyTimeoutRef.current);
-              safetyTimeoutRef.current = null;
-            }
+            console.log('🤖 No bot message found in database yet, keeping typing indicator');
+            // Don't hide typing indicator here - let safety timeout handle it
           }
         } catch (error) {
           console.error('Error in fallback message check:', error);
         }
-      }, 2000); // Check after 2 seconds
+      }, 8000); // Check after 8 seconds (account for intent classification time)
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -414,6 +543,10 @@ export default function Chatbot() {
       setMessages(prev => 
         prev.filter(msg => msg.id !== tempMessage.id)
       );
+      
+      // Hide loading state and typing indicator on error
+      setIsLoadingSession(false);
+      setIsBotTyping(false);
     } finally {
       // Don't hide typing indicator here - let it be hidden when bot response is received
       // setIsBotTyping(false); // Removed - let bot response hide it
@@ -519,8 +652,18 @@ export default function Chatbot() {
             onScrollCapture={handleScroll}
           >
             <div className="space-y-4">
+              {/* Loading Session */}
+              {isLoadingSession && (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                    <span className="text-sm">Loading chat session...</span>
+                  </div>
+                </div>
+              )}
+
               {/* Greeting message */}
-              {messages.length === 0 && greetingMessage && (
+              {!isLoadingSession && messages.length === 0 && greetingMessage && (
                 <div className="flex flex-col items-start">
                   <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800 shadow-sm">
                     <p className="text-sm">{greetingMessage}</p>
@@ -529,7 +672,7 @@ export default function Chatbot() {
               )}
               
               {/* Suggestion buttons */}
-              {messages.length === 0 && suggestionFAQs.length > 0 && (
+              {!isLoadingSession && messages.length === 0 && suggestionFAQs.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {suggestionFAQs.map((faq) => (
                     <Button
@@ -546,7 +689,7 @@ export default function Chatbot() {
               )}
               
               {/* Messages */}
-              {messages.map((message) => (
+              {!isLoadingSession && messages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex flex-col ${message.is_bot ? 'items-start' : 'items-end'}`}
@@ -570,7 +713,7 @@ export default function Chatbot() {
               ))}
               
               {/* Bot Typing Indicator */}
-              {isBotTyping && (
+              {!isLoadingSession && isBotTyping && (
                 <div key="bot-typing-indicator" className="flex flex-col items-start">
                   <div className="w-12 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
                     <div className="flex gap-1">
@@ -588,27 +731,29 @@ export default function Chatbot() {
           </ScrollArea>
 
           {/* Input */}
-          <div className="p-4 bg-white rounded-b-xl md:rounded-b-xl">
-            <div className="flex gap-2 items-center">
-              <Input 
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Write your message" 
-                className="flex-1 border-gray-200 focus:ring-orange-500 focus:border-orange-500 rounded-full px-4 py-2"
-              />
-              <Button 
-                onClick={() => sendMessage()}
-                disabled={!inputValue.trim()}
-                className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 rounded-full p-2 w-10 h-10 flex items-center justify-center"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </Button>
+          {!isLoadingSession && (
+            <div className="p-4 bg-white rounded-b-xl md:rounded-b-xl">
+              <div className="flex gap-2 items-center">
+                <Input 
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Write your message" 
+                  className="flex-1 border-gray-200 focus:ring-orange-500 focus:border-orange-500 rounded-full px-4 py-2"
+                />
+                <Button 
+                  onClick={() => sendMessage()}
+                  disabled={!inputValue.trim()}
+                  className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 rounded-full p-2 w-10 h-10 flex items-center justify-center"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
           </div>
         </>
       )}

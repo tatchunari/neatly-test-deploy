@@ -49,12 +49,6 @@ export default async function handler(
           .select('alias, faq_id');
 
         if (!aliasError && aliasMatches) {
-          console.log('🔍 ALIASES DEBUG:', aliasMatches.map(a => ({
-            alias: a.alias,
-            normalized: normalize(a.alias),
-            faq_id: a.faq_id
-          })));
-
           for (const aliasMatch of aliasMatches) {
             if (userQuery === normalize(aliasMatch.alias)) {
               // Get FAQ answer by faq_id
