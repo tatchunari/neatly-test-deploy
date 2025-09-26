@@ -5,6 +5,8 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { createRoom } from "@/services/roomService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { roomSchema, RoomFormData } from "@/schemas/roomSchema";
 
 import { RoomMainImage } from "@/components/admin/roomForm/RoomMainImage";
 import { RoomGalleryImages } from "@/components/admin/roomForm/RoomGalleryImages";
@@ -17,12 +19,12 @@ import { toast } from "sonner";
 
 export function CreateRoomForm({ room }: { room?: any }) {
   const router = useRouter();
-  const roomId = router.query.id as string;
 
   const [isLoading, setIsLoading] = useState(false);
   const [hasPromotion, setHasPromotion] = useState(!!room?.promotion_price);
 
   const methods = useForm({
+    resolver: zodResolver(roomSchema),
     defaultValues: {
       roomType: room?.room_type || "",
       roomSize: room?.room_size || "",
@@ -37,7 +39,7 @@ export function CreateRoomForm({ room }: { room?: any }) {
     },
   });
 
-  const { register, handleSubmit, setValue } = methods;
+  const { register, handleSubmit, setValue, formState: { errors } } = methods;
 
   const onSubmit = async (formData) => {
     setIsLoading(true);
@@ -91,15 +93,19 @@ export function CreateRoomForm({ room }: { room?: any }) {
                 </h2>
 
                 {/* Room Type */}
+                <div>
                 <TextInput
                   label="Room Type"
                   required
                   placeholder="Enter room type"
                   register={register("roomType")}
                 />
+                {errors.roomType && <p className="text-red-500">{errors.roomType.message}</p>}
+                </div>
 
                 {/* Room Size and Bed Type - Side by Side */}
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
                   <TextInput
                     label="Room size(sqm)"
                     required
@@ -107,7 +113,10 @@ export function CreateRoomForm({ room }: { room?: any }) {
                     placeholder="Enter room size"
                     register={register("roomSize")}
                   />
+                  {errors.roomSize && <p className="text-red-500">{errors.roomSize.message}</p>}
+                  </div>
 
+                  <div>
                   <DropDownInput
                     options={["Single bed", "Double bed", "King bed", "Twin beds"]}
                     name="bedType"
@@ -116,20 +125,24 @@ export function CreateRoomForm({ room }: { room?: any }) {
                     defaultValue={room?.bed_type}
                     label="Bed Type"
                   />
-
-
+                  {errors.bedType && <p className="text-red-500">{errors.bedType.message}</p>}
+                  </div>
                 </div>
 
                 {/* Guest Count */}
+                <div>
                 <TextInput
                   label="Guest(s)"
                   type="number"
                   register={register("guests")}
                   className="w-60"
                 />
+                {errors.guests && <p className="text-red-500">{errors.guests.message}</p>}
+                </div>
 
                 {/* Price and Promotion Price - Side by Side */}
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
                   <TextInput
                     label="Price per Night (THB)"
                     type="number"
@@ -137,6 +150,8 @@ export function CreateRoomForm({ room }: { room?: any }) {
                     register={register("pricePerNight")}
                     className="w-full"
                   />
+                  {errors.pricePerNight && <p className="text-red-500">{errors.pricePerNight.message}</p>}
+                  </div>
 
                   <div>
                     {/* Promotion Price */}
@@ -149,6 +164,7 @@ export function CreateRoomForm({ room }: { room?: any }) {
                         <input
                           type="checkbox"
                           checked={hasPromotion}
+                          {...register("hasPromotion")}
                           onChange={(e) => setHasPromotion(e.target.checked)}
                         />
                         <span className="text-sm text-gray-600 w-30">
@@ -156,6 +172,7 @@ export function CreateRoomForm({ room }: { room?: any }) {
                         </span>
                       </div>
 
+                      <div className="flex flex-col">
                       <TextInput
                         type="number"
                         register={register("promotionPrice")}
@@ -166,10 +183,13 @@ export function CreateRoomForm({ room }: { room?: any }) {
                             : "bg-gray-100 cursor-not-allowed"
                         }`}
                       />
+                      </div>
                     </div>
+                    {errors.promotionPrice && <p className="text-red-500">{errors.promotionPrice.message}</p>}
                   </div>
 
                   {/* Room Description */}
+                  <div>
                   <TextArea
                     label="Room Description"
                     required
@@ -177,6 +197,8 @@ export function CreateRoomForm({ room }: { room?: any }) {
                     register={register("description")}
                     className="w-212"
                   />
+                  {errors.description && <p className="text-red-500">{errors.description.message}</p>}
+                  </div>
                 </div>
 
                 {/* Room Image Section */}
@@ -186,22 +208,29 @@ export function CreateRoomForm({ room }: { room?: any }) {
                   </h2>
 
                   {/* Main Image */}
+                  <div>
                   <RoomMainImage
                     name="mainImgUrl"
                     value={room?.main_image_url && room.main_image_url[0]}
                   />
+                  {errors.mainImgUrl && <p className="text-red-500">{errors.mainImgUrl.message}</p>}
+                  </div>
 
                   {/* Image Gallery */}
+                  <div>
                   <RoomGalleryImages
                     name="galleryImageUrls"
                     value={room?.gallery_images}
                   />
+                  {errors.galleryImageUrls && <p className="text-red-500">{errors.galleryImageUrls.message}</p>}
+                  </div>
                 </div>
+
+
                 <div className="space-y-6 mt-5">
                   <h2 className="text-lg font-medium text-gray-700 border-t pt-5 border-gray-200 pb-2">
                     Room Amenities
                   </h2>
-
                   {/* Amenity */}
                   <AmenityItems name="amenities" value={room?.amenities} />
                 </div>

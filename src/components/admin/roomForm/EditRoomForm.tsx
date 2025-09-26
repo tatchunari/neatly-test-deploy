@@ -6,6 +6,9 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { updateRoom, deleteRoom } from "@/services/roomService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { roomSchema, RoomFormData } from "@/schemas/roomSchema";
+
 
 import { RoomMainImage } from "@/components/admin/roomForm/RoomMainImage";
 import { RoomGalleryImages } from "@/components/admin/roomForm/RoomGalleryImages";
@@ -23,10 +26,11 @@ export function EditRoomForm({ room }) {
   const roomId = router.query.id as string;
   const [isLoading, setIsLoading] = useState(false);
 
-  const [hasPromotion, setHasPromotion] = useState(!!room.promotion_price);
+  // const [hasPromotion, setHasPromotion] = useState(!!room.promotion_price);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const methods = useForm({
+    resolver: zodResolver(roomSchema),
     defaultValues: {
       roomType: room.room_type,
       roomSize: room.room_size,
@@ -34,13 +38,17 @@ export function EditRoomForm({ room }) {
       guests: room.guests,
       pricePerNight: room.price,
       promotionPrice: room.promotion_price || null,
+      hasPromotion: !!room.promotion_price,
       description: room.description,
       mainImgUrl: room.main_image_url[0],
       galleryImageUrls: room.gallery_images || [],
+      amenities: room?.amenities && room.amenities.length > 0 ? room.amenities : [],
     },
   });
 
-  const { register, handleSubmit, setValue } = methods;
+  const { watch, register, handleSubmit, setValue, formState: { errors, touchedFields, isSubmitted } } = methods;
+
+  const hasPromotion = watch("hasPromotion");
 
   // console.log("Gallery Image:", room.gallery_images);
 
@@ -65,8 +73,10 @@ export function EditRoomForm({ room }) {
     setIsLoading(true);
     try {
       await deleteRoom(roomId);
-      alert("Room deleted successfully!");
-      router.push("/admin/room-types");
+      toast.success(`Room "Room deleted successfully!`);
+      setTimeout(() => {
+        router.push("/admin/room-types");
+      }, 1000);
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     } finally {
@@ -122,15 +132,19 @@ export function EditRoomForm({ room }) {
                 </h2>
 
                 {/* Room Type */}
+                <div>
                 <TextInput
                   label="Room Type"
                   required
                   placeholder="Enter room type"
                   register={register("roomType")}
                 />
+                {errors.roomType && <p className="text-red-500">{errors.roomType.message}</p>}
+                </div>
 
                 {/* Room Size and Bed Type - Side by Side */}
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
                   <TextInput
                     label="Room size(sqm)"
                     required
@@ -138,7 +152,10 @@ export function EditRoomForm({ room }) {
                     placeholder="Enter room size"
                     register={register("roomSize")}
                   />
+                  {errors.roomSize && <p className="text-red-500">{errors.roomSize.message}</p>}
+                  </div>
 
+                  <div>
                   <DropDownInput
                     options={["Single bed", "Double bed", "King bed", "Twin beds"]}
                     name="bedType"
@@ -147,18 +164,25 @@ export function EditRoomForm({ room }) {
                     defaultValue={room?.bed_type}
                     label="Bed Type"
                   />
+                  {errors.bedType && <p className="text-red-500">{errors.bedType.message}</p>}
+                  </div>
                 </div>
 
                 {/* Guest Count */}
+                <div>
                 <TextInput
                   label="Guest(s)"
                   type="number"
                   register={register("guests")}
                   className="w-60"
                 />
+                {errors.guests && <p className="text-red-500">{errors.guests.message}</p>}
+                </div>
+
 
                 {/* Price and Promotion Price - Side by Side */}
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
                   <TextInput
                     label="Price per Night (THB)"
                     type="number"
@@ -166,6 +190,8 @@ export function EditRoomForm({ room }) {
                     register={register("pricePerNight")}
                     className="w-full"
                   />
+                  {errors.pricePerNight && <p className="text-red-500">{errors.pricePerNight.message}</p>}
+                  </div>
 
                   <div>
                     {/* Promotion Price */}
@@ -176,29 +202,33 @@ export function EditRoomForm({ room }) {
                       <div className="flex items-center space-x-3">
                         {/* ✅ Checkbox to enable/disable promotion price */}
                         <input
-                          type="checkbox"
-                          checked={hasPromotion}
-                          onChange={(e) => setHasPromotion(e.target.checked)}
-                        />
+                            type="checkbox"
+                            checked={watch("hasPromotion")}
+                            onChange={(e) => setValue("hasPromotion", e.target.checked, { shouldValidate: true })}
+                          />
                         <span className="text-sm text-gray-600 w-30">
                           Promotion price
                         </span>
                       </div>
 
+                      <div>
                       <TextInput
                         type="number"
                         register={register("promotionPrice")}
-                        disabled={!hasPromotion}
+                        disabled={!watch("hasPromotion")}
                         className={`w-60 ${
                           hasPromotion
                             ? "focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             : "bg-gray-100 cursor-not-allowed"
                         }`}
                       />
+                      </div>
                     </div>
+                    {errors.promotionPrice && <p className="text-red-500">{errors.promotionPrice.message}</p>}
                   </div>
 
                   {/* Room Description */}
+                  <div>
                   <TextArea
                     label="Room Description"
                     required
@@ -206,6 +236,8 @@ export function EditRoomForm({ room }) {
                     register={register("description")}
                     className="w-180"
                   />
+                  {errors.description && <p className="text-red-500">{errors.description.message}</p>}
+                  </div>
                 </div>
 
                 {/* Room Image Section */}
@@ -215,22 +247,28 @@ export function EditRoomForm({ room }) {
                   </h2>
 
                   {/* Main Image */}
+                  <div>
                   <RoomMainImage
                     name="mainImgUrl"
                     value={room?.main_image_url && room.main_image_url[0]}
                   />
+                  {errors.mainImgUrl && <p className="text-red-500">{errors.mainImgUrl.message}</p>}
+                  </div>
 
                   {/* Image Gallery */}
+                  <div>
                   <RoomGalleryImages
                     name="galleryImageUrls"
                     value={room?.gallery_images}
                   />
+                  {errors.galleryImageUrls && <p className="text-red-500">{errors.galleryImageUrls.message}</p>}
+                  </div>
                 </div>
+                
                 <div className="space-y-6 mt-5">
                   <h2 className="text-lg font-medium text-gray-700 border-t pt-5 border-gray-200 pb-2">
                     Room Amenities
                   </h2>
-
                   {/* Amenity */}
                   <AmenityItems name="amenities" value={room?.amenities} />
                 </div>

@@ -1,35 +1,34 @@
 import { useState, useEffect } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, FieldErrors } from "react-hook-form";
 import { ReorderableItem } from "@/components/admin/ReorderableItem";
 import { Reorder } from "motion/react";
 
-interface AmenitiesItem { name: string; value?: string[] }
+type AmenityItemType = { id: string; value: string };
 
-type AmenitiesItemsProps = {
+type AmenityItemsProps = {
   name: string;
-  value?: string[]; // initial values from form
+  value?: string[];
 };
 
-export const AmenityItems = ({ name, value }: AmenitiesItemsProps) => {
-  const { register, setValue, watch } = useFormContext();
-
-  // Initialize from form values if available, else from props
+export const AmenityItems = ({ name, value }: AmenityItemsProps) => {
+  const { register, setValue, watch, formState: { errors, touchedFields, isSubmitted } } = useFormContext();
+  
+  // Initialize local state from form or props
   const formValues = watch(name) || value || [];
-  const [amenities, setAmenities] = useState(
-    formValues.map((val, idx) => ({
-      id: crypto.randomUUID(),
-      value: val,
-    })) || [{ id: crypto.randomUUID(), value: "" }]
+  const [amenities, setAmenities] = useState<AmenityItemType[]>(
+    formValues.length > 0
+      ? formValues.map((val) => ({ id: crypto.randomUUID(), value: val }))
+      : [{ id: crypto.randomUUID(), value: "" }]
   );
 
-  // Sync local state -> RHF whenever amenities change
+  // Sync local state -> RHF values
   useEffect(() => {
-    setValue(
-      name,
-      amenities.map((item) => item.value),
-      { shouldValidate: true }
-    );
-  }, [amenities, name, setValue]);
+  setValue(
+    name,
+    amenities.map((item) => item.value.trim()).filter(Boolean),
+    { shouldValidate: true }
+  );
+}, [amenities, name, setValue]);
 
   const handleEditAmenity = (id: string, newValue: string) => {
     setAmenities((prev) =>
@@ -42,49 +41,47 @@ export const AmenityItems = ({ name, value }: AmenitiesItemsProps) => {
   };
 
   const handleDeleteAmenity = (id: string) => {
-    if (amenities.length > 1) {
-      setAmenities((prev) => prev.filter((item) => item.id !== id));
-    }
+  if (amenities.length === 1) return; // keep at least 1 input
+  setAmenities((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleReorder = (newOrder) => {
+
+  const handleReorder = (newOrder: AmenityItemType[]) => {
     setAmenities(newOrder);
   };
 
-  return (
-    <>
-      <div className="bg-white">
-        <Reorder.Group
-          axis="y"
-          values={amenities}
-          onReorder={handleReorder}
-          className="space-y-2"
-        >
-          {amenities.map((amenity, index) => (
-            <ReorderableItem
-              key={amenity.id}
-              item={amenity}
-              onChange={handleEditAmenity}
-              onDelete={handleDeleteAmenity}
-              disableDelete={amenities.length === 1}
-              label={`Amenity ${index + 1}`}
-            />
-          ))}
-        </Reorder.Group>
-      </div>
+  // Determine if error should show
+  const showError = (errors[name] && (touchedFields[name] || isSubmitted));
 
-      {/* Add Amenity Button */}
+  return (
+    <div className="bg-white">
+      <Reorder.Group
+        axis="y"
+        values={amenities}
+        onReorder={handleReorder}
+        className="space-y-2"
+      >
+        {amenities.map((amenity, index) => (
+          <ReorderableItem
+            key={amenity.id}
+            item={amenity}
+            onChange={handleEditAmenity}
+            onDelete={handleDeleteAmenity}
+            disableDelete={amenities.length === 1}
+            label={`Amenity ${index + 1}`}
+          />
+        ))}
+      </Reorder.Group>
+
       <button
         type="button"
         onClick={handleAddAmenity}
-        className="mt-3 flex items-center gap-2 px-4 py-2 
-          text-orange-600 border border-orange-600 rounded-md 
-          hover:bg-orange-50 transition-colors"
+        className="mt-3 flex items-center gap-2 px-4 py-2 text-orange-600 border border-orange-600 rounded-md hover:bg-orange-50 transition-colors"
       >
         + Add Amenity
       </button>
 
-      {/* Hidden inputs (for safety, but RHF already tracks) */}
+      {/* Hidden inputs to register each amenity */}
       <div>
         {amenities.map((item, index) => (
           <input
@@ -95,6 +92,13 @@ export const AmenityItems = ({ name, value }: AmenitiesItemsProps) => {
           />
         ))}
       </div>
-    </>
+
+      {/* Show validation error */}
+      {showError && (
+        <p className="text-red-500">
+          {(errors[name] as any)?.message || "Please add at least one amenity"}
+        </p>
+      )}
+    </div>
   );
 };
