@@ -11,14 +11,13 @@ if (!supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: true, autoRefreshToken: true },
+    auth: { 
+      persistSession: true, // เก็บ session ค้างไว้ใน localStorage
+      autoRefreshToken: true // ต่ออายุ token ให้อัตโนมัติ
+    },
     realtime: {
       params: {
         eventsPerSecond: 10,
       },
-    },
-    auth: { 
-      persistSession: true, // เก็บ session ค้างไว้ใน localStorage
-      autoRefreshToken: true // ต่ออายุ token ให้อัตโนมัติ
     },
   });

@@ -1,7 +1,11 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { VertexAI } from "@google-cloud/vertexai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const vertex = new VertexAI({
+  project: process.env.GCLOUD_PROJECT_ID!,
+  location: process.env.GCLOUD_LOCATION!,
+});
+
+const model = vertex.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export async function chatWithGemini(question: string, conversationHistory?: any[], context?: string) {
   let historyContext = '';
@@ -18,8 +22,9 @@ export async function chatWithGemini(question: string, conversationHistory?: any
   }
 
   const prompt = `
-  - คุณคือพนักงานโรงแรม Neatly
-  - ตอบคำถามด้วยภาษาที่ถามอย่างเป็นมิตรและมืออาชีพ
+  - คุณคือพนักงานหญิงโรงแรม Neatly
+  - ตอบคำถามด้วยภาษาที่ผู้ใช้ใช้ในข้อความล่าสุด
+  - ตอบอย่างเป็นมิตรและมืออาชีพ
   - ตอบทุกคำถาม
   - ตอบสั้น ๆ
   - ดูประวัติการสนทนาเพื่อเข้าใจบริบท
@@ -32,6 +37,15 @@ export async function chatWithGemini(question: string, conversationHistory?: any
   Question: ${question}
   `;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  const result = await model.generateContent({
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: prompt }
+        ]
+      }
+    ]
+  });
+  return result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }

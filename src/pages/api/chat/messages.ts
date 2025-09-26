@@ -1,11 +1,62 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabaseClient';
 
+// Helper function to verify session access
+async function verifySessionAccess(sessionId: string, anonymousId?: string, customerId?: string) {
+  console.log('🔍 Verifying session access:', { sessionId, anonymousId, customerId });
+  
+  // Get session details
+  const { data: session, error } = await supabase
+    .from('chatbot_sessions')
+    .select('*')
+    .eq('id', sessionId)
+    .single();
+
+  if (error || !session) {
+    console.error('❌ Session not found:', { sessionId, error });
+    throw new Error('Session not found');
+  }
+
+  console.log('📋 Session details:', { 
+    id: session.id, 
+    customer_id: session.customer_id, 
+    anonymous_id: session.anonymous_id 
+  });
+
+  // Check access permissions
+  if (session.customer_id) {
+    // Session belongs to a user
+    if (customerId && session.customer_id === customerId) {
+      console.log('✅ User owns this session');
+      return true; // User owns this session
+    }
+    console.error('❌ Access denied: Session belongs to another user', { 
+      sessionCustomerId: session.customer_id, 
+      providedCustomerId: customerId 
+    });
+    throw new Error('Access denied: Session belongs to another user');
+  } else if (session.anonymous_id) {
+    // Session belongs to a guest
+    if (anonymousId && session.anonymous_id === anonymousId) {
+      console.log('✅ Guest owns this session');
+      return true; // Guest owns this session
+    }
+    console.error('❌ Access denied: Session belongs to another guest', { 
+      sessionAnonymousId: session.anonymous_id, 
+      providedAnonymousId: anonymousId 
+    });
+    throw new Error('Access denied: Session belongs to another guest');
+  }
+
+  console.error('❌ Invalid session state:', session);
+  throw new Error('Invalid session state');
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { sessionId } = req.query;
+  const { sessionId, anonymousId, customerId } = req.query;
 
   if (req.method === 'GET') {
     try {
@@ -13,6 +64,9 @@ export default async function handler(
       if (!sessionId) {
         return res.status(400).json({ error: 'Session ID is required' });
       }
+
+      // Verify session access
+      await verifySessionAccess(sessionId as string, anonymousId as string, customerId as string);
 
       // Fetch messages for session
       const { data: messages, error } = await supabase
@@ -33,12 +87,19 @@ export default async function handler(
     }
   } else if (req.method === 'POST') {
     try {
-      const { message, isBot } = req.body;
+      const { message, isBot, anonymousId: bodyAnonymousId, customerId: bodyCustomerId } = req.body;
 
       // Validate required fields
       if (!sessionId || !message) {
         return res.status(400).json({ error: 'Session ID and message are required' });
       }
+
+      // Use body parameters for POST, query parameters for GET
+      const authAnonymousId = bodyAnonymousId || anonymousId;
+      const authCustomerId = bodyCustomerId || customerId;
+
+      // Verify session access
+      await verifySessionAccess(sessionId as string, authAnonymousId as string, authCustomerId as string);
 
       console.log('Saving message:', { sessionId, message, isBot });
       
@@ -72,7 +133,8 @@ export default async function handler(
             .eq('session_id', sessionId as string)
             .order('created_at', { ascending: true });
 
-          // Call bot response API asynchronously with better error handling
+          // Call bot response API asynchronously (fire-and-forget)
+          // The typing indicator will be hidden when the bot message arrives via Realtime
           const botResponseUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/chat/bot-response`;
           
           fetch(botResponseUrl, {
@@ -95,11 +157,13 @@ export default async function handler(
           })
           .then(data => {
             console.log('Bot response generated successfully:', data);
+            // Note: Typing indicator will be hidden when bot message arrives via Realtime
           })
           .catch(error => {
             console.error('Error calling bot response API:', error);
             console.error('Bot response URL:', botResponseUrl);
             console.error('Request body:', { sessionId: sessionId as string, userMessage: message });
+            // Note: Typing indicator will be hidden by safety timeout or fallback check
           });
           
         } catch (error) {
