@@ -41,7 +41,7 @@ export function CreateRoomForm({ room }: { room?: any }) {
 
   const { register, handleSubmit, setValue, formState: { errors } } = methods;
 
-  const onSubmit = async (formData) => {
+  const onSubmit = async (formData: RoomFormData) => {
     setIsLoading(true);
     try {
       await createRoom(formData, hasPromotion);

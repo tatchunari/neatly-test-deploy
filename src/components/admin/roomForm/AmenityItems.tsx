@@ -14,7 +14,7 @@ export const AmenityItems = ({ name, value }: AmenityItemsProps) => {
   const { register, setValue, watch, formState: { errors, touchedFields, isSubmitted } } = useFormContext();
   
   // Initialize local state from form or props
-  const formValues = watch(name) || value || [];
+  const formValues: string[] = watch(name) || value || [];
   const [amenities, setAmenities] = useState<AmenityItemType[]>(
     formValues.length > 0
       ? formValues.map((val) => ({ id: crypto.randomUUID(), value: val }))
