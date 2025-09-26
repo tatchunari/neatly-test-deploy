@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar"
 import SearchBox from "@/components/customer/searchbar/Searchbox"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
+import Link from "next/link"
 import Image from "next/image"
 import Footer from "@/components/Footer"
 
@@ -45,6 +46,12 @@ function SearchResultPage() {
     if (!router.isReady) return
     fetchRooms()
   }, [router.isReady, router.query])
+
+  // ฟังก์ชันเมื่อกดปุ่ม Room Detail
+  const handleRoomDetailClick = (id: string | number) => {
+    if (!id) return
+    router.push(`/customer/search-result/room-detail?id=${encodeURIComponent(String(id))}`)
+  }
 
   return (
     <div className="bg-[#F7F7FA] min-h-screen">
@@ -129,9 +136,18 @@ function SearchResultPage() {
                         {room.description || "Elegant modern decor with garden or city view. Includes balcony, bathtub, and free WiFi."}
                       </div>
                       <div className="flex gap-2 mt-auto">
-                        <button className="text-[#F47A1F] border border-[#F47A1F] bg-white px-4 py-1.5 rounded-md font-medium text-xs hover:bg-[#f7e7d7] transition">
+                        <button
+                          className="text-[#F47A1F] border border-[#F47A1F] bg-white px-4 py-1.5 rounded-md font-medium text-xs hover:bg-[#f7e7d7] transition"
+                          onClick={() => handleRoomDetailClick(room.id)}
+                        >
                           Room Detail
                         </button>
+                        <Link
+                          href={`/customer/search-result/room-detail?id=${encodeURIComponent(String(room.id ?? ""))}`}
+                          className="hidden"
+                        >
+                          View
+                        </Link>
                       </div>
                     </div>
                     <div className="flex flex-col items-end justify-between min-w-[160px]">
