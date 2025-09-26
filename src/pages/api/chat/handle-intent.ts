@@ -106,6 +106,14 @@ User Question: "${userQuestion}"
 Answer based on the FAQ and additional context above. If the question doesn't match any FAQ, provide a helpful response or ask for clarification.`;
 
     const response = await chatWithGemini(faqPrompt, conversationHistory);
+    
+    // ตรวจสอบความมั่นใจของคำตอบ
+    const confidence = await checkResponseConfidence(response, userQuestion);
+    if (confidence < 5) {
+      console.log('🤖 FAQ response confidence too low, using fallback');
+      return await getFallbackContext();
+    }
+    
     return response;
 
   } catch (error) {
@@ -170,6 +178,14 @@ Answer only based on the context and conversation history.`;
     }
 
     const response = await chatWithGemini(responsePrompt, conversationHistory);
+    
+    // ตรวจสอบความมั่นใจของคำตอบ
+    const confidence = await checkResponseConfidence(response, userQuestion);
+    if (confidence < 5) {
+      console.log('🤖 Rooms response confidence too low, using fallback');
+      return await getFallbackContext();
+    }
+    
     return response;
 
   } catch (error) {
@@ -235,11 +251,54 @@ Answer only based on the context and conversation history.`;
     }
 
     const response = await chatWithGemini(responsePrompt, conversationHistory);
+    
+    // ตรวจสอบความมั่นใจของคำตอบ
+    const confidence = await checkResponseConfidence(response, userQuestion);
+    if (confidence < 5) {
+      console.log('🤖 Promo codes response confidence too low, using fallback');
+      return await getFallbackContext();
+    }
+    
     return response;
 
   } catch (error) {
     console.error('Promo codes intent failed:', error);
     return await getFallbackContext();
+  }
+}
+
+// Helper function to check response confidence
+async function checkResponseConfidence(response: string, userQuestion: string): Promise<number> {
+  try {
+    const confidencePrompt = `
+Rate the confidence of this response (1-10):
+Response: "${response}"
+Question: "${userQuestion}"
+
+Consider:
+- Does the response directly answer the question?
+- Is the response specific and informative?
+- Does the response indicate uncertainty or lack of knowledge?
+- Is the response based on hotel information/data?
+- Does the response provide hotel-specific details?
+- If the response says "cannot help" or "not able to", give lower score (1-4)
+
+Answer only with a number from 1-10.`;
+
+    const confidenceText = await chatWithGemini(confidencePrompt);
+    const confidence = parseInt(confidenceText.trim());
+    
+    // Validate confidence score
+    if (isNaN(confidence) || confidence < 1 || confidence > 10) {
+      console.log('🤖 Invalid confidence score, defaulting to 5');
+      return 5;
+    }
+    
+    console.log('🤖 Response confidence:', confidence);
+    return confidence;
+  } catch (error) {
+    console.error('Error checking response confidence:', error);
+    return 5; // Default to medium confidence
   }
 }
 
@@ -256,10 +315,10 @@ async function getFallbackContext(): Promise<string> {
       return fallbackContext.answer;
     }
 
-    // Ultimate fallback
-    return 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
+    // No fallback message found in database
+    throw new Error('No fallback message found in database');
   } catch (error) {
     console.error('Error getting fallback context:', error);
-    return 'ขอบคุณสำหรับข้อความครับ หากต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้ครับ';
+    throw error;
   }
 }

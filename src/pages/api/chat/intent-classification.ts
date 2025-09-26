@@ -11,7 +11,7 @@ export default async function handler(
   }
 
   try {
-    const { userQuestion } = req.body;
+    const { userQuestion, conversationHistory } = req.body;
 
     if (!userQuestion) {
       return res.status(400).json({ error: 'User question is required' });
@@ -19,9 +19,20 @@ export default async function handler(
 
     console.log('🎯 INTENT CLASSIFICATION for:', userQuestion);
 
+    // Build conversation context
+    let contextString = '';
+    if (conversationHistory && conversationHistory.length > 0) {
+      const recentHistory = conversationHistory.slice(-3); // Last 3 messages
+      contextString = recentHistory.map((msg: any) => 
+        `${msg.is_bot ? 'Bot' : 'User'}: ${msg.message}`
+      ).join('\n');
+    }
+
     const intentPrompt = `You are an intent classification assistant.
 Categories: faq, rooms, promo_codes, other.
 Answer only with the category name.
+
+${contextString ? `Conversation context:\n${contextString}\n` : ''}
 User question: "${userQuestion}"`;
 
     const intentResponse = await chatWithGemini(intentPrompt);
