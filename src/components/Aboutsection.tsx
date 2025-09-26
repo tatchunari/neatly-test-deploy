@@ -1,67 +1,49 @@
-import Image from "next/image";
-import React, { useState, useEffect, useRef } from "react";
+"use client";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const Aboutsection = () => {
-  // Carousel images
-  const images = [
-    { src: "/image/deluxe.jpg", alt: "Deluxe" },
-    { src: "/image/premiersea.jpg", alt: "Premier Sea View" },
-    { src: "/image/suite.jpg", alt: "Suite" },
-    { src: "/image/superior.jpg", alt: "Superior" },
-    { src: "/image/superiorgarden.jpg", alt: "Superior Garden View" },
-    { src: "/image/supreme.jpg", alt: "Supreme" },
-  ];
+const images = [
+  { src: "/image/deluxe.jpg", alt: "Deluxe" },
+  { src: "/image/premiersea.jpg", alt: "Premier Sea View" },
+  { src: "/image/suite.jpg", alt: "Suite" },
+  { src: "/image/superior.jpg", alt: "Superior" },
+  { src: "/image/superiorgarden.jpg", alt: "Superior Garden View" },
+  { src: "/image/supreme.jpg", alt: "Supreme" },
+];
 
-  // Responsive: 6 images on desktop, 1 on mobile
-  const [slidesToShow, setSlidesToShow] = useState(1);
-  const [current, setCurrent] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+export default function Aboutsection() {
+  const [index, setIndex] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // ฟังก์ชันเปลี่ยนภาพ
+  const goToPrev = () => {
+    setIndex((prev) => (prev - 1 + images.length) % images.length);
+    resetTimer();
+  };
+
+  const goToNext = () => {
+    setIndex((prev) => (prev + 1) % images.length);
+    resetTimer();
+  };
+
+  // รีเซ็ต timer เมื่อกดปุ่ม
+  const resetTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setIndex((prev) => (prev + 1) % images.length);
+    }, 8000);
+  };
+
+  // เปลี่ยนภาพทุก 8 วิ
   useEffect(() => {
-    function handleResize() {
-      if (window.innerWidth >= 1024) setSlidesToShow(6);
-      else setSlidesToShow(1);
-    }
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Auto play (Image Carousel)
-  useEffect(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % images.length);
-    }, 3500);
+    timerRef.current = setInterval(() => {
+      setIndex((prev) => (prev + 1) % images.length);
+    }, 8000);
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [images.length]);
-
-  // Manual navigation
-  function goLeft() {
-    setCurrent((prev) => (prev - 1 + images.length) % images.length);
-  }
-  function goRight() {
-    setCurrent((prev) => (prev + 1) % images.length);
-  }
-
-  // For desktop, show 6 images in a row, highlight current
-  // For mobile, show only current image
-  function getVisibleImages() {
-    if (slidesToShow === 1) {
-      return [images[current]];
-    } else {
-      // Show 6 images, current in the middle if possible
-      let start = current - Math.floor(slidesToShow / 2);
-      if (start < 0) start = 0;
-      if (start > images.length - slidesToShow) start = images.length - slidesToShow;
-      if (images.length <= slidesToShow) start = 0;
-      return images.slice(start, start + slidesToShow);
-    }
-  }
-
-  const visibleImages = getVisibleImages();
+    // eslint-disable-next-line
+  }, []);
 
   return (
     <section
@@ -125,125 +107,55 @@ const Aboutsection = () => {
           height: "500px",
         }}
       >
-        {/* Left Button */}
-        <button
-          aria-label="Previous"
-          onClick={goLeft}
-          className={`
-            absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-20
-            bg-white/80 hover:bg-white text-[#2F3E35] rounded-full shadow
-            w-10 h-10 md:w-12 md:h-12 flex items-center justify-center
-            border border-gray-200
-            transition
-            flex
-          `}
-          style={{ outline: "none" }}
-        >
-          <svg width="20" height="20" fill="none" viewBox="0 0 20 20" className="md:w-6 md:h-6">
-            <path d="M13 16l-5-6 5-6" stroke="#2F3E35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        {/* Right Button */}
-        <button
-          aria-label="Next"
-          onClick={goRight}
-          className={`
-            absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-20
-            bg-white/80 hover:bg-white text-[#2F3E35] rounded-full shadow
-            w-10 h-10 md:w-12 md:h-12 flex items-center justify-center
-            border border-gray-200
-            transition
-            flex
-          `}
-          style={{ outline: "none" }}
-        >
-          <svg width="20" height="20" fill="none" viewBox="0 0 20 20" className="md:w-6 md:h-6">
-            <path d="M7 4l5 6-5 6" stroke="#2F3E35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        {/* Carousel Images */}
-        <div
-          className={`
-            flex items-center justify-center
-            w-full h-full bg-[#F7F7FA]
-            relative
-            overflow-hidden
-          `}
-          style={{
-            height: "500px",
-            minHeight: "500px",
-            maxWidth: "1440px",
-            marginTop: "0px",
-            marginBottom: "0px",
-          }}
-        >
-          {slidesToShow === 1 ? (
-            // Mobile: show only current image
-            <div
-              className="flex-shrink-0 relative"
-              style={{
-                width: "100vw",
-                maxWidth: "100vw",
-                minWidth: "100vw",
-                height: "500px",
-                border: "none",
-                background: "#f7f7fa",
-                margin: "0",
-                overflow: "hidden",
-                borderRadius: 0,
-                transition: "all 0.5s",
-              }}
-            >
-              <Image
-                src={images[current].src}
-                alt={images[current].alt}
-                fill
-                style={{ objectFit: "cover" }}
-                sizes="100vw"
-                priority
+        <div className="relative w-full h-[500px] overflow-hidden rounded-2xl shadow-lg bg-[#F7F7FA]">
+          {/* ปุ่มเลื่อนซ้าย */}
+          <button
+            aria-label="Previous image"
+            onClick={goToPrev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow p-2 transition-colors"
+            style={{ outline: "none", border: "none" }}
+          >
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          {/* ปุ่มเลื่อนขวา */}
+          <button
+            aria-label="Next image"
+            onClick={goToNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow p-2 transition-colors"
+            style={{ outline: "none", border: "none" }}
+          >
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <AnimatePresence>
+            <motion.img
+              key={images[index].src}
+              src={images[index].src}
+              alt={images[index].alt}
+              className="w-full h-full object-cover absolute"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 0.8 }}
+              style={{ minHeight: "500px", maxHeight: "500px" }}
+            />
+          </AnimatePresence>
+          {/* จุดบอกตำแหน่ง (Indicators) */}
+          <div className="absolute bottom-4 w-full flex justify-center gap-2 z-10">
+            {images.map((_, i) => (
+              <div
+                key={i}
+                className={`w-3 h-3 rounded-full transition-colors duration-300 ${
+                  i === index ? "bg-white" : "bg-gray-400"
+                }`}
               />
-            </div>
-          ) : (
-            // Desktop: show 6 images, highlight current
-            visibleImages.map((img, idx) => {
-              // Find the index in the original images array
-              let imgIdx = images.findIndex((i) => i.alt === img.alt);
-              const isActive = imgIdx === current;
-              return (
-                <div
-                  key={img.alt}
-                  className="flex-shrink-0 relative"
-                  style={{
-                    width: "400px",
-                    maxWidth: "400px",
-                    minWidth: "400px",
-                    height: "500px",
-                    border: isActive ? "4px solid #F47A1F" : "none",
-                    background: "#f7f7fa",
-                    margin: "0",
-                    overflow: "hidden",
-                    borderRadius: isActive ? "12px" : 0,
-                    boxShadow: isActive ? "0 4px 24px 0 rgba(244,122,31,0.10)" : "none",
-                    opacity: isActive ? 1 : 0.7,
-                    transition: "all 0.3s",
-                  }}
-                >
-                  <Image
-                    src={img.src}
-                    alt={img.alt}
-                    fill
-                    style={{ objectFit: "cover" }}
-                    sizes="400px"
-                    priority={imgIdx === 0}
-                  />
-                </div>
-              );
-            })
-          )}
+            ))}
+          </div>
         </div>
       </div>
     </section>
   );
-};
-
-export default Aboutsection;
+}
