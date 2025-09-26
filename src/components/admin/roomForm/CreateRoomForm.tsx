@@ -84,7 +84,8 @@ export function CreateRoomForm({ room }: { room?: any }) {
           </div>
 
           {/* Create Form */}
-          <div className="max-w-4xl mx-auto p-6 bg-white">
+          <div className="w-full min-h-screen bg-gray-100 py-10">
+          <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-8">
             <div className="space-y-8 flex justify-center items-center flex-col">
               {/* Basic Information Section */}
               <div className="space-y-6">
@@ -236,6 +237,7 @@ export function CreateRoomForm({ room }: { room?: any }) {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </form>
       </FormProvider>

@@ -74,13 +74,15 @@ export const RoomMainImage = ({ name, value } : RoomMainImageProps) => {
             {mainImgUrl && mainImgUrl.trim() !== "" && (
               <img src={mainImgUrl} alt="uploaded image" />
             )}
+            <div className="bg-[#B61515] left-55 bottom-55 rounded-full w-6 h-6 absolute">
             <button
               type="button"
               onClick={removeFile}
-              className="absolute top-2 right-3 text-red-500 font-bold"
+              className="absolute cursor-pointer text-white left-2 top-1 text-xs font-bold"
             >
               ✕
             </button>
+            </div>
           </div>
         )}
 
