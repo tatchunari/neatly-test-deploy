@@ -161,8 +161,6 @@ export const RegisterForm = () => {
               }
             }}
             error={!!errors.profilePicture}
-            multiple={false}
-            maxFiles={1}
           />
         </FormField>
       </div>

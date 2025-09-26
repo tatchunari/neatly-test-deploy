@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, RegisterFormData } from "@/utils/validation";
+import {
+  registerSchema,
+  RegisterFormData,
+} from "@/utils/validation/registerValidation";
 import { AuthService } from "@/services/authService";
 import { useRouter } from "next/router";
 
