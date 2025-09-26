@@ -8,6 +8,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { updateRoom, deleteRoom } from "@/services/roomService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { roomSchema, RoomFormData } from "@/schemas/roomSchema";
+import { Room } from "@/types/rooms";
 
 
 import { RoomMainImage } from "@/components/admin/roomForm/RoomMainImage";
@@ -20,8 +21,11 @@ import { ConfirmDeleteModal } from "../ui/ConfirmDeleteModal";
 import { DropDownInput } from "../ui/DropdownInput";
 import { toast } from 'sonner';
 
+interface EditRoomFormProps {
+  room: Room;
+}
 
-export function EditRoomForm({ room }) {
+export function EditRoomForm({ room }: EditRoomFormProps) {
   const router = useRouter();
   const roomId = router.query.id as string;
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +56,7 @@ export function EditRoomForm({ room }) {
 
   // console.log("Gallery Image:", room.gallery_images);
 
-  const onSubmit = async (formData) => {
+  const onSubmit = async (formData: RoomFormData) => {
     setIsLoading(true);
     try {
       await updateRoom(roomId, formData, hasPromotion);

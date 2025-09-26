@@ -12,22 +12,6 @@ export interface RoomFormData {
   amenities: string[];
 }
 
-export interface Room {
-  id: string;
-  room_type: string;
-  room_size: number;
-  bed_type: string;
-  guests: number;
-  price_per_night: number;
-  promotion_price?: number;
-  description: string;
-  main_image_url: string;
-  gallery_images: string[];
-  amenities: string[];
-  created_at: string;
-  updated_at: string;
-}
-
 export interface ImageFile {
   file: File;
   url: string;
@@ -52,4 +36,17 @@ export interface RoomFormValues {
   mainImgUrl: string;
   galleryImageUrls: string[];
   amenities?: string[];
+}
+export interface Room {
+  id: string;
+  room_type: string;
+  room_size: number;
+  bed_type: string;
+  guests: number;
+  price: number;
+  promotion_price?: number | null;
+  description: string;
+  main_image_url: string[];  
+  gallery_images: string[];
+  amenities: string[];
 }
