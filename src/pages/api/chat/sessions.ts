@@ -91,7 +91,6 @@ export default async function handler(
     try {
       const { anonymousId, customerId } = req.query;
       
-      console.log('🔍 Fetching sessions for:', { anonymousId, customerId });
       
       if (!anonymousId && !customerId) {
         return res.status(400).json({ error: 'Anonymous ID or Customer ID is required' });
@@ -113,7 +112,6 @@ export default async function handler(
 
       const { data: sessions, error } = await query;
       
-      console.log('📋 Found sessions:', { count: sessions?.length || 0, sessions });
 
       if (error) {
         console.error('Error fetching sessions:', error);

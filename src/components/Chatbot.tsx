@@ -13,14 +13,14 @@ export default function Chatbot() {
   const { user, anonymousId, isGuest } = auth || {};
   
   // Debug auth state
-  console.log('🤖 Chatbot auth state:', {
-    hasAuth: !!auth,
-    user: !!user,
-    userId: user?.id,
-    anonymousId,
-    isGuest,
-    authStatus: user ? 'authenticated' : (anonymousId ? 'guest' : 'none')
-  });
+  // console.log('🤖 Chatbot auth state:', {
+  //   hasAuth: !!auth,
+  //   user: !!user,
+  //   userId: user?.id,
+  //   anonymousId,
+  //   isGuest,
+  //   authStatus: user ? 'authenticated' : (anonymousId ? 'guest' : 'none')
+  // });
   const [open, setOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -35,10 +35,10 @@ export default function Chatbot() {
   const [greetingMessage, setGreetingMessage] = useState<string>('');
   const [suggestionFAQs, setSuggestionFAQs] = useState<any[]>([]);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
+  const [showTopics, setShowTopics] = useState(false);
   const subscriptionReadyPromise = useRef<Promise<void> | null>(null);
   const subscriptionResolve = useRef<(() => void) | null>(null);
   const displayedBotMessages = useRef<Set<string>>(new Set());
-  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -181,19 +181,22 @@ export default function Chatbot() {
             }
             console.log('Adding new message to state:', newMessage.id);
             
-            // Hide typing indicator if this is a bot message
+            // Add message to state first
+            const updatedMessages = [...prev, newMessage];
+            
+            // Hide typing indicator if this is a bot message (after adding to state)
             if (newMessage.is_bot) {
-              console.log('🤖 Bot message detected via Realtime, hiding typing indicator');
-              setIsBotTyping(false);
+              console.log('🤖 Bot message received via Realtime, hiding typing indicator');
               displayedBotMessages.current.add(newMessage.id);
-              if (safetyTimeoutRef.current) {
-                clearTimeout(safetyTimeoutRef.current);
-                safetyTimeoutRef.current = null;
-              }
-              console.log('🤖 Bot response received via Realtime, hiding typing indicator');
+              
+              // Hide typing indicator after a short delay to ensure message is rendered
+              setTimeout(() => {
+                setIsBotTyping(false);
+                console.log('🤖 Bot response received via Realtime, hiding typing indicator');
+              }, 200);
             }
             
-            return [...prev, newMessage];
+            return updatedMessages;
           });
 
           // Auto scroll to bottom after adding message
@@ -239,12 +242,6 @@ export default function Chatbot() {
   const loadExistingSession = async () => {
     try {
       setIsLoadingSession(true);
-      console.log('🔍 Loading existing session for:', {
-        user: !!user,
-        userId: user?.id,
-        anonymousId,
-        isGuest
-      });
 
       if (!user && !anonymousId) {
         console.log('❌ No user ID or anonymous ID available');
@@ -378,12 +375,6 @@ export default function Chatbot() {
       let sessionToUse = currentSession;
       if (!sessionToUse) {
         setIsLoadingSession(true);
-        console.log('🔄 Creating new session for first message:', {
-          user: !!user,
-          userId: user?.id,
-          anonymousId,
-          isGuest
-        });
 
         const sessionData: any = {};
         if (user?.id) {
@@ -413,12 +404,6 @@ export default function Chatbot() {
       console.log('🤖 Bot typing indicator shown');
 
       // Send message using the session with authentication
-      console.log('📤 Sending message with auth:', { 
-        anonymousId, 
-        customerId: user?.id, 
-        isGuest, 
-        sessionId: sessionToUse!.id 
-      });
       
       const { data } = await axios.post(`/api/chat/messages`, {
         message: userMessage,
@@ -455,11 +440,6 @@ export default function Chatbot() {
 
       console.log('Message sent successfully:', data.message);
       
-      // Safety timeout: Hide typing indicator after 15 seconds if no bot response
-      safetyTimeoutRef.current = setTimeout(() => {
-        console.log('🤖 Safety timeout: Hiding typing indicator after 15 seconds');
-        setIsBotTyping(false);
-      }, 15000);
 
       // Fallback: Check for bot response after intent classification completes
       // Wait longer to account for intent classification time (4-5 seconds)
@@ -476,13 +456,32 @@ export default function Chatbot() {
           
           console.log('🔍 Fallback check: Found', latestMessages.messages?.length || 0, 'total messages');
           
+          // Find the latest bot message that was created AFTER the user's last message
+          const userMessages = latestMessages.messages.filter((msg: ChatMessage) => !msg.is_bot);
+          const lastUserMessage = userMessages.sort((a: ChatMessage, b: ChatMessage) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )[0];
+          
           const latestBotMessage = latestMessages.messages
-            .filter((msg: ChatMessage) => msg.is_bot)
+            .filter((msg: ChatMessage) => {
+              if (!msg.is_bot) return false;
+              // Only consider bot messages created after the last user message
+              if (lastUserMessage) {
+                return new Date(msg.created_at).getTime() > new Date(lastUserMessage.created_at).getTime();
+              }
+              return true;
+            })
             .sort((a: ChatMessage, b: ChatMessage) => 
               new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             )[0];
           
-          console.log('🔍 Fallback check: Latest bot message:', latestBotMessage ? {
+          console.log('🔍 Fallback check: Last user message:', lastUserMessage ? {
+            id: lastUserMessage.id,
+            message: lastUserMessage.message.substring(0, 50) + '...',
+            created_at: lastUserMessage.created_at
+          } : 'None found');
+          
+          console.log('🔍 Fallback check: Latest bot message (after user message):', latestBotMessage ? {
             id: latestBotMessage.id,
             message: latestBotMessage.message.substring(0, 50) + '...',
             created_at: latestBotMessage.created_at
@@ -513,22 +512,14 @@ export default function Chatbot() {
               });
               displayedBotMessages.current.add(latestBotMessage.id);
               setIsBotTyping(false);
-              if (safetyTimeoutRef.current) {
-                clearTimeout(safetyTimeoutRef.current);
-                safetyTimeoutRef.current = null;
-              }
               console.log('🤖 Bot response received via fallback, hiding typing indicator');
             } else {
               console.log('Bot message already exists in UI, skipping fallback');
               setIsBotTyping(false);
-              if (safetyTimeoutRef.current) {
-                clearTimeout(safetyTimeoutRef.current);
-                safetyTimeoutRef.current = null;
-              }
               console.log('🤖 Bot response already exists, hiding typing indicator');
             }
           } else {
-            console.log('🤖 No bot message found in database yet, keeping typing indicator');
+            console.log('🤖 No NEW bot message found after user message, keeping typing indicator');
             // Don't hide typing indicator here - let safety timeout handle it
           }
         } catch (error) {
@@ -635,14 +626,24 @@ export default function Chatbot() {
               />
               <h2 className="font-semibold text-gray-800">Neatly Assistant</h2>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleClose()}
-              className="text-gray-500 hover:bg-gray-100 h-8 w-8"
-            >
-              ✖
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowTopics(!showTopics)}
+                className="text-gray-500 hover:text-gray-700 text-xs px-2 py-1"
+              >
+                Topics
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleClose()}
+                className="text-gray-500 hover:bg-gray-100 h-8 w-8"
+              >
+                ✖
+              </Button>
+            </div>
           </div>
 
           {/* Body */}
@@ -663,7 +664,7 @@ export default function Chatbot() {
               )}
 
               {/* Greeting message */}
-              {!isLoadingSession && messages.length === 0 && greetingMessage && (
+              {!isLoadingSession && greetingMessage && (
                 <div className="flex flex-col items-start">
                   <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800 shadow-sm">
                     <p className="text-sm">{greetingMessage}</p>
@@ -672,7 +673,7 @@ export default function Chatbot() {
               )}
               
               {/* Suggestion buttons */}
-              {!isLoadingSession && messages.length === 0 && suggestionFAQs.length > 0 && (
+              {!isLoadingSession && suggestionFAQs.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {suggestionFAQs.map((faq) => (
                     <Button
@@ -703,6 +704,23 @@ export default function Chatbot() {
                   >
                     <p className="text-sm">{message.message}</p>
                   </div>
+                  
+                  {/* Fallback message with Open Ticket button - outside message box */}
+                  {message.is_bot && message.message.includes('ticket') && (
+                    <div className="mt-2">
+                      <Button
+                        onClick={() => {
+                          // TODO: Implement open ticket functionality
+                          console.log('Open ticket clicked');
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="px-3 py-1.5 rounded-full border border-orange-300 bg-orange-50 text-orange-700 text-sm shadow-sm hover:bg-orange-100 cursor-pointer"
+                      >
+                        Open Ticket
+                      </Button>
+                    </div>
+                  )}
                   <p className="text-xs mt-1 text-gray-500 px-1">
                     {new Date(message.created_at).toLocaleTimeString('th-TH', {
                       hour: '2-digit',
@@ -729,6 +747,28 @@ export default function Chatbot() {
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
+
+          {/* Topics button suggestion buttons */}
+          {!isLoadingSession && showTopics && suggestionFAQs.length > 0 && (
+            <div className="p-4 bg-white border-t border-gray-200">
+              <div className="flex flex-wrap gap-2">
+                {suggestionFAQs.map((faq) => (
+                  <Button
+                    key={`topic-${faq.id}`}
+                    onClick={() => {
+                      sendMessage(faq.question);
+                      setShowTopics(false);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="px-3 py-1.5 rounded-full border border-blue-300 bg-blue-50 text-blue-700 text-sm shadow-sm hover:bg-blue-100 cursor-pointer"
+                  >
+                    {faq.question}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Input */}
           {!isLoadingSession && (

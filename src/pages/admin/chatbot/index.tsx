@@ -252,8 +252,11 @@ export default function ChatbotAdmin() {
   const handleSaveGreeting = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/chat/faqs', {
-        method: 'POST',
+      // หา greeting message ที่มีอยู่
+      const existingGreeting = faqs.find(faq => faq.question === '::greeting::');
+      
+      const response = await fetch(`/api/chat/faqs${existingGreeting ? `?id=${existingGreeting.id}` : ''}`, {
+        method: existingGreeting ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: '::greeting::',
@@ -279,8 +282,11 @@ export default function ChatbotAdmin() {
   const handleSaveFallback = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/chat/faqs', {
-        method: 'POST',
+      // หา fallback message ที่มีอยู่
+      const existingFallback = faqs.find(faq => faq.question === '::fallback::');
+      
+      const response = await fetch(`/api/chat/faqs${existingFallback ? `?id=${existingFallback.id}` : ''}`, {
+        method: existingFallback ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: '::fallback::',
