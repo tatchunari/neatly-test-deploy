@@ -1,4 +1,4 @@
-"use client";
+"use client"; // บอก Next.js ว่าคอมโพเนนต์นี้รันฝั่ง client
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/router";
@@ -7,15 +7,15 @@ import Image from "next/image";
 // ใช้ supabase โดยตรง ไม่พึ่ง useAuth context
 import { supabase } from "@/lib/supabaseClient";
 
-/**
- * Responsive Navbar
- * - Desktop: 1440x100, shows logo, nav items, and login button/user menu
- * - Mobile: 375x48, shows logo and hamburger, menu slides out on click
- * - Hamburger: 3 bars, only on mobile
- * - Login button: orange (#F47A1F)
- * - Uses TailwindCSS
- * - navItems, loginLabel, logo, etc. are props for flexible rendering
- */
+// /**
+//  * Responsive Navbar
+//  * - Desktop: 1440x100, shows logo, nav items, and login button/user menu
+//  * - Mobile: 375x48, shows logo and hamburger, menu slides out on click
+//  * - Hamburger: 3 bars, only on mobile
+//  * - Login button: orange (#F47A1F)
+//  * - Uses TailwindCSS
+//  * - navItems, loginLabel, logo, etc. are props for flexible rendering
+//  */
 
 type NavItem = {
   label: string;
@@ -50,40 +50,113 @@ const defaultLogo = (
   </div>
 );
 
+// โหลด displayName + avatar จาก profiles.username (คีย์คือ id = auth.users.id)
+// ถ้าไม่มี/อ่านไม่ได้ ให้ fallback เป็น email
+async function fetchProfileInfo(user: { id: string; email: string | null }) {
+  const fallbackName = user.email ?? ""; // ถ้าไม่มี username ใช้อีเมลแทน
+  const fallbackAvatar = "/images/avatar.png"; // รูป default
+
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username, profile_image")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) return { displayName: fallbackName, avatarUrl: fallbackAvatar };
+
+    const username = (data?.username ?? "").toString().trim();
+    const profileImage = (data?.profile_image ?? "").toString().trim();
+
+    return {
+      displayName: username || fallbackName, // ถ้าusernameมีค่า จะใช้usernameแสดง
+      avatarUrl: profileImage || fallbackAvatar, // แต่ถ้ามีรูปจะใช้รูปแสดง
+    };
+  } catch { // ถ้าerror ในการเข้าถึงข้อมูล จะไปดึง email และ รูป defefault มาแสดงแทน
+    return { displayName: fallbackName, avatarUrl: fallbackAvatar }; 
+  }
+}
+
 // UserMenu component (inline) ใช้ supabase โดยตรง
 function UserMenu() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<null | { id: string; email: string | null }>(
+    null
+  );
+  const [displayName, setDisplayName] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>("/images/avatar.png");
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // โหลดสถานะผู้ใช้
   useEffect(() => {
-    let isMounted = true;
-    const init = async () => {
-      try {
-        setLoading(true);
-        const { data } = await supabase.auth.getUser();
-        if (isMounted) setUser(data?.user ?? null);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    init();
+    let mounted = true;
 
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase.auth.getUser();
+      if (!mounted) return;
+      const u = data?.user
+        ? { id: data.user.id, email: (data.user.email as string) ?? null }
+        : null;
+      setUser(u);
+      setLoading(false);
+    })();
+
+    // Subscribe การเปลี่ยนแปลงสถานะ auth (เช่น login/logout)
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (isMounted) setUser(session?.user ?? null);
+      const u = session?.user
+        ? { id: session.user.id, email: (session.user.email as string) ?? null }
+        : null;
+      setUser(u);
     });
 
     return () => {
-      isMounted = false;
-      sub.subscription.unsubscribe();
+      mounted = false;
+      sub.subscription.unsubscribe(); // cleanup subscription
     };
   }, []);
 
+  // ดึงชื่อ กับ รูปprofile
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) {
+        if (!cancelled) {
+          setDisplayName("");
+          setAvatarUrl("/images/avatar.png");
+        }
+        return;
+      }
+      const { displayName, avatarUrl } = await fetchProfileInfo(user);
+      if (!cancelled) {
+        setDisplayName(displayName);
+        setAvatarUrl(avatarUrl);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.email]);
+
+  // ปิด dropdown ถ้าคลิกนอกเมนู
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+
+  // ใช้suppabase เพื่อlogout
   const handleLogout = async () => {
-    setOpen(false);
-    await supabase.auth.signOut();
-    window.location.replace("/customer/login?logged_out=1");
+    try {
+      setOpen(false);
+      await supabase.auth.signOut();
+    } finally {
+      // redirect ไปหน้า login หลัง logout
+      window.location.replace("/customer/login?logged_out=1");
+    }
   };
 
   if (loading) {
@@ -109,25 +182,34 @@ function UserMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 text-[#F47A1F] text-sm font-semibold hover:underline"
+        className="inline-flex items-center gap-2 text-[#F47A1F] w-6-sm font-semibold hover:underline"
       >
-        <img src="/images/avatar.png" className="w-6 h-6 rounded-full" alt="User avatar" />
-        <span className="hidden md:inline">{user.email}</span>
-        <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M5.23 7.21a.75.75 0 011.06.02L10 11.146l3.71-3.916a.75.75 0 111.08 1.04l-4.24 4.48a.75.75 0 01-1.08 0l-4.24-4.48a.75.75 0 01.02-1.06z"/>
+        <img
+          src={avatarUrl}
+          className="w-7 h-7 rounded-full object-cover"
+          alt="User avatar"
+        />
+        <span className="hidden md:inline">{displayName}</span>
+        <svg
+          className="w-3 h-3"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden
+        >
+          <path d="M5.23 7.21a.75.75 0 011.06.02L10 11.146l3.71-3.916a.75.75 0 111.08 1.04l-4.24 4.48a.75.75 0 01-1.08 0l-4.24-4.48a.75.75 0 01.02-1.06z" />
         </svg>
       </button>
 
       {open && (
         <div className="absolute right-0 mt-2 w-44 rounded-lg border bg-white shadow-md z-50">
-          <a href="/account" className="block px-4 py-2 hover:bg-gray-50">Account</a>
-          <a href="/settings" className="block px-4 py-2 hover:bg-gray-50">Settings</a>
+          <a href="/account" className="block px-4 py-2 hover:bg-gray-50">
+            Account
+          </a>
+          <a href="/settings" className="block px-4 py-2 hover:bg-gray-50">
+            Settings
+          </a>
           <button
-            onClick={async () => {
-              setOpen(false);
-              await supabase.auth.signOut();
-              window.location.replace("http://localhost:3000/");
-            }}
+            onClick={handleLogout}
             className="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600"
           >
             Logout
@@ -139,60 +221,73 @@ function UserMenu() {
 }
 
 // Mobile user menu for hamburger (when logged in)
-function MobileUserMenu({ user, onLogout }: { user: any; onLogout: () => void }) {
+function MobileUserMenu({
+  user,
+  onLogout,
+}: {
+  user: { id: string; email: string | null };
+  onLogout: () => void;
+}) {
+  const [name, setName] = useState<string>("");
+  const [avatar, setAvatar] = useState<string>("/images/avatar.png");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.id) {
+        if (!cancelled) {
+          setName("");
+          setAvatar("/images/avatar.png");
+        }
+        return;
+      }
+      const { displayName, avatarUrl } = await fetchProfileInfo(user);
+      if (!cancelled) {
+        setName(displayName);
+        setAvatar(avatarUrl);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.email]);
+
   return (
     <div className="flex flex-col w-full">
       <div className="flex items-center gap-3 px-2 pt-4 pb-2">
         <img
-          src="/images/avatar.png"
+          src={avatar}
           alt="User avatar"
           className="w-10 h-10 rounded-full object-cover"
         />
-        <span className="font-medium text-[#222] text-sm">{user?.user_metadata?.full_name || user?.email}</span>
+        <span className="font-medium text-[#222] text-sm">{name}</span>
       </div>
       <hr className="my-2 border-t border-gray-200" />
       <nav className="flex flex-col gap-2">
         <a
           href="/account"
-          className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F] transition-colors"
+          className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75V19.5z" />
-          </svg>
           Profile
         </a>
         <a
           href="/payment"
-          className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F] transition-colors"
+          className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-            <rect x="2.25" y="6.75" width="19.5" height="10.5" rx="2.25" stroke="currentColor" strokeWidth={1.5} />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 9.75h19.5" />
-          </svg>
           Payment Method
         </a>
         <a
           href="/booking-history"
-          className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F] transition-colors"
+          className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-            <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth={1.5} />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16 3v4M8 3v4M3 9h18" />
-          </svg>
           Booking History
         </a>
       </nav>
       <hr className="my-2 border-t border-gray-200" />
       <button
-        onClick={() => {
-          onLogout();
-          window.location.href = "http://localhost:3000/";
-        }}
-        className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F] transition-colors text-left"
+        onClick={onLogout}
+        className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F] text-left"
       >
-        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-3A2.25 2.25 0 008.25 5.25V9m7.5 6v3.75A2.25 2.25 0 0113.5 21h-3A2.25 2.25 0 018.25 18.75V15m-3-3h13.5" />
-        </svg>
         Log out
       </button>
     </div>
@@ -204,12 +299,10 @@ function scrollToSection(id: string) {
   if (typeof window === "undefined") return;
   const sectionId = id.replace(/^#/, "");
   const el = document.getElementById(sectionId);
-  if (el) {
-    // ปรับ offset ให้เลื่อนหลัง navbar (100px สำหรับ desktop, 80px สำหรับ mobile เพื่อให้เห็นข้อมูลครบ)
-    const yOffset = window.innerWidth >= 768 ? -100 : -80;
-    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-    window.scrollTo({ top: y, behavior: "smooth" });
-  }
+  if (!el) return;
+  const yOffset = window.innerWidth >= 768 ? -100 : -80; // กันชนกับ navbar
+  const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+  window.scrollTo({ top: y, behavior: "smooth" });
 }
 
 const Navbar = ({
@@ -217,31 +310,36 @@ const Navbar = ({
   loginLabel = "Log in",
   logo = defaultLogo,
 }: NavbarProps) => {
-  const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [open, setOpen] = useState(false); // mobile drawer
+  const [user, setUser] = useState<null | { id: string; email: string | null }>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   // Fetch user for mobile menu
   useEffect(() => {
-    let isMounted = true;
-    const init = async () => {
-      try {
-        setLoading(true);
-        const { data } = await supabase.auth.getUser();
-        if (isMounted) setUser(data?.user ?? null);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    init();
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase.auth.getUser();
+      if (!mounted) return;
+      const u = data?.user
+        ? { id: data.user.id, email: (data.user.email as string) ?? null }
+        : null;
+      setUser(u);
+      setLoading(false);
+    })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (isMounted) setUser(session?.user ?? null);
+      const u = session?.user
+        ? { id: session.user.id, email: (session.user.email as string) ?? null }
+        : null;
+      setUser(u);
     });
 
     return () => {
-      isMounted = false;
+      mounted = false;
       sub.subscription.unsubscribe();
     };
   }, []);
@@ -273,21 +371,21 @@ const Navbar = ({
         className={`block w-6 h-0.5 bg-[#4B5755] mb-1 rounded transition-all duration-300 ${
           open ? "rotate-45 translate-y-2" : ""
         }`}
-      ></span>
+      />
       <span
         className={`block w-6 h-0.5 bg-[#4B5755] mb-1 rounded transition-all duration-300 ${
           open ? "opacity-0" : ""
         }`}
-      ></span>
+      />
       <span
         className={`block w-6 h-0.5 bg-[#4B5755] rounded transition-all duration-300 ${
           open ? "-rotate-45 -translate-y-2" : ""
         }`}
-      ></span>
+      />
     </button>
   );
 
-  // Mobile menu 
+  // Mobile menu
   const MobileMenu = (
     <div
       className={`fixed top-0 left-0 h-full w-full z-50 bg-white transition-transform duration-300 md:hidden ${
@@ -295,13 +393,15 @@ const Navbar = ({
       }`}
       style={{ minWidth: 0 }}
     >
-      <div className="flex items-center px-4 py-3 border-b" style={{ height: 48 }}>
-        {/* Logo clickable for mobile menu */}
+      <div
+        className="flex items-center px-4 py-3 border-b"
+        style={{ height: 48 }}
+      >
         <div
           className="flex-shrink-0 cursor-pointer"
           onClick={() => {
             setOpen(false);
-            window.location.href = "http://localhost:3000/";
+            window.location.href = "/";
           }}
         >
           {logo}
@@ -309,10 +409,10 @@ const Navbar = ({
         <div className="ml-auto">{Hamburger}</div>
       </div>
       <nav className="flex flex-col px-4 pt-6">
-        {/* If not logged in, show nav items and login button */}
+        {/* ถ้ายังไม่ได้login จะแสดงรายการเมนู และ ปุ่มlogin */}
         {!user ? (
           <>
-            {navItems.map((item, idx) => (
+            {navItems.map((item) => (
               <button
                 key={item.label}
                 className="text-[#222] text-sm font-normal py-2 text-left hover:text-[#F47A1F] transition-colors whitespace-nowrap"
@@ -331,16 +431,20 @@ const Navbar = ({
               className="block text-[#F47A1F] text-sm font-semibold hover:underline py-2"
               onClick={() => setOpen(false)}
             >
-              Log in
+              {loginLabel}
             </a>
           </>
         ) : (
-          // If logged in, show user menu as in the image
+          // แสดงเมนูของuserบนมือถือ เมื่อuser loginอยู่
           <MobileUserMenu
+            // ส่งข้อมูลuser เพื่อใช้แสดงusername, email หรือรูปprofile
             user={user}
+            // เมื่อuser กดปุ่มlogin ในเมนู
             onLogout={async () => {
               setOpen(false);
+              // เรียกคำสั่ง logout ของ supabase เพื่อลบ session และ token
               await supabase.auth.signOut();
+              // เปลี่ยนหน้าไปยังหน้า login
               window.location.replace("/customer/login?logged_out=1");
             }}
           />
@@ -355,34 +459,36 @@ const Navbar = ({
       <header className="fixed top-0 left-0 w-full z-40 bg-white shadow-sm">
         <div
           className="mx-auto flex items-center justify-between px-4 md:px-12"
-          style={{
-            maxWidth: 1440,
-            height: 100,
-          }}
+          style={{ maxWidth: 1440, height: 100 }}
         >
           {/* Logo clickable */}
           <div
             className="flex-shrink-0 cursor-pointer"
             onClick={() => {
-              window.location.href = "http://localhost:3000/";
+              window.location.href = "/";
             }}
           >
             {logo}
           </div>
+
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center space-x-2">
             {renderNavItems()}
           </nav>
-          {/* Desktop login button or user menu */}
+
+          {/* Desktop: user menu (ชื่อ+รูปจาก profiles) */}
           <div className="hidden md:inline-block">
             <UserMenu />
           </div>
+
           {/* Hamburger for mobile */}
           <div className="md:hidden">{Hamburger}</div>
         </div>
+
         {/* Mobile menu */}
         {MobileMenu}
       </header>
+
       {/* Spacer for fixed navbar */}
       <div className="block md:hidden" style={{ height: 48 }} />
       <div className="hidden md:block" style={{ height: 100 }} />
