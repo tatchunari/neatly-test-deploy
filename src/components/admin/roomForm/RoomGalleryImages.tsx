@@ -21,12 +21,7 @@ export const RoomGalleryImages = ({ name, value }: RoomGalleryImagesProps) => {
     }))
   );
 
-  console.log("Gallery Items", galleryItems);
-
-  // Remove unused state variables that weren't being used properly
-  // const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
-  // const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  // const [galleryFileNames, setGalleryFileNames] = useState<string[]>([]);
+  // console.log("Gallery Items", galleryItems);
 
   // Sync form value when gallery items change
   const updateFormValue = (items: GalleryItem[]) => {

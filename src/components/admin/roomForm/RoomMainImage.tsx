@@ -13,7 +13,7 @@ export const RoomMainImage = ({ name, value } : RoomMainImageProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { register, setValue } = useFormContext();
 
-  console.log(`RoomMainImage.mainImgUrl: `, mainImgUrl);
+  // console.log(`RoomMainImage.mainImgUrl: `, mainImgUrl);
 
   const removeFile = () => {
     setMainImgName(null);
