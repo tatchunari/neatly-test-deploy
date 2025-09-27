@@ -1,7 +1,6 @@
 // pages/api/rooms/[id].ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { Room, RoomCreatePayload } from '@/types/rooms';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

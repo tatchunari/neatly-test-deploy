@@ -39,45 +39,48 @@ export default function Sidebar() {
 
   return (
     <aside className="w-68 min-h-screen bg-green-800 flex flex-col">
-  {/* Logo */}
-  <div className="flex items-center justify-center mt-10">
-    <img className="w-35" src="/assets/logo-white.png" alt="logo" />
-  </div>
-  <div className="flex justify-center items-center font-inter font-light text-xl mt-6 text-green-300">
-    Admin Panel Control
-  </div>
-
-  {/* Navigation */}
-  <nav className="mt-25 flex-1 w-full">
-    {menuItems.map((item) => (
-      <div key={item.href}>
-        <Link
-          href={item.href}
-          className={`flex items-center w-full px-7 py-5 mb-2 text-md font-medium text-green-300 hover:bg-green-600 ${
-            router.pathname === item.href ? "bg-green-600 text-green-300" : ""
-          }`}
-        >
-          <img className="w-6 h-6 mr-3" src={item.icon} alt={item.label} />
-          <span>{item.label}</span>
-        </Link>
+      {/* Logo */}
+      <div className="flex items-center justify-center mt-10">
+        <img className="w-35" src="/assets/logo-white.png" alt="logo" />
       </div>
-    ))}
-  </nav>
-  {/* Logout Button at the bottom */}
-  <div className="mt-auto mb-30 border-t-1 border-green-100/20">
-    <button
-      onClick={() => { // handle logout
-      }}
-      className="flex items-center w-full px-7 py-5 text-md font-inter font-medium text-green-300 hover:bg-green-600 hover:text-white cursor-pointer transition-colors"
-    >
-      <img
-        className="w-6 h-6 mr-4"
-        src="/assets/logout.png"
-        alt="Logout"
-      />
-      Log Out
-    </button>
-  </div>
-</aside>
+      <div className="flex justify-center items-center font-inter font-light text-xl mt-6 text-green-300">
+        Admin Panel Control
+      </div>
+
+      {/* Navigation */}
+      <nav className="mt-25 flex-1 w-full">
+        {menuItems.map((item) => {
+          const isActive =
+            router.pathname === item.href || router.pathname.startsWith(item.href + "/");
+
+          return (
+            <div key={item.href}>
+              <Link
+                href={item.href}
+                className={`flex items-center w-full px-7 py-5 mb-2 text-md font-medium text-green-300 hover:bg-green-600 ${
+                  isActive ? "bg-green-600 text-green-300" : ""
+                }`}
+              >
+                <img className="w-6 h-6 mr-3" src={item.icon} alt={item.label} />
+                <span>{item.label}</span>
+              </Link>
+            </div>
+          );
+        })}
+      </nav>
+
+      {/* Logout Button at the bottom */}
+      <div className="mt-auto mb-30 border-t-1 border-green-100/20">
+        <button
+          onClick={() => {
+            // handle logout
+          }}
+          className="flex items-center w-full px-7 py-5 text-md font-inter font-medium text-green-300 hover:bg-green-600 hover:text-white cursor-pointer transition-colors"
+        >
+          <img className="w-6 h-6 mr-4" src="/assets/logout.png" alt="Logout" />
+          Log Out
+        </button>
+      </div>
+    </aside>
   );
 }
