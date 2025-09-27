@@ -12,22 +12,6 @@ export interface RoomFormData {
   amenities: string[];
 }
 
-export interface Room {
-  id: string;
-  room_type: string;
-  room_size: number;
-  bed_type: string;
-  guests: number;
-  price_per_night: number;
-  promotion_price?: number;
-  description: string;
-  main_image_url: string;
-  gallery_images: string[];
-  amenities: string[];
-  created_at: string;
-  updated_at: string;
-}
-
 export interface ImageFile {
   file: File;
   url: string;
@@ -41,15 +25,28 @@ export interface AmenityItem {
 
 export type BedType = 'Single bed' | 'Double bed' | 'Queen bed' | 'King bed' | 'Twin beds';
 
-export interface RoomCreatePayload {
+export interface RoomFormValues {
+  roomType: string;
+  roomSize: number | string;
+  bedType: string;
+  guests: number | string;
+  pricePerNight: number | string;
+  promotionPrice?: number | string | null;
+  description: string;
+  mainImgUrl: string;
+  galleryImageUrls: string[];
+  amenities?: string[];
+}
+export interface Room {
+  id: string;
   room_type: string;
   room_size: number;
-  bed_type: BedType;
+  bed_type: string;
   guests: number;
   price: number;
-  promotion_price?: number;
+  promotion_price?: number | null;
   description: string;
-  main_image_url: string[];
+  main_image_url: string[];  
   gallery_images: string[];
   amenities: string[];
 }
