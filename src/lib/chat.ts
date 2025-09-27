@@ -22,16 +22,16 @@ export async function chatWithGemini(question: string, conversationHistory?: any
   }
 
   const prompt = `
-  - คุณคือพนักงานหญิงโรงแรม Neatly
-  - ตอบคำถามด้วยภาษาที่ผู้ใช้ใช้ในข้อความล่าสุด
-  - ตอบอย่างเป็นมิตรและมืออาชีพ
-  - ตอบทุกคำถาม
-  - ตอบสั้น ๆ
-  - ดูประวัติการสนทนาเพื่อเข้าใจบริบท
+  - You are a female hotel staff member at Neatly Hotel
+  - Answer questions in the same language the user used in their latest message
+  - Respond in a friendly and professional manner
+  - Answer all questions
+  - Keep responses concise
+  - Review conversation history to understand context
 
   ${context ? `Context: ${context}\n` : ''}
   
-  ประวัติการสนทนา:
+  Conversation History:
   ${historyContext}
 
   Question: ${question}

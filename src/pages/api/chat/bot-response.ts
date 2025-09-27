@@ -19,6 +19,27 @@ export default async function handler(
       return res.status(400).json({ error: 'Session ID and user message are required' });
     }
 
+    // Check if there's an active ticket with in_progress status AND live chat is enabled
+    const { data: activeTickets, error: ticketError } = await supabase
+      .from('chatbot_tickets')
+      .select('id, status, live_chat_enabled')
+      .eq('session_id', sessionId)
+      .eq('status', 'in_progress');
+
+    if (!ticketError && activeTickets && activeTickets.length > 0) {
+      const ticket = activeTickets[0];
+      // Check if live chat is enabled
+      if (ticket.live_chat_enabled) {
+        console.log('🚫 Bot response blocked - live chat active:', ticket);
+        return res.status(200).json({ 
+          message: null,
+          success: true,
+          blocked: true,
+          reason: 'Live chat is active'
+        });
+      }
+    }
+
     // 1. Strict match: JOIN chatbot_faqs + chatbot_faq_aliases
     let botResponse = '';
     try {
@@ -31,7 +52,7 @@ export default async function handler(
         .from('chatbot_faqs')
         .select('question, answer')
         .neq('question', '::greeting::')
-        .neq('question', '::fallback::');
+        // .neq('question', '::fallback::');
 
       if (!faqError && faqMatches) {
         for (const faq of faqMatches) {
