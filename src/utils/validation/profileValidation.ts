@@ -2,8 +2,6 @@ import { z } from "zod";
 import {
   firstNameValidation,
   lastNameValidation,
-  usernameValidation,
-  emailValidation,
   phoneValidation,
   countryValidation,
   profilePictureValidation,
@@ -12,7 +10,6 @@ import {
 export const profileSchema = z.object({
   firstName: firstNameValidation,
   lastName: lastNameValidation,
-  username: usernameValidation,
   email: z
     .string()
     .optional()
