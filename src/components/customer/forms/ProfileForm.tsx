@@ -55,7 +55,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     defaultValues: {
       firstName: "",
       lastName: "",
-      username: "",
       email: "",
       phoneNumber: "",
       dateOfBirth: "",
@@ -85,14 +84,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
       getCurrentUserEmail();
 
-      // เติมข้อมูลในฟอร์ม
+      // เติมข้อมูลในฟอร์ม (ISO date → เดี๋ยว DatePicker แปลงเอง)
       form.reset({
         firstName: profile.first_name,
         lastName: profile.last_name,
-        username: profile.username,
         email: "", // จะถูก set จาก auth user
         phoneNumber: profile.phone,
-        dateOfBirth: profile.date_of_birth,
+        dateOfBirth: profile.date_of_birth, // ✅ ISO string ตรง ๆ
         country: profile.country,
       });
     }
@@ -102,15 +100,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
    * จัดการการส่งฟอร์ม
    */
   const onSubmit = async (data: ProfileFormData) => {
-    clearError(); // เคลียร์ error ก่อน
-    setSuccessMessage(""); // เคลียร์ success message
+    clearError();
+    setSuccessMessage("");
 
     const success = await updateProfile(data);
     if (success) {
       setSuccessMessage("อัปเดตโปรไฟล์สำเร็จ!");
       onSuccess?.(profile);
 
-      // ซ่อน success message หลังจาก 3 วินาที
       setTimeout(() => {
         setSuccessMessage("");
       }, 3000);
@@ -127,7 +124,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         setProfileImage("");
         setSuccessMessage("ลบรูปโปรไฟล์สำเร็จ!");
 
-        // ซ่อน success message หลังจาก 3 วินาที
         setTimeout(() => {
           setSuccessMessage("");
         }, 3000);
@@ -141,8 +137,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   const handleFileSelect = (file: File | null) => {
     if (file) {
       form.setValue("profilePicture", file);
-
-      // แสดงรูปตัวอย่าง
       const reader = new FileReader();
       reader.onload = (e) => {
         setProfileImage(e.target?.result as string);
@@ -150,6 +144,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       reader.readAsDataURL(file);
     } else {
       form.setValue("profilePicture", undefined);
+      setProfileImage("");
     }
   };
 
@@ -181,45 +176,35 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 bg-[var(--color-bg)]">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-        <div className="flex gap-3">
-          {onCancel && (
-            <Button
-              type="button"
-              variant="outline"
-              size="md"
-              onClick={onCancel}
-            >
-              ยกเลิก
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="primary"
-            size="md"
-            loading={isUpdating}
-            onClick={form.handleSubmit(onSubmit)}
-            className="bg-orange-500 hover:bg-orange-600"
-          >
-            {isUpdating ? "กำลังอัปเดต..." : "Update Profile"}
-          </Button>
-        </div>
+        <h1 className="text-[68px] font-medium font-noto text-[var(--color-green-800)] leading-[125%] tracking-[-2%]">
+          Profile
+        </h1>
+
+        <Button
+          type="button"
+          variant="primary"
+          size="md"
+          loading={isUpdating}
+          onClick={form.handleSubmit(onSubmit)}
+        >
+          {isUpdating ? "กำลังอัปเดต..." : "Update Profile"}
+        </Button>
       </div>
 
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 customer-forms bg-white rounded-lg p-6 shadow-sm"
+        className="space-y-8 customer-forms bg-[var(--color-bg)] "
       >
         {/* Basic Information Section */}
-        <div className="space-y-6">
+        <div className="space-y-6 ">
           <h3 className="font-inter font-semibold text-[20px] leading-[150%] tracking-[-2%] text-[var(--color-gray-600)]">
             Basic Information
           </h3>
 
-          {/* First Row: First Name & Last Name */}
+          {/* First Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField label="First name" error={errors.firstName} required>
               <Input
@@ -238,16 +223,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             </FormField>
           </div>
 
-          {/* Second Row: Username & Email */}
+          {/* Second Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField label="Username" error={errors.username} required>
-              <Input
-                {...form.register("username")}
-                error={!!errors.username}
-                placeholder="Enter your username"
-              />
-            </FormField>
-
             <FormField label="Email" error={errors.email} required>
               <Input
                 {...form.register("email")}
@@ -259,10 +236,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 className="bg-gray-100 cursor-not-allowed"
               />
             </FormField>
-          </div>
 
-          {/* Third Row: Phone Number & Date of Birth */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField label="Phone number" error={errors.phoneNumber} required>
               <Input
                 {...form.register("phoneNumber")}
@@ -271,7 +245,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 placeholder="Enter your phone number"
               />
             </FormField>
+          </div>
 
+          {/* Third Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               label="Date of Birth"
               error={errors.dateOfBirth}
@@ -281,22 +258,18 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 {...form.register("dateOfBirth")}
                 error={!!errors.dateOfBirth}
                 placeholder="Select your date of birth"
+                value={form.watch("dateOfBirth") || ""} // ✅ ส่ง ISO ตรง ๆ
               />
             </FormField>
-          </div>
 
-          {/* Fourth Row: Country */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-1">
-              <FormField label="Country" error={errors.country} required>
-                <Select
-                  {...form.register("country")}
-                  error={!!errors.country}
-                  options={COUNTRY_OPTIONS}
-                  placeholder="Select your country"
-                />
-              </FormField>
-            </div>
+            <FormField label="Country" error={errors.country} required>
+              <Select
+                {...form.register("country")}
+                error={!!errors.country}
+                options={COUNTRY_OPTIONS}
+                placeholder="Select your country"
+              />
+            </FormField>
           </div>
         </div>
 
@@ -306,35 +279,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             Profile Picture
           </h3>
 
-          <div className="flex items-start gap-6">
-            {/* Current Profile Picture */}
-            {profileImage && (
-              <div className="relative">
-                <img
-                  src={profileImage}
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
-                />
-                <button
-                  type="button"
-                  onClick={handleDeleteProfilePicture}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600"
-                  title="ลบรูปโปรไฟล์"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-            {/* Upload New Picture */}
-            <div className="flex-1">
-              <FormField label="" error={errors.profilePicture}>
-                <FileUpload
-                  onFileSelect={handleFileSelect}
-                  error={!!errors.profilePicture}
-                />
-              </FormField>
-            </div>
+          <div className="flex-1">
+            <FormField label="" error={errors.profilePicture}>
+              <FileUpload
+                onFileSelect={handleFileSelect}
+                error={!!errors.profilePicture}
+                currentImage={profileImage}
+              />
+            </FormField>
           </div>
         </div>
 
