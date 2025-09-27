@@ -1,14 +1,16 @@
 import Layout from "@/components/admin/Layout";
+import { RoomListSkeleton } from "@/components/admin/RoomListSkeleton";
+import { Room } from "@/types/rooms";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function index() {
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [error, setError] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Filter rooms based on search query
   const filteredRooms = rooms.filter((room) => {
@@ -17,7 +19,7 @@ export default function index() {
     const query = searchQuery.toLowerCase();
 
     // Helper function to safely convert to string and check
-    const safeStringIncludes = (value) => {
+    const safeStringIncludes = (value: string | number | undefined | null) => {
       return value && value.toString().toLowerCase().includes(query);
     };
 
@@ -26,18 +28,18 @@ export default function index() {
       safeStringIncludes(room.bed_type) ||
       safeStringIncludes(room.room_size) ||
       safeStringIncludes(room.price) ||
-      safeStringIncludes(room.promotionPrice)
+      safeStringIncludes(room.promotion_price)
     );
   });
 
   // Pagination settings - USE FILTERED ROOMS
-  const roomsPerPage = 6;
-  const totalPages = Math.ceil(filteredRooms.length / roomsPerPage);
+  const roomsPerPage: number = 6;
+  const totalPages: number = Math.ceil(filteredRooms.length / roomsPerPage);
 
   // Calculate which rooms to display - USE FILTERED ROOMS
-  const startIndex = (currentPage - 1) * roomsPerPage;
-  const endIndex = startIndex + roomsPerPage;
-  const currentRooms = filteredRooms.slice(startIndex, endIndex);
+  const startIndex: number = (currentPage - 1) * roomsPerPage;
+  const endIndex: number = startIndex + roomsPerPage;
+  const currentRooms: Room[] = filteredRooms.slice(startIndex, endIndex);
 
   useEffect(() => {
     fetchRooms();
@@ -54,7 +56,7 @@ export default function index() {
         throw new Error(errData.error || "Failed to fetch rooms");
       }
 
-      const data = await response.json();
+      const data: { success: boolean; data: Room[]; message?: string } = await response.json();
 
       if (data.success) {
         setRooms(data.data); // your rooms array
@@ -69,7 +71,7 @@ export default function index() {
   };
 
   // Handle search input
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1); // Reset to first page when searching
   };
@@ -83,7 +85,7 @@ export default function index() {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
-  const handlePageClick = (page) => {
+  const handlePageClick = (page: number) => {
     setCurrentPage(page);
   };
 
@@ -123,9 +125,7 @@ export default function index() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center text-gray-600 items-center text-center w-250 bg-white z-50">
-          Loading rooms...
-        </div>
+        <RoomListSkeleton/>
       </Layout>
     );
   }
@@ -179,6 +179,9 @@ export default function index() {
 
             {/* Room Rows - Show only current page rooms */}
             {currentRooms.map((room) => (
+              <div key={room.id}>
+                <Link href={`/admin/room-types/${room.id}/edit`}>
+              <div>
               <div
                 key={room.id}
                 className="grid grid-cols-7 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors items-center"
@@ -186,7 +189,7 @@ export default function index() {
                 {/* Image */}
                 <div className="w-28 h-16 rounded-md overflow-hidden bg-gray-200">
                   <img
-                    src={room.main_image_url}
+                    src={`${room.main_image_url}`}
                     alt={room.room_type}
                     className="w-full h-full object-cover"
                   />
@@ -204,7 +207,7 @@ export default function index() {
 
                 {/* Promotion Price */}
                 <div className="text-sm text-gray-900">
-                  {Number(room.promotionPrice).toFixed(2)}
+                  {Number(room.promotion_price).toFixed(2)}
                 </div>
 
                 {/* Guests */}
@@ -217,6 +220,9 @@ export default function index() {
                 <div className="text-sm text-gray-900">
                   {room.room_size} sqm
                 </div>
+              </div>
+              </div>
+              </Link>
               </div>
             ))}
 

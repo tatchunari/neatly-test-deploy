@@ -53,7 +53,7 @@ export default function Herosection() {
           }}
         >
           <h1
-            className="text-white text-center font-serif font-medium"
+            className="text-white text-center font-noto"
             style={{
               fontSize: "clamp(2.2rem, 6vw, 56px)",
               lineHeight: "clamp(2.5rem, 7vw, 68px)",
