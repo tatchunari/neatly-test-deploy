@@ -87,7 +87,6 @@ export default function ChatbotAdmin() {
 
   const handleCreateFAQ = async () => {
     if (!newFAQ.question.trim() || !newFAQ.answer.trim()) {
-      alert('Please enter both topic and reply message');
       return;
     }
 
@@ -111,7 +110,6 @@ export default function ChatbotAdmin() {
         
         if (!newFaqId) {
           console.error('No FAQ ID returned from API');
-          alert('Error: No FAQ ID returned');
           return;
         }
         
@@ -131,7 +129,7 @@ export default function ChatbotAdmin() {
             
             if (!aliasResponse.ok) {
               console.error('Failed to create aliases:', await aliasResponse.text());
-              alert('FAQ created but failed to create aliases');
+
             } else {
               console.log('Aliases created successfully');
             }
@@ -143,13 +141,13 @@ export default function ChatbotAdmin() {
         setNewAliasInput('');
         setShowAliases(false);
         fetchFAQs();
-        alert('FAQ created successfully');
+
       } else {
-        alert('Error creating FAQ');
+
       }
     } catch (error) {
       console.error('Error creating FAQ:', error);
-      alert('Error creating FAQ');
+
     } finally {
       setLoading(false);
     }
@@ -157,7 +155,7 @@ export default function ChatbotAdmin() {
 
   const handleUpdateFAQ = async () => {
     if (!editingFAQ || !editingFAQ.question.trim() || !editingFAQ.answer.trim()) {
-      alert('Please enter both topic and reply message');
+
       return;
     }
 
@@ -191,7 +189,7 @@ export default function ChatbotAdmin() {
             
             if (!aliasResponse.ok) {
               console.error('Failed to update aliases:', await aliasResponse.text());
-              alert('FAQ updated but failed to update aliases');
+
             } else {
               console.log('Aliases updated successfully');
             }
@@ -201,13 +199,13 @@ export default function ChatbotAdmin() {
         setEditingFAQ(null);
         setEditAliasesUI([]);
         fetchFAQs();
-        alert('FAQ updated successfully');
+
       } else {
-        alert('Error updating FAQ');
+
       }
     } catch (error) {
       console.error('Error updating FAQ:', error);
-      alert('Error updating FAQ');
+
     } finally {
       setLoading(false);
     }
@@ -226,13 +224,13 @@ export default function ChatbotAdmin() {
 
       if (response.ok) {
         fetchFAQs();
-        alert('FAQ deleted successfully');
+
       } else {
-        alert('Error deleting FAQ');
+
       }
     } catch (error) {
       console.error('Error deleting FAQ:', error);
-      alert('Error deleting FAQ');
+
     } finally {
       setLoading(false);
     }
@@ -267,13 +265,13 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setIsEditingGreeting(false);
         fetchFAQs();
-        alert('Greeting message saved');
+
       } else {
-        alert('Error saving greeting message');
+
       }
     } catch (error) {
       console.error('Error saving greeting:', error);
-      alert('Error saving greeting message');
+
     } finally {
       setLoading(false);
     }
@@ -297,13 +295,13 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setIsEditingFallback(false);
         fetchFAQs();
-        alert('Fallback message saved');
+
       } else {
-        alert('Error saving fallback message');
+
       }
     } catch (error) {
       console.error('Error saving fallback:', error);
-      alert('Error saving fallback message');
+
     } finally {
       setLoading(false);
     }
@@ -322,7 +320,7 @@ export default function ChatbotAdmin() {
 
   const handleCreateContext = async () => {
     if (!newContext.content.trim()) {
-      alert('Please enter context content');
+
       return;
     }
 
@@ -339,13 +337,13 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setNewContext({ content: '' });
         fetchContexts();
-        alert('Context created successfully');
+
       } else {
-        alert('Failed to create context');
+
       }
     } catch (error) {
       console.error('Error creating context:', error);
-      alert('Error creating context');
+
     } finally {
       setLoading(false);
     }
@@ -353,7 +351,7 @@ export default function ChatbotAdmin() {
 
   const handleUpdateContext = async () => {
     if (!editingContext || !editingContext.content.trim()) {
-      alert('Please enter context content');
+
       return;
     }
 
@@ -370,13 +368,13 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setEditingContext(null);
         fetchContexts();
-        alert('Context updated successfully');
+
       } else {
-        alert('Failed to update context');
+
       }
     } catch (error) {
       console.error('Error updating context:', error);
-      alert('Error updating context');
+
     } finally {
       setLoading(false);
     }
@@ -394,28 +392,28 @@ export default function ChatbotAdmin() {
 
       if (response.ok) {
         fetchContexts();
-        alert('Context deleted successfully');
+
       } else {
-        alert('Failed to delete context');
+
       }
     } catch (error) {
       console.error('Error deleting context:', error);
-      alert('Error deleting context');
+
     }
   };
 
   return (
     <Layout>
-      <div className="bg-gray-100" style={{ minHeight: '100vh' }}>
+      <div className="bg-gray-100 flex-1" style={{ minHeight: '100vh' }}>
         {/* Header */}
         <div className="bg-white shadow-sm">
-          <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="w-full px-6 py-4">
             <h1 className="text-2xl font-bold text-gray-900">Chatbot Setup</h1>
           </div>
         </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="w-full px-6 py-8">
         <div className="bg-white rounded-lg shadow-sm p-6">
           {/* Default Chatbot Messages */}
           <div>
@@ -495,7 +493,7 @@ export default function ChatbotAdmin() {
           </div>
 
           {/* Thick Gray Divider */}
-          <div className="border-t-4 border-gray-300 my-6"></div>
+          <div className="border-t-4 border-gray-300 mt-10 mb-15"></div>
 
           {/* Suggestion Menu & Responses */}
           <div>
@@ -661,7 +659,7 @@ export default function ChatbotAdmin() {
 
 
             {/* Thick Gray Divider */}
-            <div className="border-t-4 border-gray-300 my-6"></div>
+            <div className="border-t-4 border-gray-300 mt-10 mb-15"></div>
             {/* Context Management Section */}
             <div className="mt-8">
               <h2 className="text-lg font-semibold text-gray-600 mb-4">Context Management</h2>

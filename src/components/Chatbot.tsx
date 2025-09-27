@@ -36,6 +36,17 @@ export default function Chatbot() {
   const [suggestionFAQs, setSuggestionFAQs] = useState<any[]>([]);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [showTopics, setShowTopics] = useState(false);
+  
+  // Ticket modal states
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [ticketTopic, setTicketTopic] = useState('');
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
+  
+  // Ticket status states
+  const [currentTicket, setCurrentTicket] = useState<any>(null);
+  const [adminTyping, setAdminTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  
   const subscriptionReadyPromise = useRef<Promise<void> | null>(null);
   const subscriptionResolve = useRef<(() => void) | null>(null);
   const displayedBotMessages = useRef<Set<string>>(new Set());
@@ -123,6 +134,8 @@ export default function Chatbot() {
     }
   }, [open, user, anonymousId]);
 
+
+
   // Supabase Realtime subscription for new messages
   useEffect(() => {
     if (!currentSession?.id) return;
@@ -154,6 +167,9 @@ export default function Chatbot() {
             message: payload.new?.message?.substring(0, 50) + '...',
             created_at: payload.new?.created_at
           });
+          console.log('📡 Full payload:', payload);
+          console.log('📡 Current state before processing:', { currentTicket });
+          
           const newMessage = payload.new as ChatMessage;
           
           // เพิ่มข้อความใหม่เข้า state
@@ -187,6 +203,9 @@ export default function Chatbot() {
             // Hide typing indicator if this is a bot message (after adding to state)
             if (newMessage.is_bot) {
               console.log('🤖 Bot message received via Realtime, hiding typing indicator');
+              console.log('🤖 Bot message content:', newMessage.message);
+              console.log('🤖 Current ticket state:', { currentTicket });
+              
               displayedBotMessages.current.add(newMessage.id);
               
               // Hide typing indicator after a short delay to ensure message is rendered
@@ -207,10 +226,13 @@ export default function Chatbot() {
           }, 100);
         }
       )
+      .on('broadcast', { event: 'typing_status' }, (payload) => {
+        if (payload.payload?.userType === 'admin') {
+          setAdminTyping(payload.payload.isTyping);
+        }
+      })
       .subscribe(async (status) => {
-        console.log('Realtime subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Realtime subscription active for session:', currentSession.id);
           setIsSubscribed(true);
           
           // Resolve the promise when subscription is ready
@@ -236,6 +258,57 @@ export default function Chatbot() {
     return () => {
       console.log('Cleaning up Realtime subscription for session:', currentSession.id);
       supabase.removeChannel(channel);
+    };
+  }, [currentSession?.id]);
+
+  // Supabase Realtime subscription for ticket updates
+  useEffect(() => {
+    if (!currentSession?.id) return;
+
+    console.log('Setting up ticket Realtime subscription for session:', currentSession.id);
+
+    const ticketChannel = supabase
+      .channel(`tickets:${currentSession.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'chatbot_tickets',
+          filter: `session_id=eq.${currentSession.id}`
+        },
+        async (payload) => {
+          console.log('🎫 Ticket update received via Realtime:', payload);
+          
+          // Update current ticket state when ticket is updated
+          if (payload.eventType === 'UPDATE') {
+            if (payload.new?.status === 'closed') {
+              setCurrentTicket(null);
+              console.log('🔓 Ticket closed - cleared ticket state');
+            } else {
+              // Update ticket info when status changes (open -> in_progress)
+              setCurrentTicket(payload.new);
+              console.log('🎫 Ticket updated:', payload.new);
+            }
+          } else if (payload.eventType === 'INSERT') {
+            // New ticket created
+            setCurrentTicket(payload.new);
+            console.log('🎫 New ticket created:', payload.new);
+          }
+        }
+      )
+      .subscribe(async (status) => {
+        console.log('Ticket Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Ticket Realtime subscription active for session:', currentSession.id);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Ticket Realtime subscription error for session:', currentSession.id);
+        }
+      });
+
+    return () => {
+      console.log('Cleaning up ticket Realtime subscription for session:', currentSession.id);
+      supabase.removeChannel(ticketChannel);
     };
   }, [currentSession?.id]);
 
@@ -350,9 +423,65 @@ export default function Chatbot() {
     }
   };
 
+  // Send typing status
+  const sendTypingStatus = async (typing: boolean) => {
+    if (!currentSession?.id) return;
+    
+    try {
+      await fetch('/api/chat/typing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: currentSession.id,
+          isTyping: typing,
+          userType: 'user'
+        })
+      });
+    } catch (error) {
+      console.error('Error sending typing status:', error);
+    }
+  };
+
+  // Handle input change with typing detection
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+
+    // Send typing status only if there's an active ticket with live chat enabled
+    if (currentTicket && currentTicket.live_chat_enabled) {
+      // Send typing status if there's text
+      if (value.trim()) {
+        sendTypingStatus(true);
+      }
+
+      // Clear existing timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+
+      // Set new timeout to stop typing
+      const timeout = setTimeout(() => {
+        sendTypingStatus(false);
+        setTypingTimeout(null);
+      }, 1000);
+
+      setTypingTimeout(timeout);
+    }
+  };
+
   const sendMessage = async (overrideText?: string) => {
     const userMessage = overrideText || inputValue.trim();
+    
     if (!userMessage) return;
+    
+    // Stop typing status
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      setTypingTimeout(null);
+    }
+    if (currentTicket && currentTicket.live_chat_enabled) {
+      sendTypingStatus(false);
+    }
     
     if (!overrideText) {
       setInputValue('');
@@ -551,6 +680,83 @@ export default function Chatbot() {
     }
   };
 
+
+  const handleOpenTicket = () => {
+    if (!user) {
+      // Redirect to login if not authenticated
+      window.location.href = '/login';
+      return;
+    }
+    setShowTicketModal(true);
+  };
+
+  const handleCreateTicket = async () => {
+      if (!ticketTopic.trim()) {
+        return;
+      }
+
+    setIsCreatingTicket(true);
+    try {
+      const response = await fetch('/api/ticket/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_message: ticketTopic.trim(),
+          session_id: currentSession?.id
+        })
+      });
+
+        if (response.ok) {
+          setTicketTopic('');
+          setShowTicketModal(false);
+          
+          // Update current ticket state
+          const ticketData = await response.json();
+          setCurrentTicket(ticketData.ticket);
+        }
+      } catch (error) {
+        console.error('Error creating ticket:', error);
+      } finally {
+      setIsCreatingTicket(false);
+    }
+  };
+
+  // Function to check ticket status
+  const checkTicketStatus = async () => {
+    if (!currentSession?.id) return;
+    
+    try {
+      const response = await fetch(`/api/ticket/tickets?session_id=${currentSession.id}`);
+      const data = await response.json();
+      
+      if (data.tickets && data.tickets.length > 0) {
+        const activeTicket = data.tickets.find((ticket: any) => 
+          ticket.status === 'open' || ticket.status === 'in_progress'
+        );
+        
+        if (activeTicket) {
+          setCurrentTicket(activeTicket);
+          console.log('🎫 Found active ticket:', activeTicket);
+        } else {
+          setCurrentTicket(null);
+          console.log('🔓 No active ticket found');
+        }
+      } else {
+        setCurrentTicket(null);
+        console.log('🔓 No tickets found');
+      }
+    } catch (error) {
+      console.error('❌ Error checking ticket status:', error);
+    }
+  };
+
+  // Check ticket status when session changes
+  useEffect(() => {
+    if (currentSession?.id) {
+      checkTicketStatus();
+    }
+  }, [currentSession?.id]);
+
   return (
     <>
       {/* Floating Button */}
@@ -646,6 +852,43 @@ export default function Chatbot() {
             </div>
           </div>
 
+          {/* Ticket Status Bar */}
+          {currentTicket && (
+            <div className={`px-4 py-2 border-b ${
+              currentTicket.status === 'open' 
+                ? 'bg-blue-50 border-blue-100' 
+                : currentTicket.live_chat_enabled
+                  ? 'bg-red-50 border-red-100'
+                  : 'bg-green-50 border-green-100'
+            }`}>
+              <div className="flex items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full animate-pulse ${
+                    currentTicket.status === 'open' 
+                      ? 'bg-blue-500' 
+                      : currentTicket.live_chat_enabled
+                        ? 'bg-red-500'
+                        : 'bg-green-500'
+                  }`}></div>
+                  <span className={`text-xs font-medium ${
+                    currentTicket.status === 'open' 
+                      ? 'text-blue-700' 
+                      : currentTicket.live_chat_enabled
+                        ? 'text-red-700'
+                        : 'text-green-700'
+                  }`}>
+                    {currentTicket.status === 'open' 
+                      ? '🎫 Ticket Pending' 
+                      : currentTicket.live_chat_enabled
+                        ? '🔴 Live Chat: Bot Disabled'
+                        : '👨‍💼 Ticket Accepted'
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Body */}
           <ScrollArea 
             ref={scrollRef}
@@ -705,22 +948,25 @@ export default function Chatbot() {
                     <p className="text-sm">{message.message}</p>
                   </div>
                   
-                  {/* Fallback message with Open Ticket button - outside message box */}
+                  {/* Fallback message with Ticket button - outside message box */}
                   {message.is_bot && message.message.includes('ticket') && (
                     <div className="mt-2">
                       <Button
-                        onClick={() => {
-                          // TODO: Implement open ticket functionality
-                          console.log('Open ticket clicked');
-                        }}
+                        onClick={currentTicket ? undefined : handleOpenTicket}
                         variant="outline"
                         size="sm"
-                        className="px-3 py-1.5 rounded-full border border-orange-300 bg-orange-50 text-orange-700 text-sm shadow-sm hover:bg-orange-100 cursor-pointer"
+                        disabled={!!currentTicket}
+                        className={`px-3 py-1.5 rounded-full text-sm shadow-sm ${
+                          currentTicket 
+                            ? 'border-gray-300 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                            : 'border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer'
+                        }`}
                       >
-                        Open Ticket
+                        {currentTicket ? 'Ticket Active' : 'Open Ticket'}
                       </Button>
                     </div>
                   )}
+                  
                   <p className="text-xs mt-1 text-gray-500 px-1">
                     {new Date(message.created_at).toLocaleTimeString('th-TH', {
                       hour: '2-digit',
@@ -730,9 +976,22 @@ export default function Chatbot() {
                 </div>
               ))}
               
-              {/* Bot Typing Indicator */}
-              {!isLoadingSession && isBotTyping && (
+              {/* Bot Typing Indicator - Only show when Live Chat is OFF */}
+              {!isLoadingSession && isBotTyping && !(currentTicket && currentTicket.live_chat_enabled) && (
                 <div key="bot-typing-indicator" className="flex flex-col items-start">
+                  <div className="w-12 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
+                    <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Admin Typing Indicator - Same as Bot Typing */}
+              {adminTyping && (
+                <div key="admin-typing-indicator" className="flex flex-col items-start">
                   <div className="w-12 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
                     <div className="flex gap-1">
                       <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -776,7 +1035,7 @@ export default function Chatbot() {
               <div className="flex gap-2 items-center">
                 <Input 
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
+                  onChange={handleInputChange}
                   onKeyPress={handleKeyPress}
                   placeholder="Write your message" 
                   className="flex-1 border-gray-200 focus:ring-orange-500 focus:border-orange-500 rounded-full px-4 py-2"
@@ -794,8 +1053,48 @@ export default function Chatbot() {
               </div>
             </div>
           )}
-          </div>
+        </div>
         </>
+      )}
+
+      {/* Ticket Modal */}
+      {showTicketModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 max-w-full mx-4">
+            <h2 className="text-xl font-semibold mb-4">Create Support Ticket</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Ticket Topic</label>
+                <textarea
+                  value={ticketTopic}
+                  onChange={(e) => setTicketTopic(e.target.value)}
+                  placeholder="Describe your issue or question..."
+                  className="w-full p-3 border border-gray-300 rounded-md h-24 resize-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleCreateTicket} 
+                  disabled={isCreatingTicket || !ticketTopic.trim()}
+                  className="bg-orange-500 hover:bg-orange-600 cursor-pointer flex-1"
+                >
+                  {isCreatingTicket ? 'Creating...' : 'Create Ticket'}
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowTicketModal(false);
+                    setTicketTopic('');
+                  }}
+                  variant="outline"
+                  className="cursor-pointer"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
