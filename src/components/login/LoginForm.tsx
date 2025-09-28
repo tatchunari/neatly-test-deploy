@@ -85,7 +85,7 @@ export default function LoginForm() {
           .single();
 
         if (profile?.role === "admin") {
-          router.replace("http://localhost:3000/admin");
+          router.replace("/admin");
           return;
         }
       }
