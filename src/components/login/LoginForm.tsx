@@ -90,7 +90,7 @@ export default function LoginForm() {
         }
       }
 
-      router.replace("/dashboard");
+      router.replace("/");
     } finally {
       setSubmitting(false);
     }
@@ -113,7 +113,7 @@ export default function LoginForm() {
       if (profile?.role === "admin") {
         router.replace("/admin");
       } else {
-        router.replace("/dashboard");
+        router.replace("/");
       }
     })();
     return () => {
