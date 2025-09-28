@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -61,7 +61,7 @@ export default function LoginForm() {
       }
 
       // ล็อกอินด้วยอีเมล + พาสเวิร์ด
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: emailToLogin,
         password: trimmedPassword,
       });
@@ -75,11 +75,51 @@ export default function LoginForm() {
         return;
       }
 
-      router.push("/");
+      // After successful login, check role from profiles and redirect admins
+      const userId = authData?.user?.id;
+      if (userId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .single();
+
+        if (profile?.role === "admin") {
+          router.replace("http://localhost:3000/admin");
+          return;
+        }
+      }
+
+      router.replace("/dashboard");
     } finally {
       setSubmitting(false);
     }
   };
+
+  // If already authenticated, redirect away from login page (prevents going back to login)
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const userId = data.session?.user?.id;
+      if (!isMounted || !userId) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (profile?.role === "admin") {
+        router.replace("/admin");
+      } else {
+        router.replace("/dashboard");
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   return (
     <form onSubmit={handleSubmit}>
