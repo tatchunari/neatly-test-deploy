@@ -44,6 +44,7 @@ export default function Chatbot() {
   
   // Ticket status states
   const [currentTicket, setCurrentTicket] = useState<any>(null);
+  const [isTicketSolved, setIsTicketSolved] = useState(false);
   const [adminTyping, setAdminTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
   
@@ -284,15 +285,26 @@ export default function Chatbot() {
           if (payload.eventType === 'UPDATE') {
             if (payload.new?.status === 'closed') {
               setCurrentTicket(null);
+              setIsTicketSolved(false);
+              setIsBotTyping(false); // Hide bot typing when ticket is closed
               console.log('🔓 Ticket closed - cleared ticket state');
+            } else if (payload.new?.status === 'solved') {
+              setCurrentTicket(null);
+              setIsTicketSolved(true);
+              setIsBotTyping(false); // Hide bot typing when ticket is solved
+              console.log('✅ Ticket solved - cleared ticket state');
+              // Clear solved state after 3 seconds
+              setTimeout(() => setIsTicketSolved(false), 3000);
             } else {
               // Update ticket info when status changes (open -> in_progress)
               setCurrentTicket(payload.new);
+              setIsTicketSolved(false);
               console.log('🎫 Ticket updated:', payload.new);
             }
           } else if (payload.eventType === 'INSERT') {
             // New ticket created
             setCurrentTicket(payload.new);
+            setIsTicketSolved(false);
             console.log('🎫 New ticket created:', payload.new);
           }
         }
@@ -889,6 +901,20 @@ export default function Chatbot() {
             </div>
           )}
 
+          {/* Ticket Solved Message */}
+          {isTicketSolved && (
+            <div className="px-4 py-2 border-b bg-green-50 border-green-100">
+              <div className="flex items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-xs font-medium text-green-700">
+                    ✅ Ticket Solved - Thank you for your patience!
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Body */}
           <ScrollArea 
             ref={scrollRef}
@@ -976,8 +1002,8 @@ export default function Chatbot() {
                 </div>
               ))}
               
-              {/* Bot Typing Indicator - Only show when Live Chat is OFF */}
-              {!isLoadingSession && isBotTyping && !(currentTicket && currentTicket.live_chat_enabled) && (
+              {/* Bot Typing Indicator - Only show when Live Chat is OFF and ticket is not solved */}
+              {!isLoadingSession && isBotTyping && !(currentTicket && currentTicket.live_chat_enabled) && !isTicketSolved && (
                 <div key="bot-typing-indicator" className="flex flex-col items-start">
                   <div className="w-12 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
                     <div className="flex gap-1">

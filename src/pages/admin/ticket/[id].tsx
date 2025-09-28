@@ -4,6 +4,7 @@ import Layout from "@/components/admin/Layout";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
 import { supabase } from '@/lib/supabaseClient';
+import TicketActions from "@/components/admin/TicketActions";
 
 interface ChatMessage {
   id: string;
@@ -238,8 +239,10 @@ export default function TicketDetail() {
         return 'bg-red-100 text-red-800';
       case 'in_progress':
         return 'bg-yellow-100 text-yellow-800';
-      case 'closed':
+      case 'solved':
         return 'bg-green-100 text-green-800';
+      case 'closed':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -251,6 +254,8 @@ export default function TicketDetail() {
         return 'Open';
       case 'in_progress':
         return 'In Progress';
+      case 'solved':
+        return 'Solved';
       case 'closed':
         return 'Closed';
       default:
@@ -309,9 +314,14 @@ export default function TicketDetail() {
                   )}
                 </div>
               </div>
-              <Button onClick={() => router.push('/admin/ticket')} variant="outline">
-                Back to Tickets
-              </Button>
+              <TicketActions
+                ticketId={ticket.id}
+                status={ticket.status}
+                onStatusUpdate={(newStatus) => {
+                  setTicket(prev => prev ? { ...prev, status: newStatus } : null);
+                }}
+                variant="detail"
+              />
             </div>
           </div>
         </div>
@@ -394,27 +404,15 @@ export default function TicketDetail() {
                     </div>
                   </div>
                   <div className="flex justify-center">
-                    <Button 
-                      onClick={async () => {
-                        try {
-                          const response = await fetch(`/api/ticket/tickets?id=${ticket.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: 'in_progress' })
-                          });
-                          
-                          if (response.ok) {
-                            setTicket(prev => prev ? { ...prev, status: 'in_progress' } : null);
-                            console.log('✅ Ticket accepted');
-                          }
-                        } catch (error) {
-                          console.error('Error accepting ticket:', error);
-                        }
+                    <TicketActions
+                      ticketId={ticket.id}
+                      status={ticket.status}
+                      onStatusUpdate={(newStatus) => {
+                        setTicket(prev => prev ? { ...prev, status: newStatus } : null);
                       }}
-                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-2"
-                    >
-                      Accept Ticket
-                    </Button>
+                      variant="detail"
+                      showViewDetail={false}
+                    />
                   </div>
                 </div>
               ) : (
@@ -461,7 +459,18 @@ export default function TicketDetail() {
                   </div>
 
                   {/* Chat Input */}
-                  {isLiveChat ? (
+                  {ticket.status === 'solved' ? (
+                    <div className="flex items-center justify-center py-4 px-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center">
+                        <svg className="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-green-800 text-sm font-medium">
+                          Ticket has been solved successfully!
+                        </span>
+                      </div>
+                    </div>
+                  ) : isLiveChat ? (
                     <div className="flex gap-2 items-center">
                       <Input 
                         value={newMessage}
