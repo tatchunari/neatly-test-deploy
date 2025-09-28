@@ -47,43 +47,54 @@ export default async function handler(
     }
   } else if (req.method === 'POST') {
     try {
+      console.log('🔵 Context API: POST request received');
+      
       // Create new context entry
       const { content } = req.body;
+      console.log('🔵 Context API: Request body:', { content });
 
       if (!content) {
+        console.log('❌ Context API: Content is required');
         return res.status(400).json({ error: 'Content is required' });
       }
 
-      console.log('Creating context entry:', { content });
+      console.log('🔵 Context API: Creating context entry:', { content });
 
-      // Use RPC function to insert context
-      const { data: contextEntry, error } = await supabase.rpc('insert_context', {
-        p_content: content
-      });
+      // Admin creates context without created_by
+      console.log('🔵 Context API: Creating context (admin operation)');
+
+      // Insert context without created_by (admin operation)
+      const { data: contextEntry, error } = await supabase
+        .from('chatbot_contexts')
+        .insert({
+          content
+        })
+        .select()
+        .single();
+
+      console.log('🔵 Context API: Insert result:', { contextEntry, error });
 
       if (error) {
-        console.error('Error creating context entry:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('❌ Context API: Error creating context entry:', error);
+        console.error('❌ Context API: Error details:', JSON.stringify(error, null, 2));
         throw error;
       }
 
-      console.log('Context entry created:', contextEntry);
+      console.log('✅ Context API: Context entry created successfully:', contextEntry);
 
-      // RPC function returns an array, get the first item
-      const createdContext = Array.isArray(contextEntry) ? contextEntry[0] : contextEntry;
-      
-      if (!createdContext || !createdContext.id) {
-        console.error('RPC function did not return valid context with ID');
-        throw new Error('RPC function did not return valid context with ID');
+      if (!contextEntry || !contextEntry.id) {
+        console.error('❌ Context API: Failed to create context with ID');
+        throw new Error('Failed to create context with ID');
       }
 
+      console.log('✅ Context API: Sending success response');
       res.status(201).json({ 
-        context: createdContext,
+        context: contextEntry,
         success: true 
       });
 
     } catch (error) {
-      console.error('Error in context POST:', error);
+      console.error('❌ Context API: Error in context POST:', error);
       res.status(500).json({ 
         error: 'Failed to create context entry',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -103,6 +114,9 @@ export default async function handler(
       }
 
       console.log('Updating context entry:', { id, content });
+
+      // Admin updates context without updated_by
+      console.log('🔵 Context API: Updating context (admin operation)');
 
       const { data: updatedContext, error } = await supabase
         .from('chatbot_contexts')

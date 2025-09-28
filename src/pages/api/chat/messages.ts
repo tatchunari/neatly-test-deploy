@@ -95,14 +95,28 @@ export default async function handler(
 
       console.log('Saving message:', { sessionId, message, isBot });
       
-      // Save user message
+      // Get session details to determine sender_id
+      const { data: sessionData } = await supabase
+        .from('chatbot_sessions')
+        .select('customer_id')
+        .eq('id', sessionId as string)
+        .single();
+
+      // Save user message with sender_id for authenticated users
+      const messageData: any = {
+        session_id: sessionId as string,
+        message,
+        is_bot: isBot || false
+      };
+
+      // Only add sender_id for authenticated users (not anonymous)
+      if (sessionData?.customer_id && !isBot) {
+        messageData.sender_id = sessionData.customer_id;
+      }
+
       const { data: newMessage, error: messageError } = await supabase
         .from('chatbot_messages')
-        .insert({
-          session_id: sessionId as string,
-          message,
-          is_bot: isBot || false
-        })
+        .insert(messageData)
         .select()
         .single();
 

@@ -319,32 +319,50 @@ export default function ChatbotAdmin() {
   };
 
   const handleCreateContext = async () => {
+    console.log('🟡 Admin: handleCreateContext called');
+    
     if (!newContext.content.trim()) {
-
+      console.log('❌ Admin: Content is empty, returning');
       return;
     }
 
+    console.log('🟡 Admin: Starting context creation with content:', newContext.content);
     setLoading(true);
     try {
+      // Admin operation - no auth needed
+      console.log('🟡 Admin: Creating context (admin operation)');
+      
+      const headers: any = { 'Content-Type': 'application/json' };
+
+      console.log('🟡 Admin: Making API request to /api/chat/contexts');
       const response = await fetch('/api/chat/contexts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           content: newContext.content
         })
       });
 
+      console.log('🟡 Admin: API response status:', response.status);
+
       if (response.ok) {
+        console.log('✅ Admin: Context created successfully');
+        const responseData = await response.json();
+        console.log('✅ Admin: Response data:', responseData);
         setNewContext({ content: '' });
         fetchContexts();
 
       } else {
-
+        console.error('❌ Admin: Context creation failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('❌ Admin: Error response:', errorText);
       }
+
     } catch (error) {
-      console.error('Error creating context:', error);
+      console.error('❌ Admin: Error creating context:', error);
 
     } finally {
+      console.log('🟡 Admin: Setting loading to false');
       setLoading(false);
     }
   };

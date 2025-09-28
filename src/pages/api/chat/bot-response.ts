@@ -52,7 +52,7 @@ export default async function handler(
         .from('chatbot_faqs')
         .select('question, answer')
         .neq('question', '::greeting::')
-        // .neq('question', '::fallback::');
+        .neq('question', '::fallback::');
 
       if (!faqError && faqMatches) {
         for (const faq of faqMatches) {

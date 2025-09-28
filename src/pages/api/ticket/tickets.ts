@@ -46,12 +46,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({ tickets });
 
       case 'POST':
+        console.log('🎫 Ticket API: POST request received');
         // Create new ticket
         const { user_message, session_id: ticketSessionId } = body;
+        console.log('🎫 Ticket API: Request body:', { user_message, session_id: ticketSessionId });
+        
         if (!user_message || !ticketSessionId) {
+          console.log('❌ Ticket API: Missing required fields');
           return res.status(400).json({ error: 'User message and session ID are required' });
         }
 
+        console.log('🎫 Ticket API: Creating ticket...');
+        // Create ticket without created_by (simplified)
         const { data: newTicket, error: createError } = await supabase
           .from('chatbot_tickets')
           .insert({
@@ -62,11 +68,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .select()
           .single();
 
+        console.log('🎫 Ticket API: Insert result:', { newTicket, createError });
+
         if (createError) {
-          console.error('Error creating ticket:', createError);
+          console.error('❌ Ticket API: Error creating ticket:', createError);
           return res.status(500).json({ error: 'Failed to create ticket' });
         }
 
+        console.log('✅ Ticket API: Ticket created successfully:', newTicket);
         return res.status(201).json({ ticket: newTicket });
 
       case 'PUT':
@@ -82,10 +91,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const updateData: any = { status };
         
-        // If closing ticket, set closed_at timestamp
-        if (status === 'closed') {
+        // If closing or solving ticket, set closed_at timestamp
+        if (status === 'closed' || status === 'solved') {
           updateData.closed_at = new Date().toISOString();
-        } else if (status !== 'closed') {
+        } else if (status !== 'closed' && status !== 'solved') {
           // If reopening ticket, clear closed_at
           updateData.closed_at = null;
         }

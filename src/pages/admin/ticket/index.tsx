@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Layout from "@/components/admin/Layout";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
+import TicketActions from "@/components/admin/TicketActions";
 
 interface Ticket {
   id: string;
@@ -38,49 +39,19 @@ export default function TicketAdmin() {
     }
   };
 
-  const handleUpdateTicketStatus = async (ticketId: string, newStatus: string) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/ticket/tickets?id=${ticketId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (response.ok) {
-        fetchTickets();
-      }
-    } catch (error) {
-      console.error('Error updating ticket:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteTicket = async (ticketId: string) => {
-    if (!confirm('Are you sure you want to delete this ticket?')) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/ticket/tickets?id=${ticketId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        fetchTickets();
-      }
-    } catch (error) {
-      console.error('Error deleting ticket:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Filter tickets based on status and search term
   const filteredTickets = tickets.filter(ticket => {
-    const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
+    let matchesStatus = false;
+    if (filterStatus === 'all') {
+      matchesStatus = true;
+    } else if (filterStatus === 'closed') {
+      // Include both 'closed' and 'solved' statuses for closed filter
+      matchesStatus = ticket.status === 'closed' || ticket.status === 'solved';
+    } else {
+      matchesStatus = ticket.status === filterStatus;
+    }
+    
     const matchesSearch = searchTerm === '' || 
       ticket.user_message.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.session_id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -93,6 +64,8 @@ export default function TicketAdmin() {
         return 'bg-red-100 text-red-800';
       case 'in_progress':
         return 'bg-yellow-100 text-yellow-800';
+      case 'solved':
+        return 'bg-gray-100 text-gray-800';
       case 'closed':
         return 'bg-green-100 text-green-800';
       default:
@@ -106,6 +79,8 @@ export default function TicketAdmin() {
         return 'Open';
       case 'in_progress':
         return 'In Progress';
+      case 'solved':
+        return 'Solved';
       case 'closed':
         return 'Closed';
       default:
@@ -167,7 +142,7 @@ export default function TicketAdmin() {
                     variant={filterStatus === 'closed' ? 'default' : 'outline'}
                     className="cursor-pointer"
                   >
-                    Closed ({tickets.filter(t => t.status === 'closed').length})
+                    Solved ({tickets.filter(t => t.status === 'closed' || t.status === 'solved').length})
                   </Button>
                 </div>
               </div>
@@ -217,51 +192,20 @@ export default function TicketAdmin() {
                 </div>
                       
                       <div className="flex gap-2 ml-4">
-                        {/* 1. Accept Ticket - แสดงเฉพาะเมื่อ status = open */}
-                        {ticket.status === 'open' && (
-                          <Button
-                            onClick={() => handleUpdateTicketStatus(ticket.id, 'in_progress')}
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 hover:text-green-700 cursor-pointer"
-                          >
-                            Accept Ticket
-                          </Button>
-                        )}
-                        
-                        {/* 2. View Detail - แสดงทุก status */}
-                        <Button
-                          onClick={() => router.push(`/admin/ticket/${ticket.id}`)}
-                          size="sm"
-                          variant="outline"
-                          className="text-purple-600 hover:text-purple-700 cursor-pointer"
-                        >
-                          View Detail
-                        </Button>
-                        
-                        {/* 3. Solved - แสดงเฉพาะเมื่อ status = in_progress */}
-                        {ticket.status === 'in_progress' && (
-                          <Button
-                            onClick={() => handleUpdateTicketStatus(ticket.id, 'closed')}
-                            size="sm"
-                            variant="outline"
-                            className="text-blue-600 hover:text-blue-700 cursor-pointer"
-                          >
-                            Solved
-                          </Button>
-                        )}
-                        
-                        {/* Delete - แสดงเฉพาะเมื่อ status = closed */}
-                        {ticket.status === 'closed' && (
-                          <Button 
-                            onClick={() => handleDeleteTicket(ticket.id)}
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 hover:text-red-700 cursor-pointer"
-                          >
-                            Delete
-                          </Button>
-                        )}
+                        <TicketActions
+                          ticketId={ticket.id}
+                          status={ticket.status}
+                          onStatusUpdate={(newStatus) => {
+                            setTickets(prev => prev.map(t => 
+                              t.id === ticket.id ? { ...t, status: newStatus } : t
+                            ));
+                          }}
+                          onTicketDelete={() => {
+                            setTickets(prev => prev.filter(t => t.id !== ticket.id));
+                          }}
+                          variant="list"
+                          showViewDetail={true}
+                        />
                       </div>
                   </div>
                 </div>
