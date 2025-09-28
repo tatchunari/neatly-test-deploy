@@ -221,3 +221,12 @@ export default function AdminLoginPage() {
     </>
   );
 }
+
+export const getServerSideProps = async () => {
+  return {
+    redirect: {
+      destination: "/admin",
+      permanent: false,
+    },
+  };
+};
