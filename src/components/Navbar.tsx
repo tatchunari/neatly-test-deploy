@@ -270,7 +270,7 @@ function MobileUserMenu({
       <hr className="my-2 border-t border-gray-200" />
       <nav className="flex flex-col gap-2">
         <a
-          href="/account"
+          href="/customer/profile"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Profile
