@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar"
 import SearchBox from "@/components/customer/searchbar/Searchbox"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
+import Link from "next/link"
 import Image from "next/image"
 import Footer from "@/components/Footer"
 
@@ -10,7 +11,7 @@ function SearchResultPage() {
   const [rooms, setRooms] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
+  
   // ดึงข้อมูลห้องพักจาก API
   const fetchRooms = async () => {
     try {
@@ -46,6 +47,13 @@ function SearchResultPage() {
     fetchRooms()
   }, [router.isReady, router.query])
 
+  // ฟังก์ชันเมื่อกดปุ่ม Room Detail
+  // แก้ไขให้รับ id แทน room object
+  const handleRoomDetailClick = (id: any) => {
+    if (!id) return
+    router.push(`/customer/search-result/${id}`)
+  }
+  console.log("Rooms", rooms);
   return (
     <div className="bg-[#F7F7FA] min-h-screen">
       <Navbar />
@@ -76,25 +84,61 @@ function SearchResultPage() {
               rooms.map((room: any, index: number) => (
                 <div
                   key={room.id ?? index}
-                  className="flex bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                  className="flex flex-col md:flex-row bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 mx-auto"
                   style={{
-                    minHeight: 180,
-                    maxWidth: 900,
-                    margin: "0 auto",
+                    // Mobile: 375x649, Desktop: 1120x400
                     width: "100%",
+                    maxWidth: "1120px",
+                    minWidth: 0,
+                    ...(typeof window !== "undefined"
+                      ? window.innerWidth >= 768
+                        ? {
+                            width: "1120px",
+                            minWidth: "1120px",
+                            maxWidth: "1120px",
+                            height: "400px",
+                            minHeight: "400px",
+                          }
+                        : {
+                            width: "375px",
+                            minWidth: "375px",
+                            maxWidth: "375px",
+                            height: "649px",
+                            minHeight: "649px",
+                          }
+                      : {}),
                   }}
                 >
                   {/* Room Image */}
-                  <div className="relative w-[260px] h-[170px] flex-shrink-0 m-6 mr-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                    {room.image ? (
-                      <Image
-                        src={room.image}
-                        alt={room.name || "Room image"}
-                        fill
-                        style={{ objectFit: "cover" }}
-                        sizes="260px"
-                        className="rounded-lg"
-                        priority={index < 2}
+                  <div
+                    className="relative flex-shrink-0"
+                    style={
+                      typeof window !== "undefined" && window.innerWidth >= 768
+                        ? {
+                            width: "453px",
+                            minWidth: "453px",
+                            maxWidth: "453px",
+                            height: "400px",
+                          }
+                        : {
+                            width: "100%",
+                            minWidth: 0,
+                            maxWidth: "100%",
+                            height: "200px",
+                          }
+                    }
+                  >
+                    {room.main_image_url ? (
+                      <img
+                        src={room.main_image_url}
+                        alt={room.room_type || "Room image"}
+                        style={{
+                          objectFit: "cover",
+                          width: "100%",
+                          height: "100%",
+                          display: "block",
+                        }}
+                        className="rounded-t-xl md:rounded-l-xl md:rounded-tr-none w-full h-full"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-100">
@@ -103,35 +147,37 @@ function SearchResultPage() {
                     )}
                   </div>
                   {/* Room Info */}
-                  <div className="flex flex-1 flex-col md:flex-row p-6 pl-6 gap-4">
+                  <div
+                    className="flex flex-1 flex-col justify-between p-6 gap-4"
+                    style={
+                      typeof window !== "undefined" && window.innerWidth >= 768
+                        ? { minHeight: "400px" }
+                        : { minHeight: "auto" }
+                    }
+                  >
                     <div className="flex flex-col flex-1 min-w-0">
-                      <h2 className="text-base font-semibold text-[#2F3E35] mb-1">{room.name}</h2>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                      <h2 className="text-xl font-semibold text-[#2F3E35] mb-10">{room.room_type}</h2>
+                      <div className="flex items-center gap-2 text-s text-gray-500 mb-10">
                         <span>
                           {room.guests ?? 2} {room.guests > 1 ? "Guests" : "Guest"}
                         </span>
-                        <span className="mx-1">·</span>
+                        <span className="mx-2">·</span>
                         <span>
-                          {room.beds ?? 1} {room.beds > 1 ? "Beds" : "Bed"}
+                          {room.bed_type ?? 1} {room.bed_type > 1 ? "Beds" : "Bed"}
                         </span>
-                        <span className="mx-1">·</span>
+                        <span className="mx-2">·</span>
                         <span>
-                          {room.size ? `${room.size} sqm` : "32 sqm"}
+                          {room.room_size ? `${room.room_size} sqm` : "32 sqm"}
                         </span>
-                        {room.view && (
+                        {room.room_type && (
                           <>
-                            <span className="mx-1">·</span>
-                            <span>{room.view}</span>
+                            <span className="mx-2">·</span>
+                            <span>{room.room_type}</span>
                           </>
                         )}
                       </div>
-                      <div className="text-gray-500 text-xs mb-4 line-clamp-2">
+                      <div className="text-gray-500 text-s mb-4 line-clamp-2">
                         {room.description || "Elegant modern decor with garden or city view. Includes balcony, bathtub, and free WiFi."}
-                      </div>
-                      <div className="flex gap-2 mt-auto">
-                        <button className="text-[#F47A1F] border border-[#F47A1F] bg-white px-4 py-1.5 rounded-md font-medium text-xs hover:bg-[#f7e7d7] transition">
-                          Room Detail
-                        </button>
                       </div>
                     </div>
                     <div className="flex flex-col items-end justify-between min-w-[160px]">
@@ -145,9 +191,33 @@ function SearchResultPage() {
                         <span className="text-xs text-gray-400">Per Night</span>
                         <span className="text-xs text-gray-400">Including Taxes & Fees</span>
                       </div>
-                      <button className="bg-[#F47A1F] text-white px-6 py-2 rounded-lg font-semibold text-sm mt-4 hover:bg-[#d96a1a] transition">
-                        Book Now
-                      </button>
+                      <div className="flex flex-row gap-2 mt-4">
+                        <button
+                          className="text-[#F47A1F] border border-[#F47A1F] bg-white rounded-md font-medium text-xs hover:bg-[#f7e7d7] transition"
+                          style={{
+                            width: "143px",
+                            height: "48px",
+                            minWidth: "143px",
+                            minHeight: "48px",
+                            fontSize: "16px",
+                          }}
+                          onClick={() => handleRoomDetailClick(room.id)}
+                        >
+                          Room Detail
+                        </button>
+                        <button
+                          className="bg-[#F47A1F] text-white rounded-lg font-semibold text-sm hover:bg-[#d96a1a] transition"
+                          style={{
+                            width: "143px",
+                            height: "48px",
+                            minWidth: "143px",
+                            minHeight: "48px",
+                            fontSize: "16px",
+                          }}
+                        >
+                          Book Now
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
