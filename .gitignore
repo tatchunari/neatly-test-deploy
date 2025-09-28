@@ -48,3 +48,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+neatly-472809-3ed8aba6976d.json

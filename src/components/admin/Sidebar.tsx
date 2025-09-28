@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { Tickets } from "lucide-react";
 
 const menuItems = [
   { 
@@ -32,6 +33,11 @@ const menuItems = [
     href: "/admin/chatbot",
     icon: "/assets/chat-green.png", 
   },
+  { 
+    label: "Support Tickets", 
+    href: "/admin/ticket",
+    icon: "Tickets", 
+  },
 ];
 
 export default function Sidebar() {
@@ -61,7 +67,11 @@ export default function Sidebar() {
                   isActive ? "bg-green-600 text-green-300" : ""
                 }`}
               >
-                <img className="w-6 h-6 mr-3" src={item.icon} alt={item.label} />
+                {item.icon === "Tickets" ? (
+                  <Tickets className="w-6 h-6 mr-3 text-green-500" />
+                ) : (
+                  <img className="w-6 h-6 mr-3" src={item.icon} alt={item.label} />
+                )}
                 <span>{item.label}</span>
               </Link>
             </div>
