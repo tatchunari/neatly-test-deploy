@@ -221,7 +221,6 @@ export default function AdminLoginPage() {
     </>
   );
 }
-<<<<<<< HEAD
 
 export const getServerSideProps = async () => {
   return {
@@ -231,5 +230,3 @@ export const getServerSideProps = async () => {
     },
   };
 };
-=======
->>>>>>> d99c2e59001f0f16c895db7dafd2566c63a9ff2d
