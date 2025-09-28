@@ -2,15 +2,21 @@ import React, { useCallback, useState, useEffect } from "react";
 import { PlusIcon } from "@/components/customer/icons/PlusIcon";
 import { CloseIcon } from "@/components/customer/icons/CloseIcon";
 
+// ตรวจสอบว่า FileUpload component รองรับ currentImage prop หรือไม่
 interface FileUploadProps {
   onFileSelect: (file: File | null) => void;
   error?: boolean;
+  currentImage?: string; // ตรวจสอบว่า prop นี้มีหรือไม่
 }
 
 export const FileUpload: React.FC<FileUploadProps> = React.memo(
-  ({ onFileSelect, error = false }) => {
+  ({ onFileSelect, error = false, currentImage }) => {
+    // เพิ่ม currentImage
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+    // แสดงรูปปัจจุบันหรือรูปที่เลือกใหม่
+    const displayImage = previewUrl || currentImage;
 
     // สร้าง preview URL เมื่อมีไฟล์ที่เลือก
     useEffect(() => {
@@ -37,7 +43,8 @@ export const FileUpload: React.FC<FileUploadProps> = React.memo(
       (event: React.MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
         setSelectedFile(null);
-        onFileSelect(null);
+        setPreviewUrl(null);
+        onFileSelect(null); // ส่ง null ไปลบรูปปัจจุบัน
       },
       [onFileSelect]
     );
@@ -59,10 +66,10 @@ export const FileUpload: React.FC<FileUploadProps> = React.memo(
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
 
-          {previewUrl ? (
+          {displayImage ? (
             <>
               <img
-                src={previewUrl}
+                src={displayImage} // ใช้ displayImage แทน previewUrl
                 alt="Profile Preview"
                 className="absolute inset-0 w-full h-full object-cover rounded-[4px]"
               />
