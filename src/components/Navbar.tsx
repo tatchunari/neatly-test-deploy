@@ -206,10 +206,10 @@ function UserMenu() {
 
       {open && (
         <div className="absolute right-0 mt-2 w-44 rounded-lg border bg-white shadow-md z-50">
-          <a href="/account" className="block px-4 py-2 hover:bg-gray-50">
+          <a href="/customer/profile" className="block px-4 py-2 hover:bg-gray-50">
             Account
           </a>
-          <a href="/settings" className="block px-4 py-2 hover:bg-gray-50">
+          <a href="/customer/settings" className="block px-4 py-2 hover:bg-gray-50">
             Settings
           </a>
           <button
@@ -270,19 +270,19 @@ function MobileUserMenu({
       <hr className="my-2 border-t border-gray-200" />
       <nav className="flex flex-col gap-2">
         <a
-          href="/account"
+          href="/customer/profile"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Profile
         </a>
         <a
-          href="/payment"
+          href="/customer/payment"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Payment Method
         </a>
         <a
-          href="/booking-history"
+          href="/customer/booking-history"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Booking History
