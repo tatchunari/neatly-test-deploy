@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, RegisterFormData } from "@/utils/validation";
+import {
+  registerSchema,
+  RegisterFormData,
+} from "@/utils/validation/registerValidation";
 import { AuthService } from "@/services/authService";
 import { useRouter } from "next/router";
 
@@ -74,8 +77,19 @@ export const useFormValidation = () => {
       setSuccess(true);
       console.log("User registered successfully:", userProfile);
 
-      // Reset form
-      form.reset();
+      // Reset form → ให้ placeholder ไม่หาย
+      form.reset({
+        firstName: "",
+        lastName: "",
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        phoneNumber: "",
+        dateOfBirth: "",
+        country: "",
+        profilePicture: undefined,
+      });
 
       // Redirect ไปหน้า login หลังจาก 5 วินาที
       setTimeout(() => {
