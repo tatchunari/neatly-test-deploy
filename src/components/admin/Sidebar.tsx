@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Tickets } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 const menuItems = [
   { 
@@ -43,6 +44,15 @@ const menuItems = [
 export default function Sidebar() {
   const router = useRouter();
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push("/");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
   return (
     <aside className="w-68 min-h-screen bg-green-800 flex flex-col">
       {/* Logo */}
@@ -82,9 +92,7 @@ export default function Sidebar() {
       {/* Logout Button at the bottom */}
       <div className="mt-auto mb-30 border-t-1 border-green-100/20">
         <button
-          onClick={() => {
-            // handle logout
-          }}
+          onClick={handleLogout}
           className="flex items-center w-full px-7 py-5 text-md font-inter font-medium text-green-300 hover:bg-green-600 hover:text-white cursor-pointer transition-colors"
         >
           <img className="w-6 h-6 mr-4" src="/assets/logout.png" alt="Logout" />
