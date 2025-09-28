@@ -77,8 +77,19 @@ export const useFormValidation = () => {
       setSuccess(true);
       console.log("User registered successfully:", userProfile);
 
-      // Reset form
-      form.reset();
+      // Reset form → ให้ placeholder ไม่หาย
+      form.reset({
+        firstName: "",
+        lastName: "",
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        phoneNumber: "",
+        dateOfBirth: "",
+        country: "",
+        profilePicture: undefined,
+      });
 
       // Redirect ไปหน้า login หลังจาก 5 วินาที
       setTimeout(() => {

@@ -22,7 +22,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
     const inputRef = useRef<HTMLInputElement | null>(null);
     const caretPosRef = useRef<number>(0);
 
-    // ✅ sync ค่า value (ISO) → readable format
+    // ✅ sync value (ISO) → readable
     useEffect(() => {
       if (value && value !== "mm/dd/yyyy" && typeof value === "string") {
         const date = new Date(value);
@@ -40,19 +40,24 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       }
     }, [value]);
 
-    // ✅ mask template function
+    // ✅ mask input mm/dd/yyyy
     const formatMask = (raw: string) => {
-      const template = "mm/dd/yyyy".split("");
       const digits = raw.replace(/\D/g, "").slice(0, 8);
+      const mm = digits.substring(0, 2);
+      const dd = digits.substring(2, 4);
+      const yyyy = digits.substring(4, 8);
 
-      let digitIndex = 0;
-      for (let i = 0; i < template.length; i++) {
-        if (/[mdy]/.test(template[i]) && digitIndex < digits.length) {
-          template[i] = digits[digitIndex];
-          digitIndex++;
+      let masked = "mm/dd/yyyy".split("");
+      if (mm) masked[0] = mm[0] || "m";
+      if (mm.length > 1) masked[1] = mm[1];
+      if (dd) masked[3] = dd[0] || "d";
+      if (dd.length > 1) masked[4] = dd[1];
+      if (yyyy) {
+        for (let i = 0; i < yyyy.length; i++) {
+          masked[6 + i] = yyyy[i];
         }
       }
-      return template.join("");
+      return masked.join("");
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,7 +65,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       const masked = formatMask(rawDigits);
       setInputValue(masked);
 
-      // caret position
+      // caret
       const getCaretPosition = (len: number) => {
         if (len <= 2) return len;
         if (len <= 4) return len + 1;
@@ -68,7 +73,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       };
       caretPosRef.current = getCaretPosition(rawDigits.length);
 
-      // ถ้ากรอกครบ → แปลงเป็น ISO + readable
+      // complete → update ISO
       if (rawDigits.length === 8) {
         const iso = `${rawDigits.substring(4)}-${rawDigits.substring(
           0,
@@ -102,33 +107,39 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       }
     }, [inputValue]);
 
-    // mask hint
+    // focus / blur
     const handleFocus = () => {
       setIsFocused(true);
       if (!inputValue) {
-        setInputValue("mm/dd/yyyy"); // แสดง template
+        setInputValue("mm/dd/yyyy");
       }
     };
 
     const handleBlur = () => {
       setIsFocused(false);
       if (inputValue === "mm/dd/yyyy") {
-        setInputValue(""); // clear template
+        setInputValue("");
         onChange?.({
           target: { value: "" },
         } as React.ChangeEvent<HTMLInputElement>);
       }
     };
 
+    // ✅ calendar select (fix timezone shift)
     const handleDaySelect = (day: Date | undefined) => {
       if (day) {
-        const iso = day.toISOString().split("T")[0]; // ✅ form เก็บ ISO
+        const year = day.getFullYear();
+        const month = String(day.getMonth() + 1).padStart(2, "0");
+        const date = String(day.getDate()).padStart(2, "0");
+        const iso = `${year}-${month}-${date}`; // YYYY-MM-DD
+
         const formatted = day.toLocaleDateString("en-US", {
           weekday: "short",
           day: "numeric",
           month: "long",
           year: "numeric",
         });
+
         setInputValue(formatted);
         onChange?.({
           target: { value: iso },
