@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormField } from "./form-fields/FormField";
 import { Input } from "./form-fields/Input";
@@ -14,7 +14,6 @@ import {
 } from "@/utils/validation/profileValidation";
 import { supabase } from "@/lib/supabaseClient";
 
-// Country options (ใช้ซ้ำกับ RegisterForm)
 const COUNTRY_OPTIONS = [
   { value: "thailand", label: "Thailand" },
   { value: "singapore", label: "Singapore" },
@@ -34,7 +33,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  // ใช้ Profile hook
   const {
     profile,
     isLoading,
@@ -45,11 +43,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     clearError,
   } = useProfile();
 
-  // Local state สำหรับรูปโปรไฟล์
   const [profileImage, setProfileImage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
 
-  // Form setup
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -65,14 +61,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
   const { errors } = form.formState;
 
-  /**
-   * เติมข้อมูลในฟอร์มเมื่อโหลดโปรไฟล์เสร็จ
-   */
   useEffect(() => {
     if (profile) {
       setProfileImage(profile.profile_image || "");
 
-      // ดึง email จาก auth user
       const getCurrentUserEmail = async () => {
         const {
           data: { user },
@@ -84,21 +76,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
       getCurrentUserEmail();
 
-      // เติมข้อมูลในฟอร์ม (ISO date → เดี๋ยว DatePicker แปลงเอง)
       form.reset({
         firstName: profile.first_name,
         lastName: profile.last_name,
-        email: "", // จะถูก set จาก auth user
+        email: "",
         phoneNumber: profile.phone,
-        dateOfBirth: profile.date_of_birth, // ✅ ISO string ตรง ๆ
+        dateOfBirth: profile.date_of_birth,
         country: profile.country,
       });
     }
   }, [profile, form]);
 
-  /**
-   * จัดการการส่งฟอร์ม
-   */
   const onSubmit = async (data: ProfileFormData) => {
     clearError();
     setSuccessMessage("");
@@ -114,14 +102,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }
   };
 
-  /**
-   * จัดการการลบรูปโปรไฟล์
-   */
   const handleDeleteProfilePicture = async () => {
     if (window.confirm("คุณต้องการลบรูปโปรไฟล์หรือไม่?")) {
       const success = await deleteProfilePicture();
       if (success) {
         setProfileImage("");
+        form.setValue("profilePicture", undefined);
         setSuccessMessage("ลบรูปโปรไฟล์สำเร็จ!");
 
         setTimeout(() => {
@@ -131,9 +117,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }
   };
 
-  /**
-   * จัดการการเลือกไฟล์ใหม่
-   */
   const handleFileSelect = (file: File | null) => {
     if (file) {
       form.setValue("profilePicture", file);
@@ -148,7 +131,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -160,7 +142,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     );
   }
 
-  // Error state
   if (error && !profile) {
     return (
       <div className="text-center py-8">
@@ -177,7 +158,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
   return (
     <div className="space-y-8 bg-[var(--color-bg)]">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-[68px] font-medium font-noto text-[var(--color-green-800)] leading-[125%] tracking-[-2%]">
           Profile
@@ -198,7 +178,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-8 customer-forms bg-[var(--color-bg)] "
       >
-        {/* Basic Information Section */}
+        {/* Basic Information */}
         <div className="space-y-6 ">
           <h3 className="font-inter font-semibold text-[20px] leading-[150%] tracking-[-2%] text-[var(--color-gray-600)]">
             Basic Information
@@ -254,11 +234,16 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               error={errors.dateOfBirth}
               required
             >
-              <DatePicker
-                {...form.register("dateOfBirth")}
-                error={!!errors.dateOfBirth}
-                placeholder="Select your date of birth"
-                value={form.watch("dateOfBirth") || ""} // ✅ ส่ง ISO ตรง ๆ
+              <Controller
+                control={form.control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <DatePicker
+                    {...field}
+                    error={!!errors.dateOfBirth}
+                    placeholder="Select your date of birth"
+                  />
+                )}
               />
             </FormField>
 
@@ -273,7 +258,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           </div>
         </div>
 
-        {/* Profile Picture Section */}
+        {/* Profile Picture */}
         <div className="space-y-6 border-t border-gray-300 pt-[20px]">
           <h3 className="font-inter font-semibold text-[20px] leading-[150%] tracking-[-2%] text-[var(--color-gray-600)]">
             Profile Picture
@@ -290,14 +275,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           </div>
         </div>
 
-        {/* Success Message */}
         {successMessage && (
           <div className="bg-green-50 border border-green-200 rounded-md p-4">
             <p className="text-sm text-green-600">{successMessage}</p>
           </div>
         )}
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
             <p className="text-sm text-red-600">{error}</p>

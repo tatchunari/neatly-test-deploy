@@ -6,6 +6,7 @@ import { Select } from "./form-fields/Select";
 import { DatePicker } from "./form-fields/DatePicker";
 import { FileUpload } from "./form-fields/FileUpload";
 import { Button } from "@/components/ui/Button";
+import { Controller } from "react-hook-form";
 
 const COUNTRY_OPTIONS = [
   { value: "thailand", label: "Thailand" },
@@ -39,13 +40,13 @@ export const RegisterForm = () => {
       onSubmit={onSubmit}
       className="space-y-8 customer-forms bg-[var(--color-bg)] rounded-lg"
     >
-      {/* Basic Information Section */}
+      {/* Basic Information */}
       <div className="space-y-6">
         <h3 className="font-inter font-semibold text-[20px] leading-[150%] tracking-[-2%] text-[var(--color-gray-600)]">
           Basic Information
         </h3>
 
-        {/* First Row: First Name & Last Name */}
+        {/* First Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="First name" error={errors.firstName} required>
             <Input
@@ -64,7 +65,7 @@ export const RegisterForm = () => {
           </FormField>
         </div>
 
-        {/* Second Row: Username & Email */}
+        {/* Second Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Username" error={errors.username} required>
             <Input
@@ -84,7 +85,7 @@ export const RegisterForm = () => {
           </FormField>
         </div>
 
-        {/* Third Row: Password & Confirm Password */}
+        {/* Third Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Password" error={errors.password} required>
             <Input
@@ -109,7 +110,7 @@ export const RegisterForm = () => {
           </FormField>
         </div>
 
-        {/* Fourth Row: Phone Number & Date of Birth */}
+        {/* Fourth Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Phone number" error={errors.phoneNumber} required>
             <Input
@@ -121,15 +122,21 @@ export const RegisterForm = () => {
           </FormField>
 
           <FormField label="Date of Birth" error={errors.dateOfBirth} required>
-            <DatePicker
-              {...form.register("dateOfBirth")}
-              error={!!errors.dateOfBirth}
-              placeholder="Select your date of birth"
+            <Controller
+              control={form.control}
+              name="dateOfBirth"
+              render={({ field }) => (
+                <DatePicker
+                  {...field}
+                  error={!!errors.dateOfBirth}
+                  placeholder="Select your date of birth"
+                />
+              )}
             />
           </FormField>
         </div>
 
-        {/* Fifth Row: Country - Half Width */}
+        {/* Fifth Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-1">
             <FormField label="Country" error={errors.country} required>
@@ -144,7 +151,7 @@ export const RegisterForm = () => {
         </div>
       </div>
 
-      {/* Profile Picture Section */}
+      {/* Profile Picture */}
       <div className="space-y-6 border-t border-gray-300 pt-[20px]">
         <h3 className="font-inter font-semibold text-[20px] leading-[150%] tracking-[-2%] text-[var(--color-gray-600)]">
           Profile Picture
@@ -156,7 +163,6 @@ export const RegisterForm = () => {
               if (file) {
                 form.setValue("profilePicture", file);
               } else {
-                // ถ้าไม่มีไฟล์ ให้ set เป็น undefined
                 form.setValue("profilePicture", undefined);
               }
             }}
@@ -172,7 +178,7 @@ export const RegisterForm = () => {
         </div>
       )}
 
-      {/* Submit Button - Half Width */}
+      {/* Submit Button */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="md:col-span-1">
           <Button
@@ -185,7 +191,7 @@ export const RegisterForm = () => {
             {isLoading ? "Registering..." : "Register"}
           </Button>
         </div>
-        <div></div> {/* Empty div to fill the second column */}
+        <div></div>
       </div>
     </form>
   );
