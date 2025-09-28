@@ -86,36 +86,47 @@ function SearchResultPage() {
                   key={room.id ?? index}
                   className="flex flex-col md:flex-row bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 mx-auto"
                   style={{
+                    // Mobile: 375x649, Desktop: 1120x400
                     width: "100%",
                     maxWidth: "1120px",
                     minWidth: 0,
-                    // Responsive height/minHeight for mobile/desktop
-                    minHeight: "649px",
-                    height: "649px",
+                    ...(typeof window !== "undefined"
+                      ? window.innerWidth >= 768
+                        ? {
+                            width: "1120px",
+                            minWidth: "1120px",
+                            maxWidth: "1120px",
+                            height: "400px",
+                            minHeight: "400px",
+                          }
+                        : {
+                            width: "375px",
+                            minWidth: "375px",
+                            maxWidth: "375px",
+                            height: "649px",
+                            minHeight: "649px",
+                          }
+                      : {}),
                   }}
                 >
                   {/* Room Image */}
                   <div
                     className="relative flex-shrink-0"
-                    style={{
-                      width: "100%",
-                      minWidth: "100%",
-                      maxWidth: "100%",
-                      height: "265px",
-                      ...(typeof window !== "undefined" && window.innerWidth >= 768
+                    style={
+                      typeof window !== "undefined" && window.innerWidth >= 768
                         ? {
                             width: "453px",
                             minWidth: "453px",
                             maxWidth: "453px",
-                            height: "320px",
+                            height: "400px",
                           }
                         : {
                             width: "100%",
-                            minWidth: "100%",
+                            minWidth: 0,
                             maxWidth: "100%",
-                            height: "265px",
-                          }),
-                    }}
+                            height: "200px",
+                          }
+                    }
                   >
                     {room.main_image_url ? (
                       <img
@@ -138,35 +149,34 @@ function SearchResultPage() {
                   {/* Room Info */}
                   <div
                     className="flex flex-1 flex-col justify-between p-6 gap-4"
-                    style={{
-                      minHeight: "384px",
-                      ...(typeof window !== "undefined" && window.innerWidth >= 768
-                        ? { minHeight: "320px" }
-                        : { minHeight: "384px" }),
-                    }}
+                    style={
+                      typeof window !== "undefined" && window.innerWidth >= 768
+                        ? { minHeight: "400px" }
+                        : { minHeight: "auto" }
+                    }
                   >
                     <div className="flex flex-col flex-1 min-w-0">
-                      <h2 className="text-base font-semibold text-[#2F3E35] mb-1">{room.room_type}</h2>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                      <h2 className="text-xl font-semibold text-[#2F3E35] mb-10">{room.room_type}</h2>
+                      <div className="flex items-center gap-2 text-s text-gray-500 mb-10">
                         <span>
                           {room.guests ?? 2} {room.guests > 1 ? "Guests" : "Guest"}
                         </span>
-                        <span className="mx-1">·</span>
+                        <span className="mx-2">·</span>
                         <span>
                           {room.bed_type ?? 1} {room.bed_type > 1 ? "Beds" : "Bed"}
                         </span>
-                        <span className="mx-1">·</span>
+                        <span className="mx-2">·</span>
                         <span>
                           {room.room_size ? `${room.room_size} sqm` : "32 sqm"}
                         </span>
                         {room.room_type && (
                           <>
-                            <span className="mx-1">·</span>
+                            <span className="mx-2">·</span>
                             <span>{room.room_type}</span>
                           </>
                         )}
                       </div>
-                      <div className="text-gray-500 text-xs mb-4 line-clamp-2">
+                      <div className="text-gray-500 text-s mb-4 line-clamp-2">
                         {room.description || "Elegant modern decor with garden or city view. Includes balcony, bathtub, and free WiFi."}
                       </div>
                     </div>

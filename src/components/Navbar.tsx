@@ -72,8 +72,8 @@ async function fetchProfileInfo(user: { id: string; email: string | null }) {
       displayName: username || fallbackName, // ถ้าusernameมีค่า จะใช้usernameแสดง
       avatarUrl: profileImage || fallbackAvatar, // แต่ถ้ามีรูปจะใช้รูปแสดง
     };
-  } catch { // ถ้าerror ในการเข้าถึงข้อมูล จะไปดึง email และ รูป defefault มาแสดงแทน
-    return { displayName: fallbackName, avatarUrl: fallbackAvatar }; 
+  } catch {
+    return { displayName: fallbackName, avatarUrl: fallbackAvatar };
   }
 }
 
@@ -154,8 +154,8 @@ function UserMenu() {
       setOpen(false);
       await supabase.auth.signOut();
     } finally {
-      // redirect ไปหน้า login หลัง logout
-      window.location.replace("/customer/login?logged_out=1");
+      // redirect ไปหน้า http://localhost:3000/ หลัง logout
+      window.location.replace("http://localhost:3000/");
     }
   };
 
@@ -177,11 +177,9 @@ function UserMenu() {
   }
 
   // ล็อกอินแล้ว → แสดงเมนูผู้ใช้
-  // เปลี่ยนให้แสดงชื่อ username (full_name) แทน email
-  const displayName =
-    user?.user_metadata?.full_name?.trim() ||
-    user?.user_metadata?.username?.trim() ||
-    user?.email;
+  // แก้ให้ขึ้น username แทน email
+  // displayName จะเป็น username จาก profiles เสมอ (ถ้าไม่มี username จะ fallback เป็น email)
+  const userDisplayName = displayName;
 
   return (
     <div ref={ref} className="relative">
@@ -195,7 +193,7 @@ function UserMenu() {
           className="w-7 h-7 rounded-full object-cover"
           alt="User avatar"
         />
-        <span className="hidden md:inline">{displayName}</span>
+        <span className="hidden md:inline">{userDisplayName}</span>
         <svg
           className="w-3 h-3"
           viewBox="0 0 20 20"
@@ -266,6 +264,7 @@ function MobileUserMenu({
           alt="User avatar"
           className="w-10 h-10 rounded-full object-cover"
         />
+        {/* แก้ให้ขึ้น username แทน email */}
         <span className="font-medium text-[#222] text-sm">{name}</span>
       </div>
       <hr className="my-2 border-t border-gray-200" />
@@ -450,8 +449,8 @@ const Navbar = ({
               setOpen(false);
               // เรียกคำสั่ง logout ของ supabase เพื่อลบ session และ token
               await supabase.auth.signOut();
-              // เปลี่ยนหน้าไปยังหน้า login
-              window.location.replace("/customer/login?logged_out=1");
+              // เปลี่ยนหน้าไปยังหน้า http://localhost:3000/
+              window.location.replace("http://localhost:3000/");
             }}
           />
         )}

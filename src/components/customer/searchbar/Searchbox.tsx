@@ -105,15 +105,23 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
               max-height: 48px !important;
             }
             .searchbox-btn {
-              width: 144px !important;
-              min-width: 144px !important;
-              max-width: 144px !important;
+              width: 343px !important;
+              min-width: 343px !important;
+              max-width: 343px !important;
               height: 48px !important;
               min-height: 48px !important;
               max-height: 48px !important;
               align-self: flex-end !important;
             }
             .searchbox-input {
+              width: 343px !important;
+              min-width: 343px !important;
+              max-width: 343px !important;
+              height: 48px !important;
+              min-height: 48px !important;
+              max-height: 48px !important;
+            }
+            .searchbox-btn button {
               width: 343px !important;
               min-width: 343px !important;
               max-width: 343px !important;
