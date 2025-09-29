@@ -58,7 +58,11 @@ export default async function handler(
       }
 
       // Create new chat session
-      const sessionData: any = { status: 'active' };
+      const sessionData: {
+        status: string;
+        customer_id?: string;
+        anonymous_id?: string;
+      } = { status: 'active' };
       if (customerId) {
         sessionData.customer_id = customerId;
       } else if (anonymousId) {

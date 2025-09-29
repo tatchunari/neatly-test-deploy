@@ -87,7 +87,7 @@ export default function Aboutsection() {
           }}
         >
           <p className="mb-2 md:mb-4">
-            Set in Bangkok, Thailand, Neatly Hotel offers 5-star accommodation with an outdoor pool, kids' club, sports facilities and a fitness center. There is also a spa, an indoor pool and sauna.
+            {"Set in Bangkok, Thailand, Neatly Hotel offers 5-star accommodation with an outdoor pool, kids' club, sports facilities and a fitness center. There is also a spa, an indoor pool and sauna."}
           </p>
           <p className="mb-2 md:mb-4">
             All units at the hotel are equipped with a seating area, a flat-screen TV with satellite channels, a dining area and a private bathroom with free toiletries, a bathtub and a hairdryer. Every room in Neatly Hotel features a furnished balcony. Some rooms are equipped with a coffee machine.

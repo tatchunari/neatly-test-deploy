@@ -103,7 +103,12 @@ export default async function handler(
         .single();
 
       // Save user message with sender_id for authenticated users
-      const messageData: any = {
+      const messageData: {
+        session_id: string;
+        message: string;
+        is_bot: boolean;
+        sender_id?: string;
+      } = {
         session_id: sessionId as string,
         message,
         is_bot: isBot || false

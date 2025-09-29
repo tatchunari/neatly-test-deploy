@@ -332,7 +332,7 @@ export default function ChatbotAdmin() {
       // Admin operation - no auth needed
       console.log('🟡 Admin: Creating context (admin operation)');
       
-      const headers: any = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
       console.log('🟡 Admin: Making API request to /api/chat/contexts');
       const response = await fetch('/api/chat/contexts', {

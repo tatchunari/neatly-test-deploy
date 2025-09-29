@@ -63,8 +63,9 @@ export default function RoomTypesIndex() {
       } else {
         throw new Error(data.message || "Failed to fetch rooms");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch rooms data");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch rooms data";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

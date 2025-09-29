@@ -53,8 +53,9 @@ export const RoomMainImage = ({ name, value } : RoomMainImageProps) => {
     } else {
       throw new Error(data.error || data.message || "Upload failed");
     }
-  } catch (err: any) {
-    alert(`Image upload error: ${err.message}`);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Upload failed";
+    alert(`Image upload error: ${errorMessage}`);
   }
 };
 

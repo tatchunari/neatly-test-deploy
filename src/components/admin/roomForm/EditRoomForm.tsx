@@ -64,8 +64,9 @@ export function EditRoomForm({ room }: EditRoomFormProps) {
       setTimeout(() => {
         router.push("/admin/room-types");
       }, 1000);
-    } catch (err: any) {
-      toast.error(`Failed to update room: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
+      toast.error(`Failed to update room: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }

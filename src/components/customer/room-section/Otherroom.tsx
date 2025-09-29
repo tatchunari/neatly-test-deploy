@@ -27,8 +27,9 @@ export default function Otherroompage() {
         const data = await response.json();
         // สมมติว่า API ส่ง { data: [...] }
         setRooms(Array.isArray(data?.data) ? data.data : []);
-      } catch (err: any) {
-        setError(err?.message || "Error fetching rooms");
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Error fetching rooms";
+        setError(errorMessage);
         setRooms([]);
       } finally {
         setLoading(false);

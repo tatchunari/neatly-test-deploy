@@ -89,7 +89,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(400).json({ error: 'Status is required' });
         }
 
-        const updateData: any = { status };
+        const updateData: {
+          status: string;
+          closed_at?: string | null;
+        } = { status };
         
         // If closing or solving ticket, set closed_at timestamp
         if (status === 'closed' || status === 'solved') {

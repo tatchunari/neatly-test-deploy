@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabaseClient';
 import { chatWithGemini } from '@/lib/chat';
+import type { ChatMessage } from '@/types/chat';
 
 export default async function handler(
   req: NextApiRequest,
@@ -58,7 +59,7 @@ export default async function handler(
 }
 
 // 4.1 FAQ (ยังไม่เจอใน strict/vector) - Fallback ให้ Gemini ตอบโดยใช้ FAQ context ทั้งหมด
-async function handleFAQIntent(userQuestion: string, conversationHistory?: any[]) {
+async function handleFAQIntent(userQuestion: string, conversationHistory?: ChatMessage[]) {
   try {
     console.log('📚 FAQ FALLBACK - Getting all FAQ and context data...');
     
@@ -124,7 +125,7 @@ Answer based on the FAQ and additional context above. If the question doesn't ma
 }
 
 // 4.2 Rooms - SQL Generation + Execution + Response Generation
-async function handleRoomsIntent(userQuestion: string, conversationHistory?: any[]) {
+async function handleRoomsIntent(userQuestion: string, conversationHistory?: ChatMessage[]) {
   try {
     console.log('🏨 ROOMS INTENT - Generating SQL...');
     
@@ -195,7 +196,7 @@ Answer only based on the context and conversation history.`;
 }
 
 // 4.3 Promo Codes - เหมือนกับ rooms แต่ใช้ schema promo_codes
-async function handlePromoCodesIntent(userQuestion: string, conversationHistory?: any[]) {
+async function handlePromoCodesIntent(userQuestion: string, conversationHistory?: ChatMessage[]) {
   try {
     console.log('🎟️ PROMO CODES INTENT - Generating SQL...');
     

@@ -68,7 +68,7 @@ function SearchResultPage() {
               guests: (router.query.guests as string) || undefined,
             }}
             onSearch={(params) => {
-              const q = new URLSearchParams(params as any).toString()
+              const q = new URLSearchParams(params as unknown as Record<string, string>).toString()
               router.push(`/customer/search-result?${q}`)
             }}
           />

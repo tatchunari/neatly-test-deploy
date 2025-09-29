@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { chatWithGemini } from '@/lib/chat';
+import type { ChatMessage } from '@/types/chat';
 
 export default async function handler(
   req: NextApiRequest,
@@ -23,7 +24,7 @@ export default async function handler(
     let contextString = '';
     if (conversationHistory && conversationHistory.length > 0) {
       const recentHistory = conversationHistory.slice(-3); // Last 3 messages
-      contextString = recentHistory.map((msg: any) => 
+      contextString = recentHistory.map((msg: ChatMessage) => 
         `${msg.is_bot ? 'Bot' : 'User'}: ${msg.message}`
       ).join('\n');
     }

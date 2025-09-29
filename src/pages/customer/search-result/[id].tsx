@@ -53,8 +53,9 @@ function Roomdetailpage() {
         } else {
           setRoom(null)
         }
-      } catch (e: any) {
-        setError(e?.message || "Error fetching room detail")
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : "Error fetching room detail";
+        setError(errorMessage);
       } finally {
         setLoading(false)
       }
