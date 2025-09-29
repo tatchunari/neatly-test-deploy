@@ -82,8 +82,9 @@ export function EditRoomForm({ room }: EditRoomFormProps) {
       setTimeout(() => {
         router.push("/admin/room-types");
       }, 1000);
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
+      alert(`Error: ${errorMessage}`);
     } finally {
       setIsLoading(false);
       setIsDeleteModalOpen(false);
