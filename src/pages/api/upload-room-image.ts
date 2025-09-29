@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import type { Request, Response, Express } from "express";
 import multer from "multer";
 import { createClient } from "@supabase/supabase-js";
 
@@ -15,10 +16,11 @@ export const config = {
 };
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  upload(req as unknown, res as unknown, async (err: unknown) => {
+  upload(req as unknown as Request, res as unknown as Response, async (err: unknown) => {
     if (err) return res.status(500).json({ success: false, message: err instanceof Error ? err.message : "Upload error" });
 
-    const file = (req as { file: { originalname: string; buffer: Buffer; mimetype: string } }).file;
+    const expressReq = req as unknown as Request & { file: Express.Multer.File };
+    const file = expressReq.file;
     if (!file) return res.status(400).json({ success: false, message: "No file uploaded" });
 
     const filePath = `rooms/${Date.now()}_${file.originalname}`;
