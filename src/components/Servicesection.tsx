@@ -18,7 +18,7 @@ const services = [
     label: "Arrival Lounge",
   },
   {
-    icon: "/icons/wifi.png",
+    icon: "/icons/freewifi.png",
     label: "Free WiFi",
   },
   {
@@ -26,7 +26,7 @@ const services = [
     label: "Parking",
   },
   {
-    icon: "/icons/24hours.png",
+    icon: "/icons/24 hours.png",
     label: "24 hours operation",
   },
 ];
@@ -105,8 +105,8 @@ const Servicesection = () => {
                 <Image
                   src={service.icon}
                   alt={service.label}
-                  width={48}
-                  height={48}
+                  width={60}
+                  height={60}
                   className="object-contain"
                   priority
                 />
