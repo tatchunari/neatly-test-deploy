@@ -20,8 +20,8 @@ export const RoomMainImage = ({ name, value } : RoomMainImageProps) => {
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; 
     setMainImg(null);
-    setMainImgUrl(null);
-    setValue(name, "");
+    setMainImgUrl("");
+    setValue(name, "", { shouldValidate: true, shouldDirty: true });
   };
 }
 
@@ -49,7 +49,7 @@ export const RoomMainImage = ({ name, value } : RoomMainImageProps) => {
     if (res.ok && data.success) {
       console.log("Uploaded image URL:", data.url);
       setMainImgUrl(data.url); // store URL in state for later use in form submission
-      setValue(name, data.url)
+      setValue(name, data.url, { shouldValidate: true, shouldDirty: true });
     } else {
       throw new Error(data.error || data.message || "Upload failed");
     }
