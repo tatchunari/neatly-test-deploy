@@ -164,6 +164,7 @@ export function CreateRoomForm({ room }: { room?: any }) {
                         {/* ✅ Checkbox to enable/disable promotion price */}
                         <input
                           type="checkbox"
+                          className="accent-orange-500"
                           checked={hasPromotion}
                           {...register("hasPromotion")}
                           onChange={(e) => setHasPromotion(e.target.checked)}
