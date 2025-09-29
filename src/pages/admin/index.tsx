@@ -7,7 +7,7 @@ import Layout from "../../components/admin/Layout";
 export default function AdminDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [_user, setUser] = useState<unknown>(null);
 
   useEffect(() => {
     const checkAuth = async () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useFormContext, FieldErrors } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { ReorderableItem } from "@/components/admin/ReorderableItem";
 import { Reorder } from "motion/react";
 
@@ -96,7 +96,7 @@ export const AmenityItems = ({ name, value }: AmenityItemsProps) => {
       {/* Show validation error */}
       {showError && (
         <p className="text-red-500">
-          {(errors[name] as any)?.message || "Please add at least one amenity"}
+          {(errors[name] as { message?: string })?.message || "Please add at least one amenity"}
         </p>
       )}
     </div>

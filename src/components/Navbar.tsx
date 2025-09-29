@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import Image from "next/image";
 
 // ใช้ supabase โดยตรง ไม่พึ่ง useAuth context
@@ -167,12 +168,12 @@ function UserMenu() {
   if (!user) {
     // ยังไม่ล็อกอิน → แสดงปุ่ม Log in
     return (
-      <a
+      <Link
         href="/customer/login"
         className="text-[#F47A1F] text-sm font-semibold hover:underline"
       >
         Log in
-      </a>
+      </Link>
     );
   }
 
@@ -188,8 +189,10 @@ function UserMenu() {
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-2 text-[#F47A1F] w-6-sm font-semibold hover:underline"
       >
-        <img
+        <Image
           src={avatarUrl}
+          width={28}
+          height={28}
           className="w-7 h-7 rounded-full object-cover"
           alt="User avatar"
         />
@@ -206,12 +209,12 @@ function UserMenu() {
 
       {open && (
         <div className="absolute right-0 mt-2 w-44 rounded-lg border bg-white shadow-md z-50">
-          <a href="/customer/profile" className="block px-4 py-2 hover:bg-gray-50">
+          <Link href="/customer/profile" className="block px-4 py-2 hover:bg-gray-50">
             Account
-          </a>
-          <a href="/customer/settings" className="block px-4 py-2 hover:bg-gray-50">
+          </Link>
+          <Link href="/customer/settings" className="block px-4 py-2 hover:bg-gray-50">
             Settings
-          </a>
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600"
@@ -259,8 +262,10 @@ function MobileUserMenu({
   return (
     <div className="flex flex-col w-full">
       <div className="flex items-center gap-3 px-2 pt-4 pb-2">
-        <img
+        <Image
           src={avatar}
+          width={40}
+          height={40}
           alt="User avatar"
           className="w-10 h-10 rounded-full object-cover"
         />
@@ -269,24 +274,24 @@ function MobileUserMenu({
       </div>
       <hr className="my-2 border-t border-gray-200" />
       <nav className="flex flex-col gap-2">
-        <a
+        <Link
           href="/customer/profile"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Profile
-        </a>
-        <a
+        </Link>
+        <Link
           href="/customer/payment"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Payment Method
-        </a>
-        <a
+        </Link>
+        <Link
           href="/customer/booking-history"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Booking History
-        </a>
+        </Link>
       </nav>
       <hr className="my-2 border-t border-gray-200" />
       <button
@@ -431,13 +436,13 @@ const Navbar = ({
               </button>
             ))}
             <hr className="my-6 border-t border-gray-200" />
-            <a
+            <Link
               href="/customer/login"
               className="block text-[#F47A1F] text-sm font-semibold hover:underline py-2"
               onClick={() => setOpen(false)}
             >
               {loginLabel}
-            </a>
+            </Link>
           </>
         ) : (
           // แสดงเมนูของuserบนมือถือ เมื่อuser loginอยู่

@@ -16,7 +16,7 @@ interface DatePickerProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
   ({ className, error, onChange, value, ...props }, ref) => {
-    const [isFocused, setIsFocused] = useState(false);
+    const [_isFocused, setIsFocused] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [showCalendar, setShowCalendar] = useState(false);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -47,7 +47,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       const dd = digits.substring(2, 4);
       const yyyy = digits.substring(4, 8);
 
-      let masked = "mm/dd/yyyy".split("");
+      const masked = "mm/dd/yyyy".split("");
       if (mm) masked[0] = mm[0] || "m";
       if (mm.length > 1) masked[1] = mm[1];
       if (dd) masked[3] = dd[0] || "d";

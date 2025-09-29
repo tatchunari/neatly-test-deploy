@@ -48,17 +48,7 @@ export interface FormError {
   message: string;
 }
 
-// เพิ่ม Profile-related types
-export interface ProfileFormData {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  phoneNumber: string;
-  dateOfBirth: string;
-  country: string;
-  profilePicture?: File;
-}
+// ProfileFormData ถูกกำหนดใน profileValidation.ts แล้ว
 
 export interface UpdateProfileResponse {
   success: boolean;

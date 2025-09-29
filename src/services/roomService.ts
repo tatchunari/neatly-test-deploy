@@ -1,7 +1,8 @@
 // services/roomService.ts
 import { buildRoomPayload } from "@/utils/roomPayload";
+import { RoomFormValues } from "@/types/rooms";
 
-export async function updateRoom(roomId: string, formData: any, hasPromotion: boolean) {
+export async function updateRoom(roomId: string, formData: RoomFormValues, hasPromotion: boolean) {
   const payload = buildRoomPayload(formData, hasPromotion);
 
   try {
@@ -43,7 +44,7 @@ export async function deleteRoom(roomId: string) {
 }
 
 // services/roomService.ts
-export async function createRoom(formData: any, hasPromotion: boolean) {
+export async function createRoom(formData: RoomFormValues, hasPromotion: boolean) {
   const payload = buildRoomPayload(formData, hasPromotion);
 
   try {

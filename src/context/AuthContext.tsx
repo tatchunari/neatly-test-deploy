@@ -1,8 +1,21 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
+interface User {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    first_name?: string;
+    last_name?: string;
+    username?: string;
+    phone_number?: string;
+    date_of_birth?: string;
+    country?: string;
+  };
+}
+
 interface AuthContextType {
-  user: any;
+  user: User | null;
   loading: boolean;
   anonymousId: string | null;
   isGuest: boolean;
@@ -28,7 +41,7 @@ const getOrCreateAnonymousId = (): string => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
   const [pendingAnonymousId, setPendingAnonymousId] = useState<string | null>(null);

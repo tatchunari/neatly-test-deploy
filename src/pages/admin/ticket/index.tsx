@@ -15,7 +15,7 @@ interface Ticket {
 }
 
 export default function TicketAdmin() {
-  const router = useRouter();
+  const _router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');

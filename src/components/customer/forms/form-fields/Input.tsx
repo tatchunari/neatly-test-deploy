@@ -5,7 +5,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: boolean;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+const InputComponent = forwardRef<HTMLInputElement, InputProps>(
   ({ className, error, ...props }, ref) => (
     <input
       ref={ref}
@@ -31,3 +31,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     />
   )
 );
+
+InputComponent.displayName = "Input";
+
+export const Input = InputComponent;

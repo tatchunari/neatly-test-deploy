@@ -1,5 +1,10 @@
 import { VertexAI } from "@google-cloud/vertexai";
 
+interface ChatMessage {
+  is_bot: boolean;
+  message: string;
+}
+
 const vertex = new VertexAI({
   project: process.env.GCLOUD_PROJECT_ID!,
   location: process.env.GCLOUD_LOCATION!,
@@ -7,13 +12,13 @@ const vertex = new VertexAI({
 
 const model = vertex.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-export async function chatWithGemini(question: string, conversationHistory?: any[], context?: string) {
+export async function chatWithGemini(question: string, conversationHistory?: ChatMessage[], context?: string) {
   let historyContext = '';
   
   if (conversationHistory && conversationHistory.length > 0) {
     // ส่งแค่ 3 ข้อความล่าสุด
     const recentHistory = conversationHistory.slice(-3);
-    recentHistory.forEach((msg: any) => {
+    recentHistory.forEach((msg: ChatMessage) => {
       const role = msg.is_bot ? 'พนักงาน' : 'ลูกค้า';
       historyContext += `${role}: ${msg.message}\n`;
     });

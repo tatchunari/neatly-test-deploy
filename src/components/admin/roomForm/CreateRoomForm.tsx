@@ -7,6 +7,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { createRoom } from "@/services/roomService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { roomSchema, RoomFormData } from "@/schemas/roomSchema";
+import { Room } from "@/types/rooms";
 
 import { RoomMainImage } from "@/components/admin/roomForm/RoomMainImage";
 import { RoomGalleryImages } from "@/components/admin/roomForm/RoomGalleryImages";
@@ -17,7 +18,7 @@ import { TextArea } from "@/components/admin/ui/TextArea";
 import { DropDownInput } from "../ui/DropdownInput";
 import { toast } from "sonner";
 
-export function CreateRoomForm({ room }: { room?: any }) {
+export function CreateRoomForm({ room }: { room?: Room | null }) {
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -27,13 +28,13 @@ export function CreateRoomForm({ room }: { room?: any }) {
     resolver: zodResolver(roomSchema),
     defaultValues: {
       roomType: room?.room_type || "",
-      roomSize: room?.room_size || "",
+      roomSize: room?.room_size || 0,
       bedType: room?.bed_type || "",
       guests: room?.guests || 1,
-      pricePerNight: room?.price || "",
+      pricePerNight: room?.price || 0,
       promotionPrice: room?.promotion_price || null,
       description: room?.description || "",
-      mainImgUrl: room?.main_image_url?.[0] || null,
+      mainImgUrl: room?.main_image_url?.[0] || "",
       galleryImageUrls: room?.gallery_images || [],
       amenities: room?.amenities || [],
     },
@@ -49,8 +50,9 @@ export function CreateRoomForm({ room }: { room?: any }) {
       setTimeout(() => {
         router.push("/admin/room-types");
       }, 1000);
-    } catch (err: any) {
-      toast.error(`Failed to create room: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
+      toast.error(`Failed to create room: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -222,7 +224,7 @@ export function CreateRoomForm({ room }: { room?: any }) {
                   <div>
                   <RoomGalleryImages
                     name="galleryImageUrls"
-                    value={room?.gallery_images}
+                    value={room?.gallery_images || []}
                   />
                   {errors.galleryImageUrls && <p className="text-red-500">{errors.galleryImageUrls.message}</p>}
                   </div>

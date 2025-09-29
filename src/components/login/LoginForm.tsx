@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
 interface Errors {
@@ -18,7 +19,7 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    let newErrors: Errors = { username: "", password: "" };
+    const newErrors: Errors = { username: "", password: "" };
 
     const trimmedUsername = username.trim();
     const trimmedPassword = password.trim();
@@ -171,9 +172,9 @@ export default function LoginForm() {
             Don’t have an account yet?
           </p>
 
-          <a href="/customer/register" className="font-semibold text-orange-500 text-[15px] md:text-[16px] hover:underline">
+          <Link href="/customer/register" className="font-semibold text-orange-500 text-[15px] md:text-[16px] hover:underline">
             Register
-          </a>
+          </Link>
 
           <a href="#" className="w-full sm:w-auto ml-0 sm:ml-auto text-left sm:text-right mt-1 sm:mt-0 font-semibold text-orange-500 text-[15px] md:text-[16px] hover:underline">
             Forgot Password?

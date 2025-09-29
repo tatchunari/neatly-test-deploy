@@ -4,11 +4,11 @@ interface RoomMainImageProps {
 }
 
 import { useRef, useState } from "react";
-import { useForm, useFormContext } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 
 export const RoomMainImage = ({ name, value } : RoomMainImageProps) => {
-  const [mainImgName, setMainImgName] = useState<string | null>(null);
-  const [mainImg, setMainImg] = useState<File | null>(null);
+  const [_mainImgName, setMainImgName] = useState<string | null>(null);
+  const [_mainImg, setMainImg] = useState<File | null>(null);
   const [mainImgUrl, setMainImgUrl] = useState<string | null>(value || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { register, setValue } = useFormContext();

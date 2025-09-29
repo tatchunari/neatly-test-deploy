@@ -86,17 +86,17 @@ console.log("Room", room);
             <div className="w-full grid grid-cols-6 gap-2 p-2 md:p-4 bg-white">
               <div className="relative col-span-1 h-[110px] md:h-[180px] rounded-md overflow-hidden bg-gray-100">
                 {room.gallery_images && room.gallery_images[0] ? (
-                  <img src={room.gallery_images[0]} alt="thumb-left" fill sizes="200px" style={{ objectFit: "cover" }} />
+                  <Image src={room.gallery_images[0]} alt="thumb-left" fill sizes="200px" style={{ objectFit: "cover" }} />
                 ) : null}
               </div>
               <div className="relative col-span-4 h-[220px] md:h-[380px] rounded-md overflow-hidden bg-gray-100">
                 {room.image ? (
-                  <img src={room.image} alt={room.name || "Room"} fill sizes="900px" style={{ objectFit: "cover" }} />
+                  <Image src={room.image} alt={room.name || "Room"} fill sizes="900px" style={{ objectFit: "cover" }} />
                 ) : null}
               </div>
               <div className="relative col-span-1 h-[110px] md:h-[180px] rounded-md overflow-hidden bg-gray-100">
                 {room.gallery_images && room.gallery_images[1] ? (
-                  <img src={room.gallery_images[1]} alt="thumb-right" fill sizes="200px" style={{ objectFit: "cover" }} />
+                  <Image src={room.gallery_images[1]} alt="thumb-right" fill sizes="200px" style={{ objectFit: "cover" }} />
                 ) : null}
               </div>
             </div>

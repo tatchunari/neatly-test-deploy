@@ -9,8 +9,7 @@ interface FileUploadProps {
   currentImage?: string; // ตรวจสอบว่า prop นี้มีหรือไม่
 }
 
-export const FileUpload: React.FC<FileUploadProps> = React.memo(
-  ({ onFileSelect, error = false, currentImage }) => {
+const FileUploadComponent: React.FC<FileUploadProps> = ({ onFileSelect, error = false, currentImage }) => {
     // เพิ่ม currentImage
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -108,5 +107,8 @@ export const FileUpload: React.FC<FileUploadProps> = React.memo(
         )}
       </div>
     );
-  }
-);
+};
+
+FileUploadComponent.displayName = "FileUpload";
+
+export const FileUpload = React.memo(FileUploadComponent);

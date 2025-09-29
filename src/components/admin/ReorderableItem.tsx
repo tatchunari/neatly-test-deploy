@@ -23,7 +23,7 @@ export function ReorderableItem({
 }: ReorderableItemProps) {
   const controls = useDragControls();
 
-  const { register } = useForm();
+  const { register: _register } = useForm();
   
   return (
     <Reorder.Item

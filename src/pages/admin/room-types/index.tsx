@@ -5,7 +5,7 @@ import { Room } from "@/types/rooms";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-export default function index() {
+export default function RoomTypesIndex() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number>(1);

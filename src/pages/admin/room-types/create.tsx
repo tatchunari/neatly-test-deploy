@@ -7,10 +7,10 @@ import { CreateRoomForm } from "@/components/admin/roomForm/CreateRoomForm";
 
 export default function CreateRoomPage() {
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
   
 // console.log("Gallery URLs:",galleryUrls);
- if (isLoading) {
+ if (_isLoading) {
     return (
       <Layout>
         <LoadingScreen/>

@@ -8,7 +8,7 @@ import Roomwrapper from "@/components/Roomwrapper";
 import Testimonial from "@/components/Testimonial";
 import Chatbot from "@/components/Chatbot";
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({ Component: _Component, pageProps: _pageProps }: AppProps) {
   return (
     <div className="pt-12 md:pt-[100px]">
       <Navbar />

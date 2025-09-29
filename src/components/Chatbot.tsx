@@ -8,6 +8,12 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import type { ChatMessage, ChatSession } from "@/types/chat";
 
+interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+}
+
 export default function Chatbot() {
   const auth = useAuth();
   const { user, anonymousId, isGuest } = auth || {};
@@ -30,10 +36,9 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const [inputValue, setInputValue] = useState('');
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [greetingMessage, setGreetingMessage] = useState<string>('');
-  const [suggestionFAQs, setSuggestionFAQs] = useState<any[]>([]);
+  const [suggestionFAQs, setSuggestionFAQs] = useState<FAQ[]>([]);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [showTopics, setShowTopics] = useState(false);
   
@@ -43,7 +48,7 @@ export default function Chatbot() {
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   
   // Ticket status states
-  const [currentTicket, setCurrentTicket] = useState<any>(null);
+  const [currentTicket, setCurrentTicket] = useState<{ status: string; live_chat_enabled?: boolean } | null>(null);
   const [isTicketSolved, setIsTicketSolved] = useState(false);
   const [adminTyping, setAdminTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -234,8 +239,6 @@ export default function Chatbot() {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          setIsSubscribed(true);
-          
           // Resolve the promise when subscription is ready
           if (subscriptionResolve.current) {
             subscriptionResolve.current();
@@ -243,15 +246,12 @@ export default function Chatbot() {
           }
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Realtime subscription error for session:', currentSession.id);
-          setIsSubscribed(false);
           
           // Retry subscription after error
           setTimeout(() => {
             console.log('Retrying Realtime subscription...');
             channel.subscribe();
           }, 2000);
-        } else {
-          setIsSubscribed(false);
         }
       });
 
@@ -297,13 +297,13 @@ export default function Chatbot() {
               setTimeout(() => setIsTicketSolved(false), 3000);
             } else {
               // Update ticket info when status changes (open -> in_progress)
-              setCurrentTicket(payload.new);
+              setCurrentTicket(payload.new as { status: string; live_chat_enabled?: boolean });
               setIsTicketSolved(false);
               console.log('🎫 Ticket updated:', payload.new);
             }
           } else if (payload.eventType === 'INSERT') {
             // New ticket created
-            setCurrentTicket(payload.new);
+            setCurrentTicket(payload.new as { status: string; live_chat_enabled?: boolean });
             setIsTicketSolved(false);
             console.log('🎫 New ticket created:', payload.new);
           }
@@ -335,7 +335,7 @@ export default function Chatbot() {
       }
 
       // Check for existing sessions
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (user?.id) {
         params.customerId = user.id;
       } else if (anonymousId) {
@@ -361,7 +361,7 @@ export default function Chatbot() {
     }
   };
 
-  const createChatSession = async () => {
+  const _createChatSession = async () => {
     try {
       setIsLoadingSession(true);
       console.log('🔄 Creating chat session with auth:', {
@@ -378,7 +378,7 @@ export default function Chatbot() {
       }
 
       // Use real API with appropriate ID
-      const sessionData: any = {};
+      const sessionData: Record<string, string> = {};
       if (user?.id) {
         sessionData.customerId = user.id;
       } else if (anonymousId) {
@@ -419,13 +419,13 @@ export default function Chatbot() {
       const faqs = data.faqs || [];
       
       // หา greeting message
-      const greetingFaq = faqs.find((faq: any) => faq.question === '::greeting::');
+      const greetingFaq = faqs.find((faq: FAQ) => faq.question === '::greeting::');
       if (greetingFaq) {
         setGreetingMessage(greetingFaq.answer);
       }
       
       // หา suggestion FAQs (ไม่รวม greeting และ fallback)
-      const suggestions = faqs.filter((faq: any) => 
+      const suggestions = faqs.filter((faq: FAQ) => 
         faq.question !== '::greeting::' && faq.question !== '::fallback::'
       );
       setSuggestionFAQs(suggestions);
@@ -517,7 +517,7 @@ export default function Chatbot() {
       if (!sessionToUse) {
         setIsLoadingSession(true);
 
-        const sessionData: any = {};
+        const sessionData: Record<string, string> = {};
         if (user?.id) {
           sessionData.customerId = user.id;
         } else if (anonymousId) {
@@ -742,7 +742,7 @@ export default function Chatbot() {
       const data = await response.json();
       
       if (data.tickets && data.tickets.length > 0) {
-        const activeTicket = data.tickets.find((ticket: any) => 
+        const activeTicket = data.tickets.find((ticket: { status: string }) => 
           ticket.status === 'open' || ticket.status === 'in_progress'
         );
         

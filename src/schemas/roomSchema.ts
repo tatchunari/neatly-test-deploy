@@ -38,10 +38,7 @@ export const roomSchema = z
    mainImgUrl: z
     .string()
     .url("Main image is required")
-    .nullable()
-    .refine((val) => val !== null && val.trim() !== "", {
-      message: "Main image is required",
-    }),
+    .min(1, "Main image is required"),
 
 
     galleryImageUrls: z

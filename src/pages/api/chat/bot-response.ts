@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabaseClient';
-import { chatWithGemini } from '@/lib/chat';
+import { chatWithGemini as _chatWithGemini } from '@/lib/chat';
 import { createEmbedding } from '@/lib/embedding';
 
 export default async function handler(

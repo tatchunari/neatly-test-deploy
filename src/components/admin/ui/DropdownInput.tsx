@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UseFormRegisterReturn, UseFormSetValue } from "react-hook-form";
+import { UseFormRegisterReturn, UseFormSetValue, FieldValues, Path } from "react-hook-form";
 import {
   Select,
   SelectContent,
@@ -10,32 +10,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface RHFSelectProps {
+interface RHFSelectProps<T extends FieldValues = FieldValues> {
   label: string;
   options: string[];
   register: UseFormRegisterReturn;
-  setValue: UseFormSetValue<any>;
-  name: string;
+  setValue: UseFormSetValue<T>;
+  name: Path<T>;
   defaultValue?: string;
 }
 
-export const DropDownInput = ({
+export const DropDownInput = <T extends FieldValues = FieldValues>({
   label,
   options,
   register,
   setValue,
   name,
   defaultValue = "",
-}: RHFSelectProps) => {
+}: RHFSelectProps<T>) => {
   const [selected, setSelected] = useState(defaultValue || options[0]);
 
   useEffect(() => {
-    setValue(name, selected); // initialize form value
+    setValue(name, selected as T[Path<T>]); // initialize form value
   }, []);
 
   const handleChange = (value: string) => {
     setSelected(value);
-    setValue(name, value); // update RHF value
+    setValue(name, value as T[Path<T>]); // update RHF value
   };
 
   return (

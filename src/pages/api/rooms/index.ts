@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from '@supabase/supabase-js';
+import { Room } from "@/types/rooms";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,7 +10,7 @@ const supabase = createClient(
 type Data = {
   success: boolean;
   message: string;
-  data?: any;
+  data?: Room[];
   error?: string;
 };
 

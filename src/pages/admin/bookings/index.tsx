@@ -1,7 +1,6 @@
 import Layout from "@/components/admin/Layout"
-import LoadingScreen from "@/components/admin/LoadingScreen"
 
-export default function index() {
+export default function BookingsIndex() {
   return (
     <Layout>
       <div>Customer Booking</div>

@@ -13,6 +13,7 @@ import {
   ProfileFormData,
 } from "@/utils/validation/profileValidation";
 import { supabase } from "@/lib/supabaseClient";
+import { UserProfile } from "@/types/user.type";
 
 const COUNTRY_OPTIONS = [
   { value: "thailand", label: "Thailand" },
@@ -25,13 +26,13 @@ const COUNTRY_OPTIONS = [
 ];
 
 interface ProfileFormProps {
-  onSuccess?: (profile: any) => void;
+  onSuccess?: (profile: UserProfile) => void;
   onCancel?: () => void;
 }
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({
   onSuccess,
-  onCancel,
+  onCancel: _onCancel,
 }) => {
   const {
     profile,
@@ -94,7 +95,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     const success = await updateProfile(data);
     if (success) {
       setSuccessMessage("อัปเดตโปรไฟล์สำเร็จ!");
-      onSuccess?.(profile);
+      if (profile) {
+        onSuccess?.(profile as UserProfile);
+      }
 
       setTimeout(() => {
         setSuccessMessage("");
@@ -102,7 +105,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }
   };
 
-  const handleDeleteProfilePicture = async () => {
+  const _handleDeleteProfilePicture = async () => {
     if (window.confirm("คุณต้องการลบรูปโปรไฟล์หรือไม่?")) {
       const success = await deleteProfilePicture();
       if (success) {

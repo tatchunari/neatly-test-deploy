@@ -8,7 +8,7 @@ interface FormFieldProps {
   required?: boolean; // จำเป็นต้องกรอกหรือไม่
 }
 
-export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
+const FormFieldComponent = forwardRef<HTMLDivElement, FormFieldProps>(
   ({ label, error, children, required = false }, ref) => (
     <div ref={ref} className="space-y-2">
       {/* Label - Properties */}
@@ -25,3 +25,7 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
     </div>
   )
 );
+
+FormFieldComponent.displayName = "FormField";
+
+export const FormField = FormFieldComponent;

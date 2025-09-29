@@ -2,13 +2,13 @@ import Navbar from "@/components/Navbar"
 import SearchBox from "@/components/customer/searchbar/Searchbox"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
-import Link from "next/link"
-import Image from "next/image"
 import Footer from "@/components/Footer"
+import { Room } from "@/types/rooms";
+import Image from "next/image"
 
 function SearchResultPage() {
   const router = useRouter()
-  const [rooms, setRooms] = useState<any[]>([])
+  const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -33,8 +33,9 @@ function SearchResultPage() {
       // สมมติว่า API ส่ง { data: [...] }
       const list = Array.isArray(data?.data) ? data.data : []
       setRooms(list)
-    } catch (error: any) {
-      setError(error?.message || "Error fetching rooms")
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error fetching rooms";
+      setError(errorMessage);
       setRooms([])
     } finally {
       setLoading(false)
@@ -49,7 +50,7 @@ function SearchResultPage() {
 
   // ฟังก์ชันเมื่อกดปุ่ม Room Detail
   // แก้ไขให้รับ id แทน room object
-  const handleRoomDetailClick = (id: any) => {
+  const handleRoomDetailClick = (id: string) => {
     if (!id) return
     router.push(`/customer/search-result/${id}`)
   }
@@ -81,7 +82,7 @@ function SearchResultPage() {
             {rooms.length === 0 ? (
               <div className="text-center text-gray-500 py-10">No rooms found.</div>
             ) : (
-              rooms.map((room: any, index: number) => (
+              rooms.map((room: Room, index: number) => (
                 <div
                   key={room.id ?? index}
                   className="flex flex-col md:flex-row bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 mx-auto"
@@ -129,8 +130,8 @@ function SearchResultPage() {
                     }
                   >
                     {room.main_image_url ? (
-                      <img
-                        src={room.main_image_url}
+                      <Image
+                        src={room.main_image_url[0]}
                         alt={room.room_type || "Room image"}
                         style={{
                           objectFit: "cover",
@@ -163,7 +164,7 @@ function SearchResultPage() {
                         </span>
                         <span className="mx-2">·</span>
                         <span>
-                          {room.bed_type ?? 1} {room.bed_type > 1 ? "Beds" : "Bed"}
+                          {room.bed_type ?? 1} {Number(room.bed_type) > 1 ? "Beds" : "Bed"}
                         </span>
                         <span className="mx-2">·</span>
                         <span>
@@ -183,10 +184,14 @@ function SearchResultPage() {
                     <div className="flex flex-col items-end justify-between min-w-[160px]">
                       <div className="flex flex-col items-end">
                         <span className="text-xs text-gray-400 line-through mb-1">
-                          {room.price_before_discount ? `THB ${room.price_before_discount.toLocaleString()}` : ""}
+                          {room.promotion_price ? `THB ${room.price.toLocaleString()}` : ""}
                         </span>
                         <span className="text-xl font-bold text-[#F47A1F] mb-1">
-                          {room.price ? `THB ${room.price.toLocaleString()}` : "THB 0"}
+                          {(
+                            (room.promotion_price ?? room.price) !== undefined
+                              ? `THB ${(room.promotion_price ?? room.price).toLocaleString()}`
+                              : "THB 0"
+                          )}
                         </span>
                         <span className="text-xs text-gray-400">Per Night</span>
                         <span className="text-xs text-gray-400">Including Taxes & Fees</span>

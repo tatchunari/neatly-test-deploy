@@ -9,7 +9,7 @@ interface RoomGalleryImagesProps {
 
 type GalleryItem = { id: string; url: string };
 
-export const RoomGalleryImages = ({ name, value }: RoomGalleryImagesProps) => {
+export const RoomGalleryImages = ({ name, value: _value }: RoomGalleryImagesProps) => {
   const { setValue, watch } = useFormContext();
 
   // Initialize gallery items from form value

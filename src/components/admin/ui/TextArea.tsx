@@ -11,10 +11,10 @@ interface TextAreaProps {
 }
 
 export const TextArea: React.FC<TextAreaProps> = ({
-  label,
-  required = false,
-  placeholder = "",
-  rows = 4,
+  label: _label,
+  required: _required = false,
+  placeholder: _placeholder = "",
+  rows: _rows = 4,
   register,
   className = "",
 }) => {

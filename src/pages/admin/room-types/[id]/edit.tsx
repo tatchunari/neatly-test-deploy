@@ -23,7 +23,7 @@ export default function EditRoomRoute() {
 }
 
 function EditRoomPage({ id }: {id: string}) {
-  const { data: roomResponse, error, loading } = useQuery<{ data: Room}>(`/api/rooms/${id}`);
+  const { data: roomResponse, error: _error, loading } = useQuery<{ data: Room}>(`/api/rooms/${id}`);
   if (loading || !roomResponse?.data) {
     return (
       <Layout>

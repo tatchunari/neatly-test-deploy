@@ -9,7 +9,7 @@ interface ConfirmDeleteModalProps {
   roomType?: string;
 }
 
-export function ConfirmDeleteModal({ isOpen, onClose, onConfirm, roomType }: ConfirmDeleteModalProps) {
+export function ConfirmDeleteModal({ isOpen, onClose, onConfirm, roomType: _roomType }: ConfirmDeleteModalProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="sm:max-w-md bg-white border-none">

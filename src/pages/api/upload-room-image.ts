@@ -15,14 +15,14 @@ export const config = {
 };
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  upload(req as any, res as any, async (err: any) => {
-    if (err) return res.status(500).json({ success: false, message: err.message });
+  upload(req as unknown, res as unknown, async (err: unknown) => {
+    if (err) return res.status(500).json({ success: false, message: err instanceof Error ? err.message : "Upload error" });
 
-    const file = (req as any).file;
+    const file = (req as { file: { originalname: string; buffer: Buffer; mimetype: string } }).file;
     if (!file) return res.status(400).json({ success: false, message: "No file uploaded" });
 
     const filePath = `rooms/${Date.now()}_${file.originalname}`;
-    const { data, error } = await supabase.storage
+    const { data: _data, error } = await supabase.storage
       .from("neatly")
       .upload(filePath, file.buffer, { contentType: file.mimetype });
 
