@@ -202,12 +202,12 @@ export default function index() {
 
                 {/* Price */}
                 <div className="text-sm text-gray-900">
-                  {Number(room.price).toFixed(2)}
+                  {Number(room.price)}
                 </div>
 
                 {/* Promotion Price */}
                 <div className="text-sm text-gray-900">
-                  {Number(room.promotion_price).toFixed(2)}
+                  {Number(room.promotion_price)}
                 </div>
 
                 {/* Guests */}

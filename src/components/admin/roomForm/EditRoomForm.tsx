@@ -208,6 +208,7 @@ export function EditRoomForm({ room }: EditRoomFormProps) {
                         {/* ✅ Checkbox to enable/disable promotion price */}
                         <input
                             type="checkbox"
+                            className="accent-orange-500"
                             checked={watch("hasPromotion")}
                             onChange={(e) => setValue("hasPromotion", e.target.checked, { shouldValidate: true })}
                           />

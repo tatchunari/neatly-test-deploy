@@ -7,7 +7,9 @@ export const roomSchema = z
 
     roomSize: z.coerce
       .number()
-      .positive("Room size must be greater than 0"),
+      .min(10, "Room size must be at least 10 sqm")
+      .max(200, "Room size cannot exceed 200 sqm"),
+
 
     bedType: z.string().min(1, "Bed type is required"),
 
@@ -33,10 +35,14 @@ export const roomSchema = z
       .string()
       .min(10, "Description must be at least 10 characters long"),
 
-    mainImgUrl: z
-      .string()
-      .min(1, "Main image is required")
-      .url("Invalid image URL"),
+   mainImgUrl: z
+    .string()
+    .url("Main image is required")
+    .nullable()
+    .refine((val) => val !== null && val.trim() !== "", {
+      message: "Main image is required",
+    }),
+
 
     galleryImageUrls: z
       .array(z.string().url())
