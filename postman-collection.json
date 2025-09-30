@@ -1,0 +1,97 @@
+{
+  "info": {
+    "name": "Neatly Chat API",
+    "description": "API testing for Neatly Hotel Chatbot"
+  },
+  "item": [
+    {
+      "name": "Test Supabase Connection",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/chat/test",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "chat", "test"]
+        }
+      }
+    },
+    {
+      "name": "Create Chat Session",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/chat/sessions",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "chat", "sessions"]
+        }
+      }
+    },
+    {
+      "name": "Get Messages",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/chat/messages?sessionId={{sessionId}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "chat", "messages"],
+          "query": [
+            {
+              "key": "sessionId",
+              "value": "{{sessionId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Send Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Hello, how are you?\",\n  \"isBot\": false,\n  \"senderId\": \"user123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/chat/messages?sessionId={{sessionId}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "chat", "messages"],
+          "query": [
+            {
+              "key": "sessionId",
+              "value": "{{sessionId}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
