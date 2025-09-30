@@ -164,13 +164,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           Profile
         </h1>
 
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          loading={isUpdating}
-          onClick={form.handleSubmit(onSubmit)}
-        >
+        <Button type="submit" variant="primary" size="md" loading={isUpdating}>
           {isUpdating ? "กำลังอัปเดต..." : "Update Profile"}
         </Button>
       </div>
