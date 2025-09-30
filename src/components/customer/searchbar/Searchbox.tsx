@@ -37,8 +37,9 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
   const [guest, setGuest] = useState<number>(defaultGuest);
 
   // For dropdown
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(true);
+  const dropdownButtonRef = useRef<HTMLDivElement>(null);
+  const dropdownPanelRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
   React.useEffect(() => {
@@ -70,6 +71,8 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
   // Maximums (arbitrary, can adjust)
   const maxRoom = 10;
   const maxGuest = 20;
+
+  // Calendar icon removed
 
   return (
     <div
@@ -297,7 +300,7 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
             minWidth: "200px",
             height: "48px",
           }}
-          ref={dropdownRef}
+          ref={dropdownButtonRef}
         >
           <label className="text-xs text-gray-500 mb-1" htmlFor="roomguest">
             Rooms & Guests
@@ -328,13 +331,13 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                 </svg>
               </span>
             </button>
-            {/* Dropdown */}
             {dropdownOpen && (
               <div
-                className="absolute left-0 mt-2 bg-white rounded-lg shadow-lg py-3 px-4 z-20 w-full min-w-[240px] max-w-[320px]"
+                className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-lg py-3 px-4 z-20 w-full min-w-[240px] max-w-[320px]"
                 style={{
                   boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08)",
                 }}
+                ref={dropdownPanelRef}
               >
                 {/* Room */}
                 <div className="flex items-center justify-between mb-2">
@@ -514,9 +517,10 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
           <button
             type="submit"
             className={`
-              border border-orange-400 text-orange-400
+              bg-orange-400 text-white
+              border border-orange-400
               rounded-md text-sm font-medium
-              hover:bg-orange-400 hover:text-white transition
+              hover:bg-orange-500 hover:text-white transition
               w-full
               h-[48px]
               focus:outline-none

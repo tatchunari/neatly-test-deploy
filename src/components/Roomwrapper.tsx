@@ -36,6 +36,9 @@ const rooms = [
 ];
 
 const Roomwrapper = () => {
+  // Helper to check if the label is "Explore Room"
+  const isExploreRoom = (label: string) => label.startsWith("Explore Room");
+
   return (
     <section
       id="rooms"
@@ -91,7 +94,9 @@ const Roomwrapper = () => {
             </span>
             <a
               href={rooms[0].link}
-              className="text-white text-sm underline underline-offset-2"
+              className="text-white text-sm"
+              // No underline for "Explore Room"
+              style={{ textDecoration: "none" }}
             >
               Explore Room &rarr;
             </a>
@@ -114,7 +119,8 @@ const Roomwrapper = () => {
             </span>
             <a
               href={rooms[1].link}
-              className="text-white text-xs underline underline-offset-2"
+              className="text-white text-xs"
+              style={{ textDecoration: "none" }}
             >
               Explore Room &rarr;
             </a>
@@ -135,7 +141,8 @@ const Roomwrapper = () => {
             </span>
             <a
               href={rooms[2].link}
-              className="text-white text-xs underline underline-offset-2"
+              className="text-white text-xs"
+              style={{ textDecoration: "none" }}
             >
               Explore Room &rarr;
             </a>
@@ -157,7 +164,8 @@ const Roomwrapper = () => {
             </span>
             <a
               href={rooms[3].link}
-              className="text-white text-xs underline underline-offset-2"
+              className="text-white text-xs"
+              style={{ textDecoration: "none" }}
             >
               Explore Room &rarr;
             </a>
@@ -199,7 +207,8 @@ const Roomwrapper = () => {
             </span>
             <a
               href={rooms[5].link}
-              className="text-white text-xs underline underline-offset-2"
+              className="text-white text-xs"
+              style={{ textDecoration: "none" }}
             >
               Explore Room &rarr;
             </a>
