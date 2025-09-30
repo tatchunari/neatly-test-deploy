@@ -10,7 +10,6 @@ export const roomSchema = z
       .min(10, "Room size must be at least 10 sqm")
       .max(200, "Room size cannot exceed 200 sqm"),
 
-
     bedType: z.string().min(1, "Bed type is required"),
 
     guests: z.coerce
@@ -18,9 +17,7 @@ export const roomSchema = z
       .min(1, "Number of guests must be at least 1")
       .max(5, "Number of guests cannot exceed 5"),
 
-    pricePerNight: z.coerce
-      .number()
-      .positive("Price must be greater than 0"),
+    pricePerNight: z.coerce.number().positive("Price must be greater than 0"),
 
     promotionPrice: z
       .union([
@@ -35,28 +32,27 @@ export const roomSchema = z
       .string()
       .min(10, "Description must be at least 10 characters long"),
 
-   mainImgUrl: z
-    .string()
-    .url("Main image is required")
-    .nullable()
-    .refine((val) => val !== null && val.trim() !== "", {
-      message: "Main image is required",
-    }),
-
+    mainImgUrl: z
+      .string()
+      .url("Main image is required")
+      .nullable()
+      .refine((val) => val !== null && val.trim() !== "", {
+        message: "Main image is required",
+      }),
 
     galleryImageUrls: z
       .array(z.string().url())
       .min(4, "Please upload at least 4 images")
       .max(10, "You can upload at most 10 images"),
 
-    amenities: z
-      .array(z.string())
-      .min(1, "Please add at least one amenity"),
+    amenities: z.array(z.string()).min(1, "Please add at least one amenity"),
   })
   .refine(
     (data) => {
       if (data.hasPromotion) {
-        return data.promotionPrice !== null && data.promotionPrice !== undefined;
+        return (
+          data.promotionPrice !== null && data.promotionPrice !== undefined
+        );
       }
       return true;
     },

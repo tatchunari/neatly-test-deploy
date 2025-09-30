@@ -42,7 +42,6 @@ export default function Aboutsection() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-    // eslint-disable-next-line
   }, []);
 
   return (
@@ -87,13 +86,20 @@ export default function Aboutsection() {
           }}
         >
           <p className="mb-2 md:mb-4">
-            Set in Bangkok, Thailand, Neatly Hotel offers 5-star accommodation with an outdoor pool, kids' club, sports facilities and a fitness center. There is also a spa, an indoor pool and sauna.
+            Set in Bangkok, Thailand, Neatly Hotel offers 5-star accommodation
+            with an outdoor pool, kids&apos; club, sports facilities and a
+            fitness center. There is also a spa, an indoor pool and sauna.
           </p>
           <p className="mb-2 md:mb-4">
-            All units at the hotel are equipped with a seating area, a flat-screen TV with satellite channels, a dining area and a private bathroom with free toiletries, a bathtub and a hairdryer. Every room in Neatly Hotel features a furnished balcony. Some rooms are equipped with a coffee machine.
+            All units at the hotel are equipped with a seating area, a
+            flat-screen TV with satellite channels, a dining area and a private
+            bathroom with free toiletries, a bathtub and a hairdryer. Every room
+            in Neatly Hotel features a furnished balcony. Some rooms are
+            equipped with a coffee machine.
           </p>
           <p>
-            Free WiFi and entertainment facilities are available at property and also rentals are provided to explore the area.
+            Free WiFi and entertainment facilities are available at property and
+            also rentals are provided to explore the area.
           </p>
         </div>
       </div>
@@ -116,7 +122,13 @@ export default function Aboutsection() {
             style={{ outline: "none", border: "none" }}
           >
             <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M15 6l-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
           {/* ปุ่มเลื่อนขวา */}
@@ -127,7 +139,13 @@ export default function Aboutsection() {
             style={{ outline: "none", border: "none" }}
           >
             <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M9 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
           <AnimatePresence>

@@ -159,7 +159,7 @@ const Testimonial = () => {
                 px-4
               "
             >
-              "{testimonials[currentSlide].text}"
+              {`"${testimonials[currentSlide].text}"`}
             </blockquote>
 
             {/* Customer Info */}

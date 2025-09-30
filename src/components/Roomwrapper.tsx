@@ -110,6 +110,7 @@ const Roomwrapper = () => {
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
             <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[1].name}
+              hello
             </span>
             <a
               href={rooms[1].link}

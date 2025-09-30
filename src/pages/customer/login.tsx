@@ -1,6 +1,7 @@
 import Head from "next/head";
 import LoginForm from "@/components/login/LoginForm";
 import Layout from "@/components/Layout";
+import Image from "next/image";
 
 export default function CustomerLoginPage() {
   return (
@@ -14,10 +15,13 @@ export default function CustomerLoginPage() {
           <div className="bg-bg max-w-[1440px] mx-auto flex flex-col md:flex-row">
             {/* ซ้าย: รูป */}
             <div className="w-full md:w-[708px] h-[240px] sm:h-[269px] md:h-[924px]">
-              <img
-                src="/images/login-bg.png"
+              <Image
+                width={800}
+                height={600}
+                src="/Images/login-bg.png"
                 alt="Resort pool"
                 className="w-full h-full object-cover"
+                unoptimized
               />
             </div>
 
