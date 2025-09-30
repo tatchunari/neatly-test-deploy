@@ -124,7 +124,7 @@ function UserMenu() {
       if (!user) {
         if (!cancelled) {
           setDisplayName("");
-          setAvatarUrl("/images/avatar.png");
+          setAvatarUrl("/Images/avatar.png");
         }
         return;
       }
@@ -155,7 +155,7 @@ function UserMenu() {
       await supabase.auth.signOut();
     } finally {
       // redirect ไปหน้า http://localhost:3000/ หลัง logout
-      window.location.replace("http://localhost:3000/");
+      window.location.replace("/");
     }
   };
 

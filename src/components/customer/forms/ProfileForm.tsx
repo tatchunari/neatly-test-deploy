@@ -164,7 +164,19 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           Profile
         </h1>
 
-        <Button type="submit" variant="primary" size="md" loading={isUpdating}>
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          loading={isUpdating}
+          onClick={(e) => {
+            e.preventDefault();
+            console.log("Button clicked - about to validate and submit");
+            form.handleSubmit(onSubmit, (errors) => {
+              console.log("Validation failed with errors:", errors);
+            })();
+          }}
+        >
           {isUpdating ? "กำลังอัปเดต..." : "Update Profile"}
         </Button>
       </div>
@@ -206,7 +218,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 type="email"
                 error={!!errors.email}
                 placeholder="Enter your email"
-                disabled
                 readOnly
                 className="bg-gray-100 cursor-not-allowed"
               />
