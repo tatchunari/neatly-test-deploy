@@ -21,6 +21,7 @@ export default function CustomerLoginPage() {
                 src="/images/login-bg.png"
                 alt="Resort pool"
                 className="w-full h-full object-cover"
+                priority
               />
             </div>
 
