@@ -88,24 +88,6 @@ export interface FormValues {
   amenities: string[];
 }
 
-export interface Room {
-  id: string | number;
-  name?: string;
-  room_type?: string;
-  price?: number;
-  promotion_price?: number;
-  guests?: number;
-  room_size?: number;
-  description?: string;
-  amenities?: string[] | string;
-  bed_type?: string;
-  main_image_url?: string;
-  image?: string;
-  gallery_images?: string[];
-  created_at?: string;
-  updated_at?: string;
-}
-
 export interface RoomCreatePayload {
   name: string;
   room_type: string;
@@ -124,3 +106,15 @@ export interface RoomUpdatePayload extends Partial<RoomCreatePayload> {
   id: string | number;
 }
 
+export interface FormValues {
+  roomType: string;
+  roomSize: number;
+  bedType: string;
+  guests: number;
+  pricePerNight: number;
+  promotionPrice?: number;
+  description: string;
+  mainImageUrl: string;
+  galleryImages: string[];
+  amenities: string[];
+}
