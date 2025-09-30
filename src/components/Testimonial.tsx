@@ -83,6 +83,7 @@ const Testimonial = () => {
             font-normal
             text-center
             mb-8 md:mb-12
+            font-serif
           "
         >
           Our Customer Says
