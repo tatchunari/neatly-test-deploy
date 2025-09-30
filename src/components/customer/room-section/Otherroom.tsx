@@ -44,6 +44,7 @@ export default function Otherroompage() {
 
   // Show only 3 rooms (like original)
   const displayRooms = rooms.slice(0, 3);
+  // console.log("Display Rooms", displayRooms);
 
   return (
     <section className="w-full bg-[#F7F7FA] py-10 md:py-16">
@@ -66,7 +67,7 @@ export default function Otherroompage() {
             ) : (
               displayRooms.map((room) => (
                 <div
-                  key={room.id ?? room.name}
+                  key={room.id}
                   className="relative rounded-xl overflow-hidden shadow bg-white group transition-all duration-200"
                   style={{
                     width: "309px",
@@ -83,7 +84,7 @@ export default function Otherroompage() {
                   >
                     {room.main_image_url ? (
                       <Image
-                        src={room.main_image_url}
+                        src={room.main_image_url[0]}
                         alt={room.name}
                         width={800}
                         height={600}
