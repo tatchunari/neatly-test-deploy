@@ -9,11 +9,12 @@ function getTodayDateString() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-interface SearchParams {
+export interface SearchParams {
   checkIn: string;
   checkOut: string;
   room: string; // number of rooms
   guests: string; // number of guests
+  [key: string]: string;
 }
 
 interface SearchBoxProps {
@@ -26,8 +27,12 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
   const defaultRoom = defaultValues?.room ? Number(defaultValues.room) : 1;
   const defaultGuest = defaultValues?.guests ? Number(defaultValues.guests) : 2;
 
-  const [checkIn, setCheckIn] = useState<string>(defaultValues?.checkIn || getTodayDateString());
-  const [checkOut, setCheckOut] = useState<string>(defaultValues?.checkOut || getTodayDateString());
+  const [checkIn, setCheckIn] = useState<string>(
+    defaultValues?.checkIn || getTodayDateString()
+  );
+  const [checkOut, setCheckOut] = useState<string>(
+    defaultValues?.checkOut || getTodayDateString()
+  );
   const [room, setRoom] = useState<number>(defaultRoom);
   const [guest, setGuest] = useState<number>(defaultGuest);
 
@@ -38,7 +43,10 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
   // Close dropdown on outside click
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     }
@@ -51,7 +59,9 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
   }, [dropdownOpen]);
 
   // Label for the selector
-  const roomGuestLabel = `${room} room${room > 1 ? "s" : ""}, ${guest} guest${guest > 1 ? "s" : ""}`;
+  const roomGuestLabel = `${room} room${room > 1 ? "s" : ""}, ${guest} guest${
+    guest > 1 ? "s" : ""
+  }`;
 
   // Minimums
   const minRoom = 1;
@@ -145,10 +155,15 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
         style={{
           width: "100%",
         }}
-        onSubmit={e => { 
-          e.preventDefault(); 
+        onSubmit={(e) => {
+          e.preventDefault();
           if (onSearch) {
-            onSearch({ checkIn, checkOut, room: room.toString(), guests: guest.toString() });
+            onSearch({
+              checkIn,
+              checkOut,
+              room: room.toString(),
+              guests: guest.toString(),
+            });
           }
         }}
       >
@@ -185,9 +200,23 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                <rect width="18" height="18" x="3" y="3" fill="none" rx="2" stroke="#BDBDBD" strokeWidth="1.5"/>
-                <path d="M7 7V5M17 7V5" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M3 9.5h18" stroke="#BDBDBD" strokeWidth="1.5"/>
+                <rect
+                  width="18"
+                  height="18"
+                  x="3"
+                  y="3"
+                  fill="none"
+                  rx="2"
+                  stroke="#BDBDBD"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M7 7V5M17 7V5"
+                  stroke="#BDBDBD"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path d="M3 9.5h18" stroke="#BDBDBD" strokeWidth="1.5" />
               </svg>
             </span>
           </div>
@@ -233,9 +262,23 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                <rect width="18" height="18" x="3" y="3" fill="none" rx="2" stroke="#BDBDBD" strokeWidth="1.5"/>
-                <path d="M7 7V5M17 7V5" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M3 9.5h18" stroke="#BDBDBD" strokeWidth="1.5"/>
+                <rect
+                  width="18"
+                  height="18"
+                  x="3"
+                  y="3"
+                  fill="none"
+                  rx="2"
+                  stroke="#BDBDBD"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M7 7V5M17 7V5"
+                  stroke="#BDBDBD"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path d="M3 9.5h18" stroke="#BDBDBD" strokeWidth="1.5" />
               </svg>
             </span>
           </div>
@@ -275,7 +318,13 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
               {roomGuestLabel}
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                 <svg width="16" height="16" fill="none" viewBox="0 0 20 20">
-                  <path d="M6 8l4 4 4-4" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path
+                    d="M6 8l4 4 4-4"
+                    stroke="#BDBDBD"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </span>
             </button>
@@ -298,22 +347,69 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                       disabled={room <= minRoom}
                       aria-label="Decrease room"
                     >
-                      <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                        <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
-                        <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="none"
+                        viewBox="0 0 18 18"
+                      >
+                        <circle
+                          cx="9"
+                          cy="9"
+                          r="8"
+                          stroke="#F47A1F"
+                          strokeWidth="1.5"
+                          fill="none"
+                        />
+                        <rect
+                          x="5"
+                          y="8.25"
+                          width="8"
+                          height="1.5"
+                          rx="0.75"
+                          fill="#F47A1F"
+                        />
                       </svg>
                     </button>
-                    <span className="w-5 text-center text-base text-gray-700">{room}</span>
+                    <span className="w-5 text-center text-base text-gray-700">
+                      {room}
+                    </span>
                     <button
                       type="button"
                       className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition"
                       onClick={() => setRoom((r) => Math.min(maxRoom, r + 1))}
                       aria-label="Increase room"
                     >
-                      <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                        <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
-                        <rect x="8.25" y="5" width="1.5" height="8" rx="0.75" fill="#F47A1F"/>
-                        <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="none"
+                        viewBox="0 0 18 18"
+                      >
+                        <circle
+                          cx="9"
+                          cy="9"
+                          r="8"
+                          stroke="#F47A1F"
+                          strokeWidth="1.5"
+                          fill="none"
+                        />
+                        <rect
+                          x="8.25"
+                          y="5"
+                          width="1.5"
+                          height="8"
+                          rx="0.75"
+                          fill="#F47A1F"
+                        />
+                        <rect
+                          x="5"
+                          y="8.25"
+                          width="8"
+                          height="1.5"
+                          rx="0.75"
+                          fill="#F47A1F"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -329,22 +425,69 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                       disabled={guest <= minGuest}
                       aria-label="Decrease guest"
                     >
-                      <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                        <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
-                        <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="none"
+                        viewBox="0 0 18 18"
+                      >
+                        <circle
+                          cx="9"
+                          cy="9"
+                          r="8"
+                          stroke="#F47A1F"
+                          strokeWidth="1.5"
+                          fill="none"
+                        />
+                        <rect
+                          x="5"
+                          y="8.25"
+                          width="8"
+                          height="1.5"
+                          rx="0.75"
+                          fill="#F47A1F"
+                        />
                       </svg>
                     </button>
-                    <span className="w-5 text-center text-base text-gray-700">{guest}</span>
+                    <span className="w-5 text-center text-base text-gray-700">
+                      {guest}
+                    </span>
                     <button
                       type="button"
                       className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition"
                       onClick={() => setGuest((g) => Math.min(maxGuest, g + 1))}
                       aria-label="Increase guest"
                     >
-                      <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                        <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
-                        <rect x="8.25" y="5" width="1.5" height="8" rx="0.75" fill="#F47A1F"/>
-                        <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="none"
+                        viewBox="0 0 18 18"
+                      >
+                        <circle
+                          cx="9"
+                          cy="9"
+                          r="8"
+                          stroke="#F47A1F"
+                          strokeWidth="1.5"
+                          fill="none"
+                        />
+                        <rect
+                          x="8.25"
+                          y="5"
+                          width="1.5"
+                          height="8"
+                          rx="0.75"
+                          fill="#F47A1F"
+                        />
+                        <rect
+                          x="5"
+                          y="8.25"
+                          width="8"
+                          height="1.5"
+                          rx="0.75"
+                          fill="#F47A1F"
+                        />
                       </svg>
                     </button>
                   </div>

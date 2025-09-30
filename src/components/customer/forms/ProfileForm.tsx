@@ -13,6 +13,7 @@ import {
   ProfileFormData,
 } from "@/utils/validation/profileValidation";
 import { supabase } from "@/lib/supabaseClient";
+import { UserProfile } from "@/types/user.type";
 
 const COUNTRY_OPTIONS = [
   { value: "thailand", label: "Thailand" },
@@ -25,7 +26,7 @@ const COUNTRY_OPTIONS = [
 ];
 
 interface ProfileFormProps {
-  onSuccess?: (profile: any) => void;
+  onSuccess?: (profile: UserProfile | null) => void;
   onCancel?: () => void;
 }
 

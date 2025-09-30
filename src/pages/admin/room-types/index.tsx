@@ -4,8 +4,9 @@ import { Room } from "@/types/rooms";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
-export default function index() {
+export default function RoomAndPropertyPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -56,15 +57,20 @@ export default function index() {
         throw new Error(errData.error || "Failed to fetch rooms");
       }
 
-      const data: { success: boolean; data: Room[]; message?: string } = await response.json();
+      const data: { success: boolean; data: Room[]; message?: string } =
+        await response.json();
 
       if (data.success) {
         setRooms(data.data); // your rooms array
       } else {
         throw new Error(data.message || "Failed to fetch rooms");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch rooms data");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "Failed to fetch rooms data");
+      } else {
+        console.error("An unknown error occurred.");
+      }
     } finally {
       setLoading(false);
     }
@@ -125,7 +131,7 @@ export default function index() {
   if (loading) {
     return (
       <Layout>
-        <RoomListSkeleton/>
+        <RoomListSkeleton />
       </Layout>
     );
   }
@@ -148,7 +154,13 @@ export default function index() {
           <p className="text-xl font-semibold">Room & Property</p>
           <div className="flex flex-row gap-3">
             <div className="flex items-center border pl-3 gap-2 bg-white border-gray-500/30 h-[46px] rounded-md overflow-hidden max-w-md w-full">
-              <img src="/assets/search.png" className="w-4" />
+              <Image
+                src="/assets/search.png"
+                alt="search-icon"
+                className="w-4"
+                width={800}
+                height={600}
+              />
               <input
                 type="text"
                 value={searchQuery}
@@ -181,48 +193,52 @@ export default function index() {
             {currentRooms.map((room) => (
               <div key={room.id}>
                 <Link href={`/admin/room-types/${room.id}/edit`}>
-              <div>
-              <div
-                key={room.id}
-                className="grid grid-cols-7 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors items-center"
-              >
-                {/* Image */}
-                <div className="w-28 h-16 rounded-md overflow-hidden bg-gray-200">
-                  <img
-                    src={`${room.main_image_url}`}
-                    alt={room.room_type}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                  <div>
+                    <div
+                      key={room.id}
+                      className="grid grid-cols-7 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors items-center"
+                    >
+                      {/* Image */}
+                      <div className="w-28 h-16 rounded-md overflow-hidden bg-gray-200">
+                        <Image
+                          width={800}
+                          height={600}
+                          src={`${room.main_image_url}`}
+                          alt={room.room_type}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
 
-                {/* Room Type */}
-                <div className="text-sm text-gray-900 font-medium">
-                  {room.room_type}
-                </div>
+                      {/* Room Type */}
+                      <div className="text-sm text-gray-900 font-medium">
+                        {room.room_type}
+                      </div>
 
-                {/* Price */}
-                <div className="text-sm text-gray-900">
-                  {Number(room.price)}
-                </div>
+                      {/* Price */}
+                      <div className="text-sm text-gray-900">
+                        {Number(room.price)}
+                      </div>
 
-                {/* Promotion Price */}
-                <div className="text-sm text-gray-900">
-                  {Number(room.promotion_price)}
-                </div>
+                      {/* Promotion Price */}
+                      <div className="text-sm text-gray-900">
+                        {Number(room.promotion_price)}
+                      </div>
 
-                {/* Guests */}
-                <div className="text-sm text-gray-900">{room.guests}</div>
+                      {/* Guests */}
+                      <div className="text-sm text-gray-900">{room.guests}</div>
 
-                {/* Bed Type */}
-                <div className="text-sm text-gray-900">{room.bed_type}</div>
+                      {/* Bed Type */}
+                      <div className="text-sm text-gray-900">
+                        {room.bed_type}
+                      </div>
 
-                {/* Room Size */}
-                <div className="text-sm text-gray-900">
-                  {room.room_size} sqm
-                </div>
-              </div>
-              </div>
-              </Link>
+                      {/* Room Size */}
+                      <div className="text-sm text-gray-900">
+                        {room.room_size} sqm
+                      </div>
+                    </div>
+                  </div>
+                </Link>
               </div>
             ))}
 
@@ -243,7 +259,9 @@ export default function index() {
                   disabled={currentPage === 1}
                   onClick={handlePreviousPage}
                 >
-                  <img
+                  <Image
+                    width={800}
+                    height={600}
                     className="w-2"
                     src="/assets/arrow-left.png"
                     alt="Previous"

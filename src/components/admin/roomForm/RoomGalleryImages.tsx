@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { Reorder } from "framer-motion";
+import Image from "next/image";
 
 interface RoomGalleryImagesProps {
   name: string;
-  value: string[];
+  value: string[] | undefined;
 }
 
 type GalleryItem = { id: string; url: string };
@@ -26,14 +27,18 @@ export const RoomGalleryImages = ({ name, value }: RoomGalleryImagesProps) => {
   // Sync form value when gallery items change
   const updateFormValue = (items: GalleryItem[]) => {
     setGalleryItems(items);
-    setValue(name, items.map((item) => item.url), { shouldValidate: true });
+    setValue(
+      name,
+      items.map((item) => item.url),
+      { shouldValidate: true }
+    );
   };
 
   // Sync with external form changes
   useEffect(() => {
     const currentFormValue = watch(name) || [];
-    const currentUrls = galleryItems.map(item => item.url);
-    
+    const currentUrls = galleryItems.map((item) => item.url);
+
     // Only update if form value differs from current state
     if (JSON.stringify(currentFormValue) !== JSON.stringify(currentUrls)) {
       const newItems = currentFormValue.map((url: string, idx: number) => ({
@@ -65,21 +70,25 @@ export const RoomGalleryImages = ({ name, value }: RoomGalleryImagesProps) => {
 
         const data = await res.json();
         if (res.ok && data.success) {
-          uploadedItems.push({ 
-            id: crypto.randomUUID(), 
-            url: data.url 
+          uploadedItems.push({
+            id: crypto.randomUUID(),
+            url: data.url,
           });
         } else {
           throw new Error(data.error || data.message || "Upload failed");
         }
-      } catch (err: any) {
-        alert(`Image upload error: ${err.message}`);
+      } catch (err) {
+        if (err instanceof Error) {
+          alert(`Image upload error: ${err.message}`);
+        } else {
+          console.error("An unknown error occurred.");
+        }
       }
     }
 
     // Update with new uploaded items
     updateFormValue([...galleryItems, ...uploadedItems]);
-    
+
     // Clear input
     e.target.value = "";
   };
@@ -111,10 +120,10 @@ export const RoomGalleryImages = ({ name, value }: RoomGalleryImagesProps) => {
                 value={item}
                 as="div"
                 className="w-42 h-42 rounded-md flex items-center justify-center relative bg-[#F1F2F6] cursor-grab active:cursor-grabbing flex-shrink-0"
-                whileDrag={{ 
+                whileDrag={{
                   scale: 1.02,
                   zIndex: 999,
-                  boxShadow: "0 0 0 rgba(0,0,0,0)"
+                  boxShadow: "0 0 0 rgba(0,0,0,0)",
                 }}
                 transition={{ type: "keyframes", stiffness: 600, damping: 30 }}
               >
@@ -132,8 +141,10 @@ export const RoomGalleryImages = ({ name, value }: RoomGalleryImagesProps) => {
                     ✕
                   </button>
                 </div>
-                <img
+                <Image
                   src={item.url}
+                  width={800}
+                  height={600}
                   alt={`Gallery image ${index + 1}`}
                   className="object-contain w-full h-full rounded-md select-none"
                   onError={(e) => {

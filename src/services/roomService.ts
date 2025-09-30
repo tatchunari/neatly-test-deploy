@@ -1,7 +1,12 @@
 // services/roomService.ts
 import { buildRoomPayload } from "@/utils/roomPayload";
+import { RoomFormData } from "@/schemas/roomSchema";
 
-export async function updateRoom(roomId: string, formData: any, hasPromotion: boolean) {
+export async function updateRoom(
+  roomId: string,
+  formData: RoomFormData,
+  hasPromotion: boolean
+) {
   const payload = buildRoomPayload(formData, hasPromotion);
 
   try {
@@ -17,9 +22,9 @@ export async function updateRoom(roomId: string, formData: any, hasPromotion: bo
       throw new Error(data.error || data.message || "Failed to update room");
     }
 
-    return data; 
+    return data;
   } catch (error) {
-    throw error; 
+    throw error;
   }
 }
 
@@ -43,8 +48,15 @@ export async function deleteRoom(roomId: string) {
 }
 
 // services/roomService.ts
-export async function createRoom(formData: any, hasPromotion: boolean) {
-  const payload = buildRoomPayload(formData, hasPromotion);
+export async function createRoom(
+  formData: RoomFormData,
+  hasPromotion: boolean
+) {
+  const payload = {
+    ...formData,
+    main_image_url: formData.mainImgUrl ? [formData.mainImgUrl] : [],
+    // ... other field mappings
+  };
 
   try {
     const response = await fetch(`/api/rooms`, {

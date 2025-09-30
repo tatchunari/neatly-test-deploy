@@ -71,7 +71,7 @@ export class ProfileService {
     profilePicture?: File
   ): Promise<ServiceResponse<UserProfile>> {
     try {
-      let updatedProfile = { ...profileData };
+      const updatedProfile = { ...profileData };
 
       // 1. อัปโหลดรูปโปรไฟล์ใหม่ (ถ้ามี)
       if (profilePicture) {
