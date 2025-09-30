@@ -18,9 +18,10 @@ export default function CustomerLoginPage() {
               <Image
                 width={800}
                 height={600}
-                src="/images/login-bg.png"
+                src="/Images/login-bg.png"
                 alt="Resort pool"
                 className="w-full h-full object-cover"
+                unoptimized
               />
             </div>
 

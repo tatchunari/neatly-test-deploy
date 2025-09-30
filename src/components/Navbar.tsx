@@ -54,7 +54,7 @@ const defaultLogo = (
 // ถ้าไม่มี/อ่านไม่ได้ ให้ fallback เป็น email
 async function fetchProfileInfo(user: { id: string; email: string | null }) {
   const fallbackName = user.email ?? ""; // ถ้าไม่มี username ใช้อีเมลแทน
-  const fallbackAvatar = "/images/avatar.png"; // รูป default
+  const fallbackAvatar = "/Images/avatar.png"; // รูป default
 
   try {
     const { data, error } = await supabase
@@ -83,7 +83,7 @@ function UserMenu() {
     null
   );
   const [displayName, setDisplayName] = useState<string>("");
-  const [avatarUrl, setAvatarUrl] = useState<string>("/images/avatar.png");
+  const [avatarUrl, setAvatarUrl] = useState<string>("/Images/avatar.png");
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -124,7 +124,7 @@ function UserMenu() {
       if (!user) {
         if (!cancelled) {
           setDisplayName("");
-          setAvatarUrl("/images/avatar.png");
+          setAvatarUrl("/Images/avatar.png");
         }
         return;
       }
@@ -155,7 +155,7 @@ function UserMenu() {
       await supabase.auth.signOut();
     } finally {
       // redirect ไปหน้า http://localhost:3000/ หลัง logout
-      window.location.replace("http://localhost:3000/");
+      window.location.replace("/");
     }
   };
 
@@ -241,7 +241,7 @@ function MobileUserMenu({
   onLogout: () => void;
 }) {
   const [name, setName] = useState<string>("");
-  const [avatar, setAvatar] = useState<string>("/images/avatar.png");
+  const [avatar, setAvatar] = useState<string>("/Images/avatar.png");
 
   useEffect(() => {
     let cancelled = false;
@@ -249,7 +249,7 @@ function MobileUserMenu({
       if (!user?.id) {
         if (!cancelled) {
           setName("");
-          setAvatar("/images/avatar.png");
+          setAvatar("/Images/avatar.png");
         }
         return;
       }
