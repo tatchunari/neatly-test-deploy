@@ -1,58 +1,65 @@
-import Navbar from "@/components/Navbar"
-import SearchBox from "@/components/customer/searchbar/Searchbox"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/router"
-import Link from "next/link"
-import Image from "next/image"
-import Footer from "@/components/Footer"
+import Navbar from "@/components/Navbar";
+import SearchBox from "@/components/customer/searchbar/Searchbox";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import Image from "next/image";
+import Footer from "@/components/Footer";
+import { Room } from "@/types/rooms";
+import { SearchParams } from "@/components/customer/searchbar/Searchbox";
 
 function SearchResultPage() {
-  const router = useRouter()
-  const [rooms, setRooms] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  
+  const router = useRouter();
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   // ดึงข้อมูลห้องพักจาก API
   const fetchRooms = async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       // read query params for filtering
-      const { checkIn, checkOut, room, guests } = router.query as { [key: string]: string }
-      const searchParams = new URLSearchParams()
-      if (checkIn) searchParams.set("checkIn", checkIn)
-      if (checkOut) searchParams.set("checkOut", checkOut)
-      if (room) searchParams.set("room", room)
-      if (guests) searchParams.set("guests", guests)
-      const qs = searchParams.toString()
-      const response = await fetch(`/api/rooms${qs ? `?${qs}` : ""}`)
+      const { checkIn, checkOut, room, guests } = router.query as {
+        [key: string]: string;
+      };
+      const searchParams = new URLSearchParams();
+      if (checkIn) searchParams.set("checkIn", checkIn);
+      if (checkOut) searchParams.set("checkOut", checkOut);
+      if (room) searchParams.set("room", room);
+      if (guests) searchParams.set("guests", guests);
+      const qs = searchParams.toString();
+      const response = await fetch(`/api/rooms${qs ? `?${qs}` : ""}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch rooms")
+        throw new Error("Failed to fetch rooms");
       }
-      const data = await response.json()
+      const data = await response.json();
       // สมมติว่า API ส่ง { data: [...] }
-      const list = Array.isArray(data?.data) ? data.data : []
-      setRooms(list)
-    } catch (error: any) {
-      setError(error?.message || "Error fetching rooms")
-      setRooms([])
+      const list = Array.isArray(data?.data) ? data.data : [];
+      setRooms(list);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err?.message || "Error fetching rooms");
+        setRooms([]);
+      } else {
+        console.error("An unknown error occurred.");
+      }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // refetch whenever query changes
   useEffect(() => {
-    if (!router.isReady) return
-    fetchRooms()
-  }, [router.isReady, router.query])
+    if (!router.isReady) return;
+    fetchRooms();
+  }, [router.isReady, router.query]);
 
   // ฟังก์ชันเมื่อกดปุ่ม Room Detail
   // แก้ไขให้รับ id แทน room object
-  const handleRoomDetailClick = (id: any) => {
-    if (!id) return
-    router.push(`/customer/search-result/${id}`)
-  }
+  const handleRoomDetailClick = (id: string) => {
+    if (!id) return;
+    router.push(`/customer/search-result/${id}`);
+  };
   console.log("Rooms", rooms);
   return (
     <div className="bg-[#F7F7FA] min-h-screen">
@@ -66,22 +73,26 @@ function SearchResultPage() {
               room: (router.query.room as string) || undefined,
               guests: (router.query.guests as string) || undefined,
             }}
-            onSearch={(params) => {
-              const q = new URLSearchParams(params as any).toString()
-              router.push(`/customer/search-result?${q}`)
+            onSearch={(params: SearchParams) => {
+              const q = new URLSearchParams(params).toString();
+              router.push(`/customer/search-result?${q}`);
             }}
           />
         </div>
         {loading ? (
-          <div className="text-center py-10 text-gray-500 text-lg">Loading rooms...</div>
+          <div className="text-center py-10 text-gray-500 text-lg">
+            Loading rooms...
+          </div>
         ) : error ? (
           <div className="text-center py-10 text-red-500 text-lg">{error}</div>
         ) : (
           <div className="flex flex-col gap-6 mt-4">
             {rooms.length === 0 ? (
-              <div className="text-center text-gray-500 py-10">No rooms found.</div>
+              <div className="text-center text-gray-500 py-10">
+                No rooms found.
+              </div>
             ) : (
-              rooms.map((room: any, index: number) => (
+              rooms.map((room: Room, index: number) => (
                 <div
                   key={room.id ?? index}
                   className="flex flex-col md:flex-row bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 mx-auto"
@@ -129,9 +140,11 @@ function SearchResultPage() {
                     }
                   >
                     {room.main_image_url ? (
-                      <img
-                        src={room.main_image_url}
+                      <Image
+                        src={room.main_image_url[0]}
                         alt={room.room_type || "Room image"}
+                        width={800}
+                        height={600}
                         style={{
                           objectFit: "cover",
                           width: "100%",
@@ -156,15 +169,16 @@ function SearchResultPage() {
                     }
                   >
                     <div className="flex flex-col flex-1 min-w-0">
-                      <h2 className="text-xl font-semibold text-[#2F3E35] mb-10">{room.room_type}</h2>
+                      <h2 className="text-xl font-semibold text-[#2F3E35] mb-10">
+                        {room.room_type}
+                      </h2>
                       <div className="flex items-center gap-2 text-s text-gray-500 mb-10">
                         <span>
-                          {room.guests ?? 2} {room.guests > 1 ? "Guests" : "Guest"}
+                          {room.guests ?? 2}{" "}
+                          {room.guests > 1 ? "Guests" : "Guest"}
                         </span>
                         <span className="mx-2">·</span>
-                        <span>
-                          {room.bed_type ?? 1} {room.bed_type > 1 ? "Beds" : "Bed"}
-                        </span>
+                        <span>{room.bed_type}</span>
                         <span className="mx-2">·</span>
                         <span>
                           {room.room_size ? `${room.room_size} sqm` : "32 sqm"}
@@ -177,19 +191,26 @@ function SearchResultPage() {
                         )}
                       </div>
                       <div className="text-gray-500 text-s mb-4 line-clamp-2">
-                        {room.description || "Elegant modern decor with garden or city view. Includes balcony, bathtub, and free WiFi."}
+                        {room.description ||
+                          "Elegant modern decor with garden or city view. Includes balcony, bathtub, and free WiFi."}
                       </div>
                     </div>
                     <div className="flex flex-col items-end justify-between min-w-[160px]">
                       <div className="flex flex-col items-end">
                         <span className="text-xs text-gray-400 line-through mb-1">
-                          {room.price_before_discount ? `THB ${room.price_before_discount.toLocaleString()}` : ""}
+                          {room.price
+                            ? `THB ${room.price.toLocaleString()}`
+                            : ""}
                         </span>
                         <span className="text-xl font-bold text-[#F47A1F] mb-1">
-                          {room.price ? `THB ${room.price.toLocaleString()}` : "THB 0"}
+                          {room.price
+                            ? `THB ${room.price.toLocaleString()}`
+                            : "THB 0"}
                         </span>
                         <span className="text-xs text-gray-400">Per Night</span>
-                        <span className="text-xs text-gray-400">Including Taxes & Fees</span>
+                        <span className="text-xs text-gray-400">
+                          Including Taxes & Fees
+                        </span>
                       </div>
                       <div className="flex flex-row gap-2 mt-4">
                         <button
@@ -228,7 +249,7 @@ function SearchResultPage() {
       </div>
       <Footer />
     </div>
-  )
+  );
 }
 
-export default SearchResultPage
+export default SearchResultPage;

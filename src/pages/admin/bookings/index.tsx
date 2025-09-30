@@ -1,10 +1,9 @@
-import Layout from "@/components/admin/Layout"
-import LoadingScreen from "@/components/admin/LoadingScreen"
+import Layout from "@/components/admin/Layout";
 
 export default function index() {
   return (
     <Layout>
       <div>Customer Booking</div>
     </Layout>
-  )
+  );
 }

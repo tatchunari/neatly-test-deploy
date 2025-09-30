@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import Layout from "@/components/admin/Layout";
 import { ArrowLeft } from "lucide-react";
 
@@ -10,7 +10,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { roomSchema, RoomFormData } from "@/schemas/roomSchema";
 import { Room } from "@/types/rooms";
 
-
 import { RoomMainImage } from "@/components/admin/roomForm/RoomMainImage";
 import { RoomGalleryImages } from "@/components/admin/roomForm/RoomGalleryImages";
 import { AmenityItems } from "@/components/admin/roomForm/AmenityItems";
@@ -19,7 +18,7 @@ import { TextInput } from "@/components/admin/ui/TextInput";
 import { TextArea } from "@/components/admin/ui/TextArea";
 import { ConfirmDeleteModal } from "../ui/ConfirmDeleteModal";
 import { DropDownInput } from "../ui/DropdownInput";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 interface EditRoomFormProps {
   room: Room;
@@ -33,7 +32,7 @@ export function EditRoomForm({ room }: EditRoomFormProps) {
   // const [hasPromotion, setHasPromotion] = useState(!!room.promotion_price);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const methods = useForm({
+  const methods = useForm<RoomFormData>({
     resolver: zodResolver(roomSchema),
     defaultValues: {
       roomType: room.room_type,
@@ -46,11 +45,18 @@ export function EditRoomForm({ room }: EditRoomFormProps) {
       description: room.description,
       mainImgUrl: room.main_image_url[0],
       galleryImageUrls: room.gallery_images || [],
-      amenities: room?.amenities && room.amenities.length > 0 ? room.amenities : [],
+      amenities:
+        room?.amenities && room.amenities.length > 0 ? room.amenities : [],
     },
   });
 
-  const { watch, register, handleSubmit, setValue, formState: { errors, touchedFields, isSubmitted } } = methods;
+  const {
+    watch,
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = methods;
 
   const hasPromotion = watch("hasPromotion");
 
@@ -64,12 +70,16 @@ export function EditRoomForm({ room }: EditRoomFormProps) {
       setTimeout(() => {
         router.push("/admin/room-types");
       }, 1000);
-    } catch (err: any) {
-      toast.error(`Failed to update room: ${err.message}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(`Failed to update room: ${err.message}`);
+      } else {
+        console.error("An unknown error occurred.");
+      }
     } finally {
       setIsLoading(false);
     }
-    console.log("Form Data:", formData)
+    console.log("Form Data:", formData);
   };
 
   // Handle Delete Room
@@ -81,8 +91,12 @@ export function EditRoomForm({ room }: EditRoomFormProps) {
       setTimeout(() => {
         router.push("/admin/room-types");
       }, 1000);
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        alert(`Error Message: ${err.message}`);
+      } else {
+        console.error("An unknown error occurred.");
+      }
     } finally {
       setIsLoading(false);
       setIsDeleteModalOpen(false);
@@ -128,159 +142,197 @@ export function EditRoomForm({ room }: EditRoomFormProps) {
 
           {/* Edit Form */}
           <div className="w-full min-h-screen bg-gray-100 py-10">
-          <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-8">
-            <div className="space-y-8 flex justify-center items-center flex-col">
-              {/* Basic Information Section */}
-              <div className="space-y-6">
-                <h2 className="text-lg font-medium text-gray-700 border-b border-gray-200 pb-2">
-                  Basic Information
-                </h2>
+            <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-8">
+              <div className="space-y-8 flex justify-center items-center flex-col">
+                {/* Basic Information Section */}
+                <div className="space-y-6">
+                  <h2 className="text-lg font-medium text-gray-700 border-b border-gray-200 pb-2">
+                    Basic Information
+                  </h2>
 
-                {/* Room Type */}
-                <div>
-                <TextInput
-                  label="Room Type"
-                  required
-                  placeholder="Enter room type"
-                  register={register("roomType")}
-                />
-                {errors.roomType && <p className="text-red-500">{errors.roomType.message}</p>}
-                </div>
-
-                {/* Room Size and Bed Type - Side by Side */}
-                <div className="grid grid-cols-2 gap-4">
+                  {/* Room Type */}
                   <div>
-                  <TextInput
-                    label="Room size(sqm)"
-                    required
-                    type="number"
-                    placeholder="Enter room size"
-                    register={register("roomSize")}
-                  />
-                  {errors.roomSize && <p className="text-red-500">{errors.roomSize.message}</p>}
+                    <TextInput
+                      label="Room Type"
+                      required
+                      placeholder="Enter room type"
+                      register={register("roomType")}
+                    />
+                    {errors.roomType && (
+                      <p className="text-red-500">{errors.roomType.message}</p>
+                    )}
                   </div>
 
-                  <div>
-                  <DropDownInput
-                    options={["Single bed", "Double bed", "King bed", "Twin beds"]}
-                    name="bedType"
-                    register={register("bedType")}
-                    setValue={setValue}
-                    defaultValue={room?.bed_type}
-                    label="Bed Type"
-                  />
-                  {errors.bedType && <p className="text-red-500">{errors.bedType.message}</p>}
+                  {/* Room Size and Bed Type - Side by Side */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <TextInput
+                        label="Room size(sqm)"
+                        required
+                        type="number"
+                        placeholder="Enter room size"
+                        register={register("roomSize")}
+                      />
+                      {errors.roomSize && (
+                        <p className="text-red-500">
+                          {errors.roomSize.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <DropDownInput
+                        options={[
+                          "Single bed",
+                          "Double bed",
+                          "King bed",
+                          "Twin beds",
+                        ]}
+                        name="bedType"
+                        register={register("bedType")}
+                        setValue={setValue}
+                        defaultValue={room?.bed_type}
+                        label="Bed Type"
+                      />
+                      {errors.bedType && (
+                        <p className="text-red-500">{errors.bedType.message}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Guest Count */}
-                <div>
-                <TextInput
-                  label="Guest(s)"
-                  type="number"
-                  register={register("guests")}
-                  className="w-60"
-                />
-                {errors.guests && <p className="text-red-500">{errors.guests.message}</p>}
-                </div>
-
-
-                {/* Price and Promotion Price - Side by Side */}
-                <div className="grid grid-cols-2 gap-4">
+                  {/* Guest Count */}
                   <div>
-                  <TextInput
-                    label="Price per Night (THB)"
-                    type="number"
-                    placeholder="Enter price"
-                    register={register("pricePerNight")}
-                    className="w-full"
-                  />
-                  {errors.pricePerNight && <p className="text-red-500">{errors.pricePerNight.message}</p>}
+                    <TextInput
+                      label="Guest(s)"
+                      type="number"
+                      register={register("guests")}
+                      className="w-60"
+                    />
+                    {errors.guests && (
+                      <p className="text-red-500">{errors.guests.message}</p>
+                    )}
                   </div>
 
-                  <div>
-                    {/* Promotion Price */}
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Promotion Price
-                    </label>
-                    <div className="flex flex-row">
-                      <div className="flex items-center space-x-3">
-                        {/* ✅ Checkbox to enable/disable promotion price */}
-                        <input
+                  {/* Price and Promotion Price - Side by Side */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <TextInput
+                        label="Price per Night (THB)"
+                        type="number"
+                        placeholder="Enter price"
+                        register={register("pricePerNight")}
+                        className="w-full"
+                      />
+                      {errors.pricePerNight && (
+                        <p className="text-red-500">
+                          {errors.pricePerNight.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      {/* Promotion Price */}
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Promotion Price
+                      </label>
+                      <div className="flex flex-row">
+                        <div className="flex items-center space-x-3">
+                          {/* ✅ Checkbox to enable/disable promotion price */}
+                          <input
                             type="checkbox"
                             className="accent-orange-500"
                             checked={watch("hasPromotion")}
-                            onChange={(e) => setValue("hasPromotion", e.target.checked, { shouldValidate: true })}
+                            onChange={(e) =>
+                              setValue("hasPromotion", e.target.checked, {
+                                shouldValidate: true,
+                              })
+                            }
                           />
-                        <span className="text-sm text-gray-600 w-30">
-                          Promotion price
-                        </span>
-                      </div>
+                          <span className="text-sm text-gray-600 w-30">
+                            Promotion price
+                          </span>
+                        </div>
 
-                      <div>
-                      <TextInput
-                        type="number"
-                        register={register("promotionPrice")}
-                        disabled={!watch("hasPromotion")}
-                        className={`w-60 ${
-                          hasPromotion
-                            ? "focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            : "bg-gray-100 cursor-not-allowed"
-                        }`}
-                      />
+                        <div>
+                          <TextInput
+                            type="number"
+                            register={register("promotionPrice")}
+                            disabled={!watch("hasPromotion")}
+                            className={`w-60 ${
+                              hasPromotion
+                                ? "focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                : "bg-gray-100 cursor-not-allowed"
+                            }`}
+                          />
+                        </div>
                       </div>
+                      {errors.promotionPrice && (
+                        <p className="text-red-500">
+                          {errors.promotionPrice.message}
+                        </p>
+                      )}
                     </div>
-                    {errors.promotionPrice && <p className="text-red-500">{errors.promotionPrice.message}</p>}
+
+                    {/* Room Description */}
+                    <div>
+                      <TextArea
+                        label="Room Description"
+                        required
+                        placeholder="Enter room description"
+                        register={register("description")}
+                        className="w-180"
+                      />
+                      {errors.description && (
+                        <p className="text-red-500">
+                          {errors.description.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Room Description */}
-                  <div>
-                  <TextArea
-                    label="Room Description"
-                    required
-                    placeholder="Enter room description"
-                    register={register("description")}
-                    className="w-180"
-                  />
-                  {errors.description && <p className="text-red-500">{errors.description.message}</p>}
-                  </div>
-                </div>
+                  {/* Room Image Section */}
+                  <div className="space-y-6">
+                    <h2 className="text-lg font-medium text-gray-700 border-b border-gray-200 pb-2">
+                      Room Image
+                    </h2>
 
-                {/* Room Image Section */}
-                <div className="space-y-6">
-                  <h2 className="text-lg font-medium text-gray-700 border-b border-gray-200 pb-2">
-                    Room Image
-                  </h2>
+                    {/* Main Image */}
+                    <div>
+                      <RoomMainImage
+                        name="mainImgUrl"
+                        value={room?.main_image_url && room.main_image_url[0]}
+                      />
+                      {errors.mainImgUrl && (
+                        <p className="text-red-500">
+                          {errors.mainImgUrl.message}
+                        </p>
+                      )}
+                    </div>
 
-                  {/* Main Image */}
-                  <div>
-                  <RoomMainImage
-                    name="mainImgUrl"
-                    value={room?.main_image_url && room.main_image_url[0]}
-                  />
-                  {errors.mainImgUrl && <p className="text-red-500">{errors.mainImgUrl.message}</p>}
+                    {/* Image Gallery */}
+                    <div>
+                      <RoomGalleryImages
+                        name="galleryImageUrls"
+                        value={room?.gallery_images}
+                      />
+                      {errors.galleryImageUrls && (
+                        <p className="text-red-500">
+                          {errors.galleryImageUrls.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Image Gallery */}
-                  <div>
-                  <RoomGalleryImages
-                    name="galleryImageUrls"
-                    value={room?.gallery_images}
-                  />
-                  {errors.galleryImageUrls && <p className="text-red-500">{errors.galleryImageUrls.message}</p>}
+                  <div className="space-y-6 mt-5">
+                    <h2 className="text-lg font-medium text-gray-700 border-t pt-5 border-gray-200 pb-2">
+                      Room Amenities
+                    </h2>
+                    {/* Amenity */}
+                    <AmenityItems name="amenities" value={room?.amenities} />
                   </div>
-                </div>
-                
-                <div className="space-y-6 mt-5">
-                  <h2 className="text-lg font-medium text-gray-700 border-t pt-5 border-gray-200 pb-2">
-                    Room Amenities
-                  </h2>
-                  {/* Amenity */}
-                  <AmenityItems name="amenities" value={room?.amenities} />
                 </div>
               </div>
             </div>
-          </div>
           </div>
         </form>
       </FormProvider>

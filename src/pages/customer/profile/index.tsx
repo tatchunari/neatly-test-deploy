@@ -4,10 +4,11 @@ import { supabase } from "@/lib/supabaseClient";
 import { ProfileForm } from "@/components/customer/forms/ProfileForm";
 import { UserProfile } from "@/types/user.type";
 import Layout from "@/components/Layout";
+import { User } from "@supabase/supabase-js";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   /**
@@ -42,7 +43,7 @@ export default function ProfilePage() {
   /**
    * จัดการเมื่ออัปเดตโปรไฟล์สำเร็จ
    */
-  const handleProfileUpdate = (profile: UserProfile) => {
+  const handleProfileUpdate = (profile: UserProfile | null) => {
     console.log("Profile updated:", profile);
 
     // แสดง notification (ถ้ามี)
@@ -66,7 +67,8 @@ export default function ProfilePage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p> {/* กำลังตรวจสอบการล็อกอิน... */}
+          <p className="mt-4 text-gray-600">Checking authentication...</p>{" "}
+          {/* กำลังตรวจสอบการล็อกอิน... */}
         </div>
       </div>
     );

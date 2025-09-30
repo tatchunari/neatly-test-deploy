@@ -80,6 +80,8 @@ const Roomwrapper = () => {
           <Image
             src={rooms[0].image}
             alt={rooms[0].name}
+            width={800}
+            height={600}
             fill
             className="object-cover"
             priority
@@ -103,6 +105,8 @@ const Roomwrapper = () => {
             src={rooms[1].image}
             alt={rooms[1].name}
             fill
+            width={800}
+            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 588px"
@@ -110,6 +114,7 @@ const Roomwrapper = () => {
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
             <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
               {rooms[1].name}
+              hello
             </span>
             <a
               href={rooms[1].link}
@@ -124,6 +129,8 @@ const Roomwrapper = () => {
             src={rooms[2].image}
             alt={rooms[2].name}
             fill
+            width={800}
+            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 588px"
@@ -146,6 +153,8 @@ const Roomwrapper = () => {
             src={rooms[3].image}
             alt={rooms[3].name}
             fill
+            width={800}
+            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 588px"
@@ -167,6 +176,8 @@ const Roomwrapper = () => {
             src={rooms[4].image}
             alt={rooms[4].name}
             fill
+            width={800}
+            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 588px"
@@ -188,6 +199,8 @@ const Roomwrapper = () => {
             src={rooms[5].image}
             alt={rooms[5].name}
             fill
+            width={800}
+            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 1200px"

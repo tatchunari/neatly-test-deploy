@@ -1,18 +1,24 @@
 import { useState, useEffect } from "react";
-import { useFormContext, FieldErrors } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { ReorderableItem } from "@/components/admin/ReorderableItem";
 import { Reorder } from "motion/react";
+import { RoomFormData } from "@/schemas/roomSchema";
 
 type AmenityItemType = { id: string; value: string };
 
 type AmenityItemsProps = {
-  name: string;
+  name: "amenities";
   value?: string[];
 };
 
 export const AmenityItems = ({ name, value }: AmenityItemsProps) => {
-  const { register, setValue, watch, formState: { errors, touchedFields, isSubmitted } } = useFormContext();
-  
+  const {
+    register,
+    setValue,
+    watch,
+    formState: { errors, touchedFields, isSubmitted },
+  } = useFormContext<RoomFormData>();
+
   // Initialize local state from form or props
   const formValues: string[] = watch(name) || value || [];
   const [amenities, setAmenities] = useState<AmenityItemType[]>(
@@ -23,12 +29,10 @@ export const AmenityItems = ({ name, value }: AmenityItemsProps) => {
 
   // Sync local state -> RHF values
   useEffect(() => {
-  setValue(
-    name,
-    amenities.map((item) => item.value.trim()).filter(Boolean),
-    { shouldValidate: true }
-  );
-}, [amenities, name, setValue]);
+    setValue(name, amenities.map((item) => item.value.trim()).filter(Boolean), {
+      shouldValidate: true,
+    });
+  }, [amenities, name, setValue]);
 
   const handleEditAmenity = (id: string, newValue: string) => {
     setAmenities((prev) =>
@@ -41,17 +45,18 @@ export const AmenityItems = ({ name, value }: AmenityItemsProps) => {
   };
 
   const handleDeleteAmenity = (id: string) => {
-  if (amenities.length === 1) return; // keep at least 1 input
-  setAmenities((prev) => prev.filter((item) => item.id !== id));
+    if (amenities.length === 1) return; // keep at least 1 input
+    setAmenities((prev) => prev.filter((item) => item.id !== id));
   };
-
 
   const handleReorder = (newOrder: AmenityItemType[]) => {
     setAmenities(newOrder);
   };
 
   // Determine if error should show
-  const showError = (errors[name] && (touchedFields[name] || isSubmitted));
+  const showError = errors[name] && (touchedFields[name] || isSubmitted);
+
+  const fieldError = errors[name];
 
   return (
     <div className="bg-white">
@@ -96,7 +101,7 @@ export const AmenityItems = ({ name, value }: AmenityItemsProps) => {
       {/* Show validation error */}
       {showError && (
         <p className="text-red-500">
-          {(errors[name] as any)?.message || "Please add at least one amenity"}
+          {fieldError?.message || "Please add at least one amenity"}
         </p>
       )}
     </div>

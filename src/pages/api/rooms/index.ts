@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+import { Room } from "@/types/rooms";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,7 +10,7 @@ const supabase = createClient(
 type Data = {
   success: boolean;
   message: string;
-  data?: any;
+  data?: Room[];
   error?: string;
 };
 
@@ -48,9 +49,30 @@ export default async function handler(
   if (req.method === "POST") {
     // ✅ Create a new room
     try {
-      const { room_type, price, guests, room_size, description, amenities, bed_type, promotion_price, main_image_url, gallery_images} = req.body;
+      const {
+        room_type,
+        price,
+        guests,
+        room_size,
+        description,
+        amenities,
+        bed_type,
+        promotion_price,
+        main_image_url,
+        gallery_images,
+      } = req.body;
 
-      if (!room_type || !price || !guests || !room_size || !description || !amenities || !bed_type || !main_image_url || !gallery_images) {
+      if (
+        !room_type ||
+        !price ||
+        !guests ||
+        !room_size ||
+        !description ||
+        !amenities ||
+        !bed_type ||
+        !main_image_url ||
+        !gallery_images
+      ) {
         return res.status(400).json({
           success: false,
           message: "Missing required fields",
@@ -59,7 +81,20 @@ export default async function handler(
 
       const { data, error } = await supabase
         .from("rooms")
-        .insert([{ room_type, price, guests, room_size, description, amenities, bed_type, promotion_price, main_image_url, gallery_images }])
+        .insert([
+          {
+            room_type,
+            price,
+            guests,
+            room_size,
+            description,
+            amenities,
+            bed_type,
+            promotion_price,
+            main_image_url,
+            gallery_images,
+          },
+        ])
         .select(); // return the created room
 
       if (error) {

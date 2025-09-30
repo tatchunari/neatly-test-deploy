@@ -1,5 +1,5 @@
 import { Reorder, useDragControls } from "framer-motion";
-import { useForm } from "react-hook-form";
+import Image from "next/image";
 
 export interface AmenityItem {
   id: string;
@@ -23,8 +23,6 @@ export function ReorderableItem({
 }: ReorderableItemProps) {
   const controls = useDragControls();
 
-  const { register } = useForm();
-  
   return (
     <Reorder.Item
       value={item}
@@ -34,9 +32,11 @@ export function ReorderableItem({
     >
       <div className="flex items-center gap-3 w-full">
         {/* Drag handle */}
-        <img
+        <Image
           src="/assets/drag-icon.png"
           alt="drag"
+          width={800}
+          height={600}
           className="w-4 cursor-grab shrink-0 mt-7 hover:scale-110 transition"
           onPointerDown={(e) => {
             e.preventDefault();
