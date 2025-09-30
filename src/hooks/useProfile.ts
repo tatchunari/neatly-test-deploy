@@ -58,30 +58,30 @@ export const useProfile = () => {
 
       try {
         // ตรวจสอบ username availability (ถ้าเปลี่ยน username)
-        if (formData.username !== state.profile.username) {
-          const usernameResult = await ProfileService.checkUsernameAvailability(
-            formData.username,
-            state.profile.id
-          );
+        // if (formData.username !== state.profile.username) {
+        //   const usernameResult = await ProfileService.checkUsernameAvailability(
+        //     formData.username,
+        //     state.profile.id
+        //   );
 
-          if (!usernameResult.success) {
-            setState((prev) => ({
-              ...prev,
-              error: usernameResult.message,
-              isUpdating: false,
-            }));
-            return false;
-          }
+        //   if (!usernameResult.success) {
+        //     setState((prev) => ({
+        //       ...prev,
+        //       error: usernameResult.message,
+        //       isUpdating: false,
+        //     }));
+        //     return false;
+        //   }
 
-          if (!usernameResult.data) {
-            setState((prev) => ({
-              ...prev,
-              error: "ชื่อผู้ใช้นี้มีอยู่แล้ว",
-              isUpdating: false,
-            }));
-            return false;
-          }
-        }
+        //   if (!usernameResult.data) {
+        //     setState((prev) => ({
+        //       ...prev,
+        //       error: "ชื่อผู้ใช้นี้มีอยู่แล้ว",
+        //       isUpdating: false,
+        //     }));
+        //     return false;
+        //   }
+        // }
 
         // อัปเดตข้อมูล
         const result = await ProfileService.updateUserProfile(
