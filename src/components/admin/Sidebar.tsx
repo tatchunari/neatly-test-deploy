@@ -2,42 +2,43 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { Tickets } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import Image from "next/image";
 
 const menuItems = [
-  { 
-    label: "Customer Booking", 
+  {
+    label: "Customer Booking",
     href: "/admin/bookings",
     icon: "/assets/booking-green.png",
   },
-  { 
-    label: "Room Management", 
+  {
+    label: "Room Management",
     href: "/admin/room-management",
     icon: "/assets/manage-green.png",
   },
-  { 
-    label: "Hotel Information", 
+  {
+    label: "Hotel Information",
     href: "/admin/hotel-info",
     icon: "/assets/hotel-green.png",
   },
-  { 
-    label: "Room & Property", 
+  {
+    label: "Room & Property",
     href: "/admin/room-types",
     icon: "/assets/room-green.png",
   },
-  { 
-    label: "Analytics Dashboard", 
+  {
+    label: "Analytics Dashboard",
     href: "/admin/analytics",
     icon: "/assets/analytic-green.png",
   },
-  { 
-    label: "Chatbot Setup", 
+  {
+    label: "Chatbot Setup",
     href: "/admin/chatbot",
-    icon: "/assets/chat-green.png", 
+    icon: "/assets/chat-green.png",
   },
-  { 
-    label: "Support Tickets", 
+  {
+    label: "Support Tickets",
     href: "/admin/ticket",
-    icon: "Tickets", 
+    icon: "Tickets",
   },
 ];
 
@@ -57,7 +58,13 @@ export default function Sidebar() {
     <aside className="w-68 min-h-screen bg-green-800 flex flex-col">
       {/* Logo */}
       <div className="flex items-center justify-center mt-10">
-        <img className="w-35" src="/assets/logo-white.png" alt="logo" />
+        <Image
+          className="w-35"
+          src="/assets/logo-white.png"
+          alt="logo"
+          width={800}
+          height={600}
+        />
       </div>
       <div className="flex justify-center items-center font-inter font-light text-xl mt-6 text-green-300">
         Admin Panel Control
@@ -67,7 +74,8 @@ export default function Sidebar() {
       <nav className="mt-25 flex-1 w-full">
         {menuItems.map((item) => {
           const isActive =
-            router.pathname === item.href || router.pathname.startsWith(item.href + "/");
+            router.pathname === item.href ||
+            router.pathname.startsWith(item.href + "/");
 
           return (
             <div key={item.href}>
@@ -80,7 +88,13 @@ export default function Sidebar() {
                 {item.icon === "Tickets" ? (
                   <Tickets className="w-6 h-6 mr-3 text-green-500" />
                 ) : (
-                  <img className="w-6 h-6 mr-3" src={item.icon} alt={item.label} />
+                  <Image
+                    width={800}
+                    height={600}
+                    className="w-6 h-6 mr-3"
+                    src={item.icon}
+                    alt={item.label}
+                  />
                 )}
                 <span>{item.label}</span>
               </Link>

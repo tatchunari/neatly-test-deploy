@@ -17,21 +17,35 @@ import { TextArea } from "@/components/admin/ui/TextArea";
 import { DropDownInput } from "../ui/DropdownInput";
 import { toast } from "sonner";
 
-export function CreateRoomForm({ room }: { room?: any }) {
+export interface Room {
+  room_type: string;
+  room_size: number;
+  bed_type: string;
+  guests: number;
+  price: number;
+  promotion_price?: number | null;
+  description: string;
+  main_image_url?: string[];
+  gallery_images: string[];
+  amenities: string[];
+}
+
+export function CreateRoomForm({ room }: { room?: Room }) {
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
   const [hasPromotion, setHasPromotion] = useState(!!room?.promotion_price);
 
-  const methods = useForm({
+  const methods = useForm<RoomFormData>({
     resolver: zodResolver(roomSchema),
     defaultValues: {
       roomType: room?.room_type || "",
-      roomSize: room?.room_size || "",
+      roomSize: room?.room_size,
       bedType: room?.bed_type || "",
       guests: room?.guests || 1,
-      pricePerNight: room?.price || "",
-      promotionPrice: room?.promotion_price || null,
+      pricePerNight: room?.price,
+      hasPromotion: !!room?.promotion_price,
+      promotionPrice: room?.promotion_price,
       description: room?.description || "",
       mainImgUrl: room?.main_image_url?.[0] || null,
       galleryImageUrls: room?.gallery_images || [],
@@ -39,7 +53,12 @@ export function CreateRoomForm({ room }: { room?: any }) {
     },
   });
 
-  const { register, handleSubmit, setValue, formState: { errors } } = methods;
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = methods;
 
   const onSubmit = async (formData: RoomFormData) => {
     setIsLoading(true);
@@ -49,13 +68,17 @@ export function CreateRoomForm({ room }: { room?: any }) {
       setTimeout(() => {
         router.push("/admin/room-types");
       }, 1000);
-    } catch (err: any) {
-      toast.error(`Failed to create room: ${err.message}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(`Failed to create room: ${err.message}`);
+      } else {
+        console.error("An unknown error occurred.");
+      }
     } finally {
       setIsLoading(false);
     }
-    console.log("formData:", formData)
-   };
+    console.log("formData:", formData);
+  };
 
   return (
     <Layout>
@@ -85,160 +108,194 @@ export function CreateRoomForm({ room }: { room?: any }) {
 
           {/* Create Form */}
           <div className="w-full min-h-screen bg-gray-100 py-10">
-          <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-8">
-            <div className="space-y-8 flex justify-center items-center flex-col">
-              {/* Basic Information Section */}
-              <div className="space-y-6">
-                <h2 className="text-lg font-medium text-gray-700 border-b border-gray-200 pb-2">
-                  Basic Information
-                </h2>
-
-                {/* Room Type */}
-                <div>
-                <TextInput
-                  label="Room Type"
-                  required
-                  placeholder="Enter room type"
-                  register={register("roomType")}
-                />
-                {errors.roomType && <p className="text-red-500">{errors.roomType.message}</p>}
-                </div>
-
-                {/* Room Size and Bed Type - Side by Side */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                  <TextInput
-                    label="Room size(sqm)"
-                    required
-                    type="number"
-                    placeholder="Enter room size"
-                    register={register("roomSize")}
-                  />
-                  {errors.roomSize && <p className="text-red-500">{errors.roomSize.message}</p>}
-                  </div>
-
-                  <div>
-                  <DropDownInput
-                    options={["Single bed", "Double bed", "King bed", "Twin beds"]}
-                    name="bedType"
-                    register={register("bedType")}
-                    setValue={setValue}
-                    defaultValue={room?.bed_type}
-                    label="Bed Type"
-                  />
-                  {errors.bedType && <p className="text-red-500">{errors.bedType.message}</p>}
-                  </div>
-                </div>
-
-                {/* Guest Count */}
-                <div>
-                <TextInput
-                  label="Guest(s)"
-                  type="number"
-                  register={register("guests")}
-                  className="w-60"
-                />
-                {errors.guests && <p className="text-red-500">{errors.guests.message}</p>}
-                </div>
-
-                {/* Price and Promotion Price - Side by Side */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                  <TextInput
-                    label="Price per Night (THB)"
-                    type="number"
-                    placeholder="Enter price"
-                    register={register("pricePerNight")}
-                    className="w-full"
-                  />
-                  {errors.pricePerNight && <p className="text-red-500">{errors.pricePerNight.message}</p>}
-                  </div>
-
-                  <div>
-                    {/* Promotion Price */}
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Promotion Price
-                    </label>
-                    <div className="flex flex-row">
-                      <div className="flex items-center space-x-3">
-                        {/* ✅ Checkbox to enable/disable promotion price */}
-                        <input
-                          type="checkbox"
-                          className="accent-orange-500"
-                          checked={hasPromotion}
-                          {...register("hasPromotion")}
-                          onChange={(e) => setHasPromotion(e.target.checked)}
-                        />
-                        <span className="text-sm text-gray-600 w-30">
-                          Promotion price
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col">
-                      <TextInput
-                        type="number"
-                        register={register("promotionPrice")}
-                        disabled={!hasPromotion}
-                        className={`w-60 ${
-                          hasPromotion
-                            ? "focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            : "bg-gray-100 cursor-not-allowed"
-                        }`}
-                      />
-                      </div>
-                    </div>
-                    {errors.promotionPrice && <p className="text-red-500">{errors.promotionPrice.message}</p>}
-                  </div>
-
-                  {/* Room Description */}
-                  <div>
-                  <TextArea
-                    label="Room Description"
-                    required
-                    placeholder="Enter room description"
-                    register={register("description")}
-                    className="w-212"
-                  />
-                  {errors.description && <p className="text-red-500">{errors.description.message}</p>}
-                  </div>
-                </div>
-
-                {/* Room Image Section */}
+            <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-8">
+              <div className="space-y-8 flex justify-center items-center flex-col">
+                {/* Basic Information Section */}
                 <div className="space-y-6">
                   <h2 className="text-lg font-medium text-gray-700 border-b border-gray-200 pb-2">
-                    Room Image
+                    Basic Information
                   </h2>
 
-                  {/* Main Image */}
+                  {/* Room Type */}
                   <div>
-                  <RoomMainImage
-                    name="mainImgUrl"
-                    value={room?.main_image_url && room.main_image_url[0]}
-                  />
-                  {errors.mainImgUrl && <p className="text-red-500">{errors.mainImgUrl.message}</p>}
+                    <TextInput
+                      label="Room Type"
+                      required
+                      placeholder="Enter room type"
+                      register={register("roomType")}
+                    />
+                    {errors.roomType && (
+                      <p className="text-red-500">{errors.roomType.message}</p>
+                    )}
                   </div>
 
-                  {/* Image Gallery */}
-                  <div>
-                  <RoomGalleryImages
-                    name="galleryImageUrls"
-                    value={room?.gallery_images}
-                  />
-                  {errors.galleryImageUrls && <p className="text-red-500">{errors.galleryImageUrls.message}</p>}
+                  {/* Room Size and Bed Type - Side by Side */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <TextInput
+                        label="Room size(sqm)"
+                        required
+                        type="number"
+                        placeholder="Enter room size"
+                        register={register("roomSize")}
+                      />
+                      {errors.roomSize && (
+                        <p className="text-red-500">
+                          {errors.roomSize.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <DropDownInput
+                        options={[
+                          "Single bed",
+                          "Double bed",
+                          "King bed",
+                          "Twin beds",
+                        ]}
+                        name="bedType"
+                        register={register("bedType")}
+                        setValue={setValue}
+                        defaultValue={room?.bed_type}
+                        label="Bed Type"
+                      />
+                      {errors.bedType && (
+                        <p className="text-red-500">{errors.bedType.message}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
+                  {/* Guest Count */}
+                  <div>
+                    <TextInput
+                      label="Guest(s)"
+                      type="number"
+                      register={register("guests")}
+                      className="w-60"
+                    />
+                    {errors.guests && (
+                      <p className="text-red-500">{errors.guests.message}</p>
+                    )}
+                  </div>
 
-                <div className="space-y-6 mt-5">
-                  <h2 className="text-lg font-medium text-gray-700 border-t pt-5 border-gray-200 pb-2">
-                    Room Amenities
-                  </h2>
-                  {/* Amenity */}
-                  <AmenityItems name="amenities" value={room?.amenities} />
+                  {/* Price and Promotion Price - Side by Side */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <TextInput
+                        label="Price per Night (THB)"
+                        type="number"
+                        placeholder="Enter price"
+                        register={register("pricePerNight")}
+                        className="w-full"
+                      />
+                      {errors.pricePerNight && (
+                        <p className="text-red-500">
+                          {errors.pricePerNight.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      {/* Promotion Price */}
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Promotion Price
+                      </label>
+                      <div className="flex flex-row">
+                        <div className="flex items-center space-x-3">
+                          {/* ✅ Checkbox to enable/disable promotion price */}
+                          <input
+                            type="checkbox"
+                            className="accent-orange-500"
+                            checked={hasPromotion}
+                            {...register("hasPromotion")}
+                            onChange={(e) => setHasPromotion(e.target.checked)}
+                          />
+                          <span className="text-sm text-gray-600 w-30">
+                            Promotion price
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <TextInput
+                            type="number"
+                            register={register("promotionPrice")}
+                            disabled={!hasPromotion}
+                            className={`w-60 ${
+                              hasPromotion
+                                ? "focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                : "bg-gray-100 cursor-not-allowed"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                      {errors.promotionPrice && (
+                        <p className="text-red-500">
+                          {errors.promotionPrice.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Room Description */}
+                    <div>
+                      <TextArea
+                        label="Room Description"
+                        required
+                        placeholder="Enter room description"
+                        register={register("description")}
+                        className="w-212"
+                      />
+                      {errors.description && (
+                        <p className="text-red-500">
+                          {errors.description.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Room Image Section */}
+                  <div className="space-y-6">
+                    <h2 className="text-lg font-medium text-gray-700 border-b border-gray-200 pb-2">
+                      Room Image
+                    </h2>
+
+                    {/* Main Image */}
+                    <div>
+                      <RoomMainImage
+                        name="mainImgUrl"
+                        value={room?.main_image_url && room.main_image_url[0]}
+                      />
+                      {errors.mainImgUrl && (
+                        <p className="text-red-500">
+                          {errors.mainImgUrl.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Image Gallery */}
+                    <div>
+                      <RoomGalleryImages
+                        name="galleryImageUrls"
+                        value={room?.gallery_images}
+                      />
+                      {errors.galleryImageUrls && (
+                        <p className="text-red-500">
+                          {errors.galleryImageUrls.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-6 mt-5">
+                    <h2 className="text-lg font-medium text-gray-700 border-t pt-5 border-gray-200 pb-2">
+                      Room Amenities
+                    </h2>
+                    {/* Amenity */}
+                    <AmenityItems name="amenities" value={room?.amenities} />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           </div>
         </form>
       </FormProvider>

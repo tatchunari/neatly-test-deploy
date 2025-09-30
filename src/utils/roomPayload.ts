@@ -1,18 +1,20 @@
-import { RoomFormValues } from "@/types/rooms";
-
+import { RoomFormData } from "@/schemas/roomSchema";
 
 export const buildRoomPayload = (
-  formData: RoomFormValues,
+  formData: RoomFormData, // Change from RoomFormValues to RoomFormData
   hasPromotion: boolean
 ) => ({
   room_type: formData.roomType,
-  room_size: Number(formData.roomSize),
+  room_size: formData.roomSize,
   bed_type: formData.bedType,
-  guests: Number(formData.guests),
-  price: Number(formData.pricePerNight),
-  promotion_price: hasPromotion ? Number(formData.promotionPrice) : null,
+  guests: formData.guests,
+  price: formData.pricePerNight,
+  promotion_price:
+    hasPromotion && formData.promotionPrice !== null
+      ? formData.promotionPrice
+      : null,
   description: formData.description,
-  main_image_url: [formData.mainImgUrl],
+  main_image_url: formData.mainImgUrl ? [formData.mainImgUrl] : [],
   gallery_images: formData.galleryImageUrls,
-  amenities: formData.amenities || [],
+  amenities: formData.amenities ?? [],
 });

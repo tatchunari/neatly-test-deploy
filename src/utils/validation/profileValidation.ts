@@ -8,6 +8,7 @@ import {
 } from "./commonValidation";
 
 export const profileSchema = z.object({
+  username: z.string().optional(),
   firstName: firstNameValidation,
   lastName: lastNameValidation,
   email: z

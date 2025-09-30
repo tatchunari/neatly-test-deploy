@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Room = {
   id: string | number;
@@ -27,9 +28,13 @@ export default function Otherroompage() {
         const data = await response.json();
         // สมมติว่า API ส่ง { data: [...] }
         setRooms(Array.isArray(data?.data) ? data.data : []);
-      } catch (err: any) {
-        setError(err?.message || "Error fetching rooms");
-        setRooms([]);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err?.message || "Error fetching rooms");
+          setRooms([]);
+        } else {
+          console.error("An unknown error occurred.");
+        }
       } finally {
         setLoading(false);
       }
@@ -39,6 +44,7 @@ export default function Otherroompage() {
 
   // Show only 3 rooms (like original)
   const displayRooms = rooms.slice(0, 3);
+  // console.log("Display Rooms", displayRooms);
 
   return (
     <section className="w-full bg-[#F7F7FA] py-10 md:py-16">
@@ -47,17 +53,21 @@ export default function Otherroompage() {
           Other Rooms
         </h2>
         {loading ? (
-          <div className="text-center text-gray-500 py-10">Loading rooms...</div>
+          <div className="text-center text-gray-500 py-10">
+            Loading rooms...
+          </div>
         ) : error ? (
           <div className="text-center text-red-500 py-10">{error}</div>
         ) : (
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center md:items-stretch">
             {displayRooms.length === 0 ? (
-              <div className="text-center text-gray-500 py-10">No rooms found.</div>
+              <div className="text-center text-gray-500 py-10">
+                No rooms found.
+              </div>
             ) : (
               displayRooms.map((room) => (
                 <div
-                  key={room.id ?? room.name}
+                  key={room.id}
                   className="relative rounded-xl overflow-hidden shadow bg-white group transition-all duration-200"
                   style={{
                     width: "309px",
@@ -73,9 +83,11 @@ export default function Otherroompage() {
                     }}
                   >
                     {room.main_image_url ? (
-                      <img
-                        src={room.main_image_url}
+                      <Image
+                        src={room.main_image_url[0]}
                         alt={room.name}
+                        width={800}
+                        height={600}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         style={{
                           width: "100%",
@@ -113,7 +125,13 @@ export default function Otherroompage() {
             aria-label="Previous"
             disabled
           >
-            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M10 4l-4 4 4 4" />
             </svg>
           </button>
@@ -122,7 +140,13 @@ export default function Otherroompage() {
             aria-label="Next"
             disabled
           >
-            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M6 12l4-4-4-4" />
             </svg>
           </button>

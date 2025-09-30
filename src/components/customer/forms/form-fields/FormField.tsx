@@ -21,7 +21,11 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
       {children}
 
       {/* Error Message */}
-      {error && <p className="text-sm text-[var(--color-red)]">{error.message}</p>}
+      {error && (
+        <p className="text-sm text-[var(--color-red)]">{error.message}</p>
+      )}
     </div>
   )
 );
+
+FormField.displayName = "FormField";

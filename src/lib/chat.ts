@@ -7,14 +7,20 @@ const vertex = new VertexAI({
 
 const model = vertex.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-export async function chatWithGemini(question: string, conversationHistory?: any[], context?: string) {
-  let historyContext = '';
-  
+export type historyType = { is_bot: boolean; message: string };
+
+export async function chatWithGemini(
+  question: string,
+  conversationHistory?: historyType[],
+  context?: string
+) {
+  let historyContext = "";
+
   if (conversationHistory && conversationHistory.length > 0) {
     // ส่งแค่ 3 ข้อความล่าสุด
     const recentHistory = conversationHistory.slice(-3);
-    recentHistory.forEach((msg: any) => {
-      const role = msg.is_bot ? 'พนักงาน' : 'ลูกค้า';
+    recentHistory.forEach((msg) => {
+      const role = msg.is_bot ? "พนักงาน" : "ลูกค้า";
       historyContext += `${role}: ${msg.message}\n`;
     });
   } else {
@@ -29,7 +35,7 @@ export async function chatWithGemini(question: string, conversationHistory?: any
   - Keep responses concise
   - Review conversation history to understand context
 
-  ${context ? `Context: ${context}\n` : ''}
+  ${context ? `Context: ${context}\n` : ""}
   
   Conversation History:
   ${historyContext}
@@ -41,11 +47,9 @@ export async function chatWithGemini(question: string, conversationHistory?: any
     contents: [
       {
         role: "user",
-        parts: [
-          { text: prompt }
-        ]
-      }
-    ]
+        parts: [{ text: prompt }],
+      },
+    ],
   });
-  return result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return result.response.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
