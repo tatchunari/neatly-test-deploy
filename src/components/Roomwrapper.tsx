@@ -80,8 +80,6 @@ const Roomwrapper = () => {
           <Image
             src={rooms[0].image}
             alt={rooms[0].name}
-            width={800}
-            height={600}
             fill
             className="object-cover"
             priority
@@ -105,8 +103,6 @@ const Roomwrapper = () => {
             src={rooms[1].image}
             alt={rooms[1].name}
             fill
-            width={800}
-            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 588px"
@@ -129,8 +125,6 @@ const Roomwrapper = () => {
             src={rooms[2].image}
             alt={rooms[2].name}
             fill
-            width={800}
-            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 588px"
@@ -153,8 +147,6 @@ const Roomwrapper = () => {
             src={rooms[3].image}
             alt={rooms[3].name}
             fill
-            width={800}
-            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 588px"
@@ -176,8 +168,6 @@ const Roomwrapper = () => {
             src={rooms[4].image}
             alt={rooms[4].name}
             fill
-            width={800}
-            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 588px"
@@ -199,8 +189,6 @@ const Roomwrapper = () => {
             src={rooms[5].image}
             alt={rooms[5].name}
             fill
-            width={800}
-            height={600}
             className="object-cover"
             priority
             sizes="(max-width: 768px) 100vw, 1200px"

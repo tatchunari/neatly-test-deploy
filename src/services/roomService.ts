@@ -53,10 +53,22 @@ export async function createRoom(
   hasPromotion: boolean
 ) {
   const payload = {
-    ...formData,
+    room_type: formData.roomType,
+    room_size: formData.roomSize,
+    bed_type: formData.bedType,
+    guests: formData.guests,
+    price: formData.pricePerNight,
+    promotion_price:
+      hasPromotion && formData.promotionPrice !== null
+        ? formData.promotionPrice
+        : null,
+    description: formData.description,
     main_image_url: formData.mainImgUrl ? [formData.mainImgUrl] : [],
-    // ... other field mappings
+    gallery_images: formData.galleryImageUrls,
+    amenities: formData.amenities ?? [],
   };
+
+  console.log("Payload being sent:", payload); // Debug log
 
   try {
     const response = await fetch(`/api/rooms`, {
@@ -64,13 +76,10 @@ export async function createRoom(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-
     const data = await response.json();
-
     if (!response.ok || !data.success) {
       throw new Error(data.error || data.message || "Failed to create room");
     }
-
     return data;
   } catch (error) {
     throw error;
