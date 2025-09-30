@@ -135,116 +135,329 @@ const Roomwrapper = () => {
             </a>
           </div>
         </div>
-        {/* Second row: 2 images */}
-        <div className="relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
-          <Image
-            src={rooms[1].image}
-            alt={rooms[1].name}
-            fill
-            className="object-cover"
-            priority
-            sizes="(max-width: 768px) 100vw, 588px"
-          />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
-            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
-              {rooms[1].name}
-              hello
-            </span>
-            <a
-              href={rooms[1].link}
-              className="text-white text-xs"
-              style={{ textDecoration: "none" }}
-            >
-              Explore Room &rarr;
-            </a>
+        {/* Row 2: Deluxe and Superior */}
+        <div className="flex flex-col md:flex-row md:justify-center gap-4 md:gap-6 w-full">
+          {/* Deluxe */}
+          <div
+            className="relative rounded-xl overflow-hidden shadow room-deluxe-image"
+            style={{
+              width: "100%",
+              minWidth: "0",
+              maxWidth: "100%",
+              height: "250px",
+              minHeight: "250px",
+              maxHeight: "250px",
+            }}
+          >
+            <Image
+              src={rooms[1].image}
+              alt={rooms[1].name}
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 767px) 100vw, (min-width: 768px) 643px"
+              style={{
+                objectFit: "cover",
+              }}
+            />
+            <style>
+              {`
+                @media (min-width: 768px) {
+                  .room-deluxe-image {
+                    width: 643px !important;
+                    min-width: 643px !important;
+                    max-width: 643px !important;
+                    height: 400px !important;
+                    min-height: 400px !important;
+                    max-height: 400px !important;
+                  }
+                }
+                @media (max-width: 767px) {
+                  .room-deluxe-image {
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    max-width: 100% !important;
+                    height: 250px !important;
+                    min-height: 250px !important;
+                    max-height: 250px !important;
+                  }
+                }
+              `}
+            </style>
+            <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+              <span className="text-white text-base md:text-xl font-serif mb-2 drop-shadow">
+                {rooms[1].name}
+              </span>
+              <a
+                href={rooms[1].link}
+                className="text-white text-xs"
+                style={{ textDecoration: "none" }}
+              >
+                Explore Room &rarr;
+              </a>
+            </div>
+          </div>
+          {/* Superior */}
+          <div
+            className="relative rounded-xl overflow-hidden shadow room-superior-image"
+            style={{
+              width: "100%",
+              minWidth: "0",
+              maxWidth: "100%",
+              height: "250px",
+              minHeight: "250px",
+              maxHeight: "250px",
+            }}
+          >
+            <Image
+              src={rooms[2].image}
+              alt={rooms[2].name}
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 767px) 100vw, (min-width: 768px) 453px"
+              style={{
+                objectFit: "cover",
+              }}
+            />
+            <style>
+              {`
+                @media (min-width: 768px) {
+                  .room-superior-image {
+                    width: 453px !important;
+                    min-width: 453px !important;
+                    max-width: 453px !important;
+                    height: 400px !important;
+                    min-height: 400px !important;
+                    max-height: 400px !important;
+                  }
+                }
+                @media (max-width: 767px) {
+                  .room-superior-image {
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    max-width: 100% !important;
+                    height: 250px !important;
+                    min-height: 250px !important;
+                    max-height: 250px !important;
+                  }
+                }
+              `}
+            </style>
+            <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+              <span className="text-white text-base md:text-xl font-serif mb-2 drop-shadow">
+                {rooms[2].name}
+              </span>
+              <a
+                href={rooms[2].link}
+                className="text-white text-xs"
+                style={{ textDecoration: "none" }}
+              >
+                Explore Room &rarr;
+              </a>
+            </div>
           </div>
         </div>
-        <div className="relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
-          <Image
-            src={rooms[2].image}
-            alt={rooms[2].name}
-            fill
-            className="object-cover"
-            priority
-            sizes="(max-width: 768px) 100vw, 588px"
-          />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
-            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
-              {rooms[2].name}
-            </span>
-            <a
-              href={rooms[2].link}
-              className="text-white text-xs"
-              style={{ textDecoration: "none" }}
-            >
-              Explore Room &rarr;
-            </a>
+        {/* Row 3: Premier Sea View (left tall) and right column with Supreme + Suite */}
+        <div className="flex flex-col md:flex-row md:justify-center gap-4 md:gap-6 w-full">
+          {/* Left: Premier Sea View (tall) */}
+          <div
+            className="relative rounded-xl overflow-hidden shadow room-premiersea-image"
+            style={{
+              width: "100%",
+              minWidth: "0",
+              maxWidth: "100%",
+              height: "250px",
+              minHeight: "250px",
+              maxHeight: "250px",
+            }}
+          >
+            <Image
+              src={rooms[3].image}
+              alt={rooms[3].name}
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 767px) 100vw, (min-width: 768px) 453px"
+              style={{
+                objectFit: "cover",
+              }}
+            />
+            <style>
+              {`
+                @media (min-width: 768px) {
+                  .room-premiersea-image {
+                    width: 453px !important;
+                    min-width: 453px !important;
+                    max-width: 453px !important;
+                    height: 700px !important;
+                    min-height: 700px !important;
+                    max-height: 700px !important;
+                  }
+                }
+                @media (max-width: 767px) {
+                  .room-premiersea-image {
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    max-width: 100% !important;
+                    height: 250px !important;
+                    min-height: 250px !important;
+                    max-height: 250px !important;
+                  }
+                }
+              `}
+            </style>
+            <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+              <span className="text-white text-base md:text-xl font-serif mb-2 drop-shadow">
+                {rooms[3].name}
+              </span>
+              <a
+                href={rooms[3].link}
+                className="text-white text-xs"
+                style={{ textDecoration: "none" }}
+              >
+                Explore Room &rarr;
+              </a>
+            </div>
           </div>
-        </div>
-        {/* Third row: 3 images (Premier Sea View, Supreme, Suite) */}
-        <div className="col-span-1 md:col-span-1 relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
-          <Image
-            src={rooms[3].image}
-            alt={rooms[3].name}
-            fill
-            className="object-cover"
-            priority
-            sizes="(max-width: 768px) 100vw, 588px"
-          />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
-            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
-              {rooms[3].name}
-            </span>
-            <a
-              href={rooms[3].link}
-              className="text-white text-xs"
-              style={{ textDecoration: "none" }}
+          {/* Right column: Supreme + Suite stacked */}
+          <div className="flex flex-col gap-4 md:gap-6 room-right-column"
+            style={{
+              width: "100%",
+              minWidth: "0",
+              maxWidth: "100%",
+            }}
+          >
+            <style>
+              {`
+                @media (min-width: 768px) {
+                  .room-right-column {
+                    width: 643px !important;
+                    min-width: 643px !important;
+                    max-width: 643px !important;
+                  }
+                }
+              `}
+            </style>
+            {/* Supreme */}
+            <div
+              className="relative rounded-xl overflow-hidden shadow room-supreme-image"
+              style={{
+                width: "100%",
+                minWidth: "0",
+                maxWidth: "100%",
+                height: "250px",
+                minHeight: "250px",
+                maxHeight: "250px",
+              }}
             >
-              Explore Room &rarr;
-            </a>
-          </div>
-        </div>
-        <div className="col-span-1 md:col-span-1 relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
-          <Image
-            src={rooms[4].image}
-            alt={rooms[4].name}
-            fill
-            className="object-cover"
-            priority
-            sizes="(max-width: 768px) 100vw, 588px"
-          />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
-            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
-              {rooms[4].name}
-            </span>
-            <a
-              href={rooms[4].link}
-              className="text-white text-xs underline underline-offset-2"
+              <Image
+                src={rooms[4].image}
+                alt={rooms[4].name}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 767px) 100vw, (min-width: 768px) 643px"
+                style={{
+                  objectFit: "cover",
+                }}
+              />
+              <style>
+                {`
+                  @media (min-width: 768px) {
+                    .room-supreme-image {
+                      width: 643px !important;
+                      min-width: 643px !important;
+                      max-width: 643px !important;
+                      height: 338px !important;
+                      min-height: 338px !important;
+                      max-height: 338px !important;
+                    }
+                  }
+                  @media (max-width: 767px) {
+                    .room-supreme-image {
+                      width: 100% !important;
+                      min-width: 0 !important;
+                      max-width: 100% !important;
+                      height: 250px !important;
+                      min-height: 250px !important;
+                      max-height: 250px !important;
+                    }
+                  }
+                `}
+              </style>
+              <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+                <span className="text-white text-base md:text-xl font-serif mb-2 drop-shadow">
+                  {rooms[4].name}
+                </span>
+                <a
+                  href={rooms[4].link}
+                  className="text-white text-xs underline underline-offset-2"
+                >
+                  Explore Stays &rarr;
+                </a>
+              </div>
+            </div>
+            {/* Suite */}
+            <div
+              className="relative rounded-xl overflow-hidden shadow room-suite-image"
+              style={{
+                width: "100%",
+                minWidth: "0",
+                maxWidth: "100%",
+                height: "250px",
+                minHeight: "250px",
+                maxHeight: "250px",
+              }}
             >
-              Explore Stays &rarr;
-            </a>
-          </div>
-        </div>
-        <div className="col-span-1 md:col-span-2 relative h-[180px] md:h-[220px] rounded-xl overflow-hidden shadow">
-          <Image
-            src={rooms[5].image}
-            alt={rooms[5].name}
-            fill
-            className="object-cover"
-            priority
-            sizes="(max-width: 768px) 100vw, 1200px"
-          />
-          <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
-            <span className="text-white text-base md:text-xl font-Noto mb-2 drop-shadow">
-              {rooms[5].name}
-            </span>
-            <a
-              href={rooms[5].link}
-              className="text-white text-xs"
-              style={{ textDecoration: "none" }}
-            >
-              Explore Room &rarr;
-            </a>
+              <Image
+                src={rooms[5].image}
+                alt={rooms[5].name}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 767px) 100vw, (min-width: 768px) 643px"
+                style={{
+                  objectFit: "cover",
+                }}
+              />
+              <style>
+                {`
+                  @media (min-width: 768px) {
+                    .room-suite-image {
+                      width: 643px !important;
+                      min-width: 643px !important;
+                      max-width: 643px !important;
+                      height: 338px !important;
+                      min-height: 338px !important;
+                      max-height: 338px !important;
+                    }
+                  }
+                  @media (max-width: 767px) {
+                    .room-suite-image {
+                      width: 100% !important;
+                      min-width: 0 !important;
+                      max-width: 100% !important;
+                      height: 250px !important;
+                      min-height: 250px !important;
+                      max-height: 250px !important;
+                    }
+                  }
+                `}
+              </style>
+              <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
+                <span className="text-white text-base md:text-xl font-serif mb-2 drop-shadow">
+                  {rooms[5].name}
+                </span>
+                <a
+                  href={rooms[5].link}
+                  className="text-white text-xs"
+                  style={{ textDecoration: "none" }}
+                >
+                  Explore Room &rarr;
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
