@@ -10,7 +10,7 @@ import Chatbot from "@/components/Chatbot";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <div className="pt-12 md:pt-[100px]">
+    <div className="pt-12 md:pt-[100px] overflow-x-hidden">
       <Navbar />
       <Herosection />
       <Aboutsection />

@@ -37,7 +37,7 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
   const [guest, setGuest] = useState<number>(defaultGuest);
 
   // For dropdown
-  const [dropdownOpen, setDropdownOpen] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownButtonRef = useRef<HTMLDivElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
 
@@ -72,15 +72,21 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
   const maxRoom = 10;
   const maxGuest = 20;
 
-  // Calendar icon removed
+  // Calendar SVG
+  const calendarIcon = (
+    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+      <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+        <rect x="3" y="5" width="14" height="12" rx="2" stroke="#BDBDBD" strokeWidth="1.2" />
+        <path d="M7 3v2M13 3v2" stroke="#BDBDBD" strokeWidth="1.2" strokeLinecap="round" />
+        <rect x="7" y="9" width="2" height="2" rx="1" fill="#BDBDBD" />
+        <rect x="11" y="9" width="2" height="2" rx="1" fill="#BDBDBD" />
+      </svg>
+    </span>
+  );
 
   return (
     <div
       className={`
-        bg-white
-        rounded-xl
-        shadow
-        mx-auto
         flex
         items-center
         justify-center
@@ -89,7 +95,7 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
         z-10
       `}
       style={{
-        maxWidth: "1440px",
+        maxWidth: "100vw",
         width: "100%",
         marginTop: "0",
       }}
@@ -97,6 +103,23 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
       <style>
         {`
           @media (max-width: 767px) {
+            .searchbox-outer-border {
+              width: 343px !important;
+              min-width: 343px !important;
+              max-width: 343px !important;
+              height: 396px !important;
+              min-height: 396px !important;
+              max-height: 396px !important;
+              border: 6px solid #fff;
+              border-radius: 1.25rem;
+              box-sizing: border-box;
+              background: #fff;
+              box-shadow: 0 6px 32px 0 rgba(0,0,0,0.08);
+              padding: 0.5rem;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
             .searchbox-mobile-size {
               width: 343px !important;
               min-width: 343px !important;
@@ -138,6 +161,68 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
               width: 343px !important;
               min-width: 343px !important;
               max-width: 343px !important;
+              height: 48px !important;
+              min-height: 48px !important;
+              max-height: 48px !important;
+            }
+          }
+          @media (min-width: 768px) {
+            .searchbox-outer-border {
+              width: 1120px !important;
+              min-width: 1120px !important;
+              max-width: 1120px !important;
+              height: 196px !important;
+              min-height: 196px !important;
+              max-height: 196px !important;
+              border: 6px solid #fff;
+              border-radius: 1.25rem; /* 20px */
+              box-sizing: border-box;
+              background: #fff;
+              box-shadow: 0 6px 32px 0 rgba(0,0,0,0.08);
+              padding: 0.5rem;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+            .searchbox-mobile-size {
+              width: 100%;
+              height: 100%;
+              flex-direction: row !important;
+              gap: 24px !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              align-items: center !important;
+              position: relative;
+            }
+            .searchbox-field {
+              width: 260px !important;
+              min-width: 200px !important;
+              max-width: 320px !important;
+              height: 48px !important;
+              min-height: 48px !important;
+              max-height: 48px !important;
+            }
+            .searchbox-btn {
+              min-width: 144px !important;
+              max-width: 144px !important;
+              width: 144px !important;
+              height: 48px !important;
+              min-height: 48px !important;
+              max-height: 48px !important;
+              align-self: center !important;
+            }
+            .searchbox-input {
+              width: 100% !important;
+              min-width: 0 !important;
+              max-width: 100% !important;
+              height: 48px !important;
+              min-height: 48px !important;
+              max-height: 48px !important;
+            }
+            .searchbox-btn button {
+              min-width: 144px !important;
+              max-width: 144px !important;
+              width: 144px !important;
               height: 48px !important;
               min-height: 48px !important;
               max-height: 48px !important;

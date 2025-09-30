@@ -36,9 +36,6 @@ const rooms = [
 ];
 
 const Roomwrapper = () => {
-  // Helper to check if the label is "Explore Room"
-  const isExploreRoom = (label: string) => label.startsWith("Explore Room");
-
   return (
     <section
       id="rooms"
@@ -49,15 +46,18 @@ const Roomwrapper = () => {
         py-10 md:py-20
       "
       style={{
-        minHeight: "1755px",
+        minHeight: "100vh",
+        width: "100vw",
         maxWidth: "100vw",
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
       }}
     >
       <h2
         className="
           text-[#2D5A27]
           text-[28px] md:text-[36px]
-          font-Noto
+          font-serif
           text-center
           mb-8 md:mb-14
         "
@@ -66,36 +66,69 @@ const Roomwrapper = () => {
       </h2>
       <div
         className="
-          w-full max-w-[359px] md:max-w-[1200px]
-          grid
-          grid-cols-1
-          md:grid-cols-2
-          gap-4 md:gap-6
-          px-4 md:px-0
+          w-full md:max-w-[1120px]
+          flex flex-col gap-4 md:gap-6
+          px-0 md:px-0
         "
         style={{
-          minHeight: "1440px",
+          width: "100vw",
           maxWidth: "100vw",
         }}
       >
-        {/* First row: 1 big image */}
-        <div className="col-span-1 md:col-span-2 relative h-[250px] md:h-[400px] rounded-xl overflow-hidden shadow">
+        {/* Row 1: Superior Garden View */}
+        <div
+          className="relative rounded-xl overflow-hidden shadow mx-auto superior-garden-image"
+          style={{
+            width: "100%",
+            minWidth: "0",
+            maxWidth: "100%",
+            height: "250px",
+            minHeight: "250px",
+            maxHeight: "250px",
+          }}
+        >
           <Image
             src={rooms[0].image}
             alt={rooms[0].name}
             fill
             className="object-cover"
             priority
-            sizes="(max-width: 768px) 100vw, 1200px"
+            sizes="(max-width: 767px) 100vw, (min-width: 768px) 1120px"
+            style={{
+              objectFit: "cover",
+            }}
           />
+          <style>
+            {`
+              @media (min-width: 768px) {
+                .superior-garden-image {
+                  width: 1120px !important;
+                  min-width: 1120px !important;
+                  max-width: 1120px !important;
+                  height: 540px !important;
+                  min-height: 540px !important;
+                  max-height: 540px !important;
+                }
+              }
+              @media (max-width: 767px) {
+                .superior-garden-image {
+                  width: 100% !important;
+                  min-width: 0 !important;
+                  max-width: 100% !important;
+                  height: 250px !important;
+                  min-height: 250px !important;
+                  max-height: 250px !important;
+                }
+              }
+            `}
+          </style>
           <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-4 md:p-6">
-            <span className="text-white text-lg md:text-2xl font-Noto mb-2 drop-shadow">
+            <span className="text-white text-lg md:text-2xl font-serif mb-2 drop-shadow">
               {rooms[0].name}
             </span>
             <a
               href={rooms[0].link}
               className="text-white text-sm"
-              // No underline for "Explore Room"
               style={{ textDecoration: "none" }}
             >
               Explore Room &rarr;
