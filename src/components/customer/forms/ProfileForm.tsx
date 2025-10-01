@@ -219,7 +219,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 error={!!errors.email}
                 placeholder="Enter your email"
                 readOnly
-                className="bg-gray-100 cursor-not-allowed"
+                className="bg-[var(--color-gray-200)] text-[var(--color-gray-600)] cursor-not-allowed border-[var(--color-gray-400)]"
               />
             </FormField>
 
@@ -254,11 +254,18 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             </FormField>
 
             <FormField label="Country" error={errors.country} required>
-              <Select
-                {...form.register("country")}
-                error={!!errors.country}
-                options={COUNTRY_OPTIONS}
-                placeholder="Select your country"
+              <Controller
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    error={!!errors.country}
+                    options={COUNTRY_OPTIONS}
+                    placeholder="Select your country"
+                  />
+                )}
               />
             </FormField>
           </div>

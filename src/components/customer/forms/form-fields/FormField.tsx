@@ -22,7 +22,9 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
 
       {/* Error Message */}
       {error && (
-        <p className="text-sm text-[var(--color-red)]">{error.message}</p>
+        <p className="text-sm text-[var(--color-red)] font-inter font-normal leading-[1.5] tracking-normal">
+          {error.message}
+        </p>
       )}
     </div>
   )

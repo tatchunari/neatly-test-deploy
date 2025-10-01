@@ -140,11 +140,18 @@ export const RegisterForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-1">
             <FormField label="Country" error={errors.country} required>
-              <Select
-                {...form.register("country")}
-                error={!!errors.country}
-                options={COUNTRY_OPTIONS}
-                placeholder="Select your country"
+              <Controller
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    error={!!errors.country}
+                    options={COUNTRY_OPTIONS}
+                    placeholder="Select your country"
+                  />
+                )}
               />
             </FormField>
           </div>

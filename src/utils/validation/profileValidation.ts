@@ -5,6 +5,7 @@ import {
   phoneValidation,
   countryValidation,
   profilePictureValidation,
+  dateOfBirthValidation,
 } from "./commonValidation";
 
 export const profileSchema = z.object({
@@ -18,9 +19,7 @@ export const profileSchema = z.object({
       message: "Invalid email format",
     }),
   phoneNumber: phoneValidation,
-  dateOfBirth: z
-    .string()
-    .min(1, { message: "Please select your date of birth" }), // กรุณาเลือกวันเกิด
+  dateOfBirth: dateOfBirthValidation, // เปลี่ยนจาก z.string() เป็น dateOfBirthValidation
   country: countryValidation,
   profilePicture: profilePictureValidation,
 });
