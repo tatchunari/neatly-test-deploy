@@ -17,10 +17,12 @@ export const StatisticsCard: React.FC<StatCardProps> = ({
   const isNegative = changeType === "down";
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 flex items-center justify-between relative">
+    <div className="bg-white rounded-lg py-4 px-5 w-full shadow-sm border border-gray-200 flex items-center justify-between relative">
       <div className="flex-1">
-        <p className="text-gray-900 text-lg mb-2">{title}</p>
-        <p className="text-3xl font-semibold text-gray-900 mb-2">{value}</p>
+        <p className="text-gray-900 text-lg mb-2 font-inter">{title}</p>
+        <p className="text-3xl font-semibold text-gray-900 mb-2 font-inter">
+          {value}
+        </p>
         <div className="flex items-center gap-1">
           {isPositive && (
             <svg
@@ -65,7 +67,7 @@ export const StatisticsCard: React.FC<StatCardProps> = ({
           </span>
         </div>
       </div>
-      <div className="bg-gray-300 rounded-full p-3 right-5 absolute">
+      <div className="bg-gray-300 rounded-full p-3 right-5 top-5 absolute">
         <Icon className="w-6 h-6 text-gray-700" />
       </div>
     </div>

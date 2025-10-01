@@ -1,4 +1,5 @@
 import AnalyticCardSection from "@/components/admin/analyticDashboard/AnalyticCardSection";
+import RoomAvailabilityChart from "@/components/admin/analyticDashboard/RoomAvailabilityChart.tsx";
 import Layout from "@/components/admin/Layout";
 
 function AnalyticDashboard() {
@@ -6,14 +7,21 @@ function AnalyticDashboard() {
     <Layout>
       <div className="flex-1">
         {/* Header */}
-        <div className="flex flex-row justify-between border-b border-gray-400 pb-5 mt-10 mx-10">
-          <p className="text-xl font-semibold">Analytic Dashboard</p>
+        <div className="flex flex-row justify-between pb-5 mt-20 md:mt-10 mx-10">
+          <p className="text-2xl md:text-xl font-semibold">
+            Analytic Dashboard
+          </p>
         </div>
 
-        <div className="max-w-7xl mt-10 mx-auto p-6 bg-gray-50 min-h-screen min-w-3">
+        <div className=" flex flex-col max-w-7xl mx-auto p-6 bg-gray-50 border-t border-gray-400 min-h-screen min-w-3">
           {/* Analytic Statistics */}
           <div className="flex flex-col">
             <AnalyticCardSection />
+          </div>
+
+          {/* Availability Chart & Booking Trends  */}
+          <div className="flex flex-row">
+            <RoomAvailabilityChart />
           </div>
         </div>
       </div>
