@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "@/components/customer/icons/CalendarIcon";
+import { ErrorIcon } from "@/components/customer/icons/ErrorIcon";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
@@ -167,31 +168,50 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
           className={cn(
             "w-full h-12 pt-3 pr-10 pb-3 pl-3 border rounded",
             "bg-[var(--color-white)] border-[var(--color-gray-400)]",
-            "focus:outline-none focus:ring-2 focus:ring-blue-500",
+            "focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)] focus:border-[var(--color-orange-500)]", // ✅ เปลี่ยนเป็น orange
             "transition-colors duration-200",
             "font-inter text-base font-normal leading-6 tracking-normal",
             "text-[var(--color-gray-900)]",
             "placeholder:text-[var(--color-gray-600)]",
-            error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+
+            // Error state - ใช้ CSS variables
+            error &&
+              "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)]",
+
             className
           )}
           {...props}
         />
-        <div
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
-          onClick={() => setShowCalendar(!showCalendar)}
-        >
-          <CalendarIcon size={20} className="text-[var(--color-gray-400)]" />
-        </div>
 
-        {showCalendar && (
-          <div className="absolute z-10 mt-2 bg-white border rounded shadow">
+        {/* Calendar Icon - ซ่อนเมื่อมี error */}
+        {!error && (
+          <div
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer"
+            onClick={() => setShowCalendar(!showCalendar)}
+          >
+            <CalendarIcon size={20} className="text-[var(--color-gray-400)]" />
+          </div>
+        )}
+
+        {/* Error Icon - อยู่ขวาสุด */}
+        {error && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <ErrorIcon size={14} className="text-[var(--color-red)]" />
+          </div>
+        )}
+
+        {showCalendar && !error && (
+          <div className="absolute z-10 mt-2 bg-white border border-[var(--color-gray-400)] rounded-lg shadow-lg p-4 min-w-[320px]">
             <DayPicker
               mode="single"
               onSelect={handleDaySelect}
               captionLayout="dropdown"
               defaultMonth={new Date(1990, 0)}
               disabled={(date) => date > new Date() || date < new Date(1900, 0)}
+              showOutsideDays
+              fixedWeeks
+              weekStartsOn={1}
+              className="[&_.rdp-day]:hover:border-[var(--color-orange-500)] [&_.rdp-day]:hover:border-2"
             />
           </div>
         )}
