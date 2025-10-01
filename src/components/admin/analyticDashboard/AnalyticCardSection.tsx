@@ -4,7 +4,7 @@ import { ShoppingCart, Wallet, BookCheck, Globe } from "lucide-react";
 
 const AnalyticCardSection = () => {
   return (
-    <div className="flex md:flex-row flex-col justify-center shadow-[0px_4px_25px_0px_#0000000D] gap-5 ">
+    <div className="flex md:flex-row flex-col justify-center gap-5 ">
       <StatisticsCard
         title="Total booking"
         value="76"
