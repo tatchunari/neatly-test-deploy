@@ -21,11 +21,12 @@ function formatDateString(dateStr: string) {
   });
 }
 
-interface SearchParams {
+export interface SearchParams {
   checkIn: string;
   checkOut: string;
   room: string; // number of rooms
   guests: string; // number of guests
+  [key: string]: string; // index signature for URLSearchParams compatibility
 }
 
 interface SearchBoxProps {
