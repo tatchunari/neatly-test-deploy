@@ -55,7 +55,7 @@ export default function Herosection() {
           <h1
             className="text-white text-center font-serif"
             style={{
-              fontSize: "clamp(2.2rem, 6vw, 56px)",
+              fontSize: "clamp(2.5rem, 6vw, 56px)",
               lineHeight: "clamp(2.5rem, 7vw, 68px)",
               marginTop: "0",
               marginBottom: "32px",
@@ -69,6 +69,7 @@ export default function Herosection() {
           >
             A Best Place for Your<br />Neatly Experience
           </h1>
+          <div style={{ height: 40 }} />
           {/* Search Box */}
           <div
             className={`

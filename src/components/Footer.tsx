@@ -37,13 +37,13 @@ const Footer = () => {
         </div>
 
         {/* Right: Contact Info */}
-        <div className="md:w-1/2 w-full flex flex-col items-center">
+        <div className="md:w-1/2 w-full flex flex-col items-end md:items-end md:pl-16 justify-start">
           {/* CONTACT Header */}
-          <div className="mb-6 font-semibold text-base tracking-wide text-white w-full text-left md:text-left">
+          <div className="mb-6 font-semibold text-base tracking-wide text-white w-full text-left md:text-center">
             CONTACT
           </div>
-          <div className="space-y-6 w-full">
-            <div className="flex items-center gap-3 text-base text-[#ffffff]">
+          <div className="space-y-6 w-full md:w-auto md:min-w-[320px]">
+            <div className="flex items-center gap-3 text-base text-[#ffffff] justify-start">
               <span className="inline-block text-[#ffffff]">
                 <Image
                   src="/icons/phone.png"
@@ -53,9 +53,9 @@ const Footer = () => {
                   style={{ minWidth: 24, minHeight: 24 }}
                 />
               </span>
-              <span className="font-normal text-[#ffffff]">+66 99 999 9999</span>
+              <span className="font-normal text-[#ffffff] text-left">+66 99 999 9999</span>
             </div>
-            <div className="flex items-center gap-3 text-base text-[#ffffff]">
+            <div className="flex items-center gap-3 text-base text-[#ffffff] justify-start">
               <span className="inline-block text-[#ffffff]">
                 <Image
                   src="/icons/email.png"
@@ -65,9 +65,9 @@ const Footer = () => {
                   style={{ minWidth: 24, minHeight: 24 }}
                 />
               </span>
-              <span className="font-normal text-[#ffffff]">contact@neatlyhotel.com</span>
+              <span className="font-normal text-[#ffffff] text-left">contact@neatlyhotel.com</span>
             </div>
-            <div className="flex items-start gap-3 text-base text-[#ffffff]">
+            <div className="flex items-start gap-3 text-base text-[#ffffff] justify-start">
               <span className="inline-block pt-0.5 text-[#ffffff]">
                 <Image
                   src="/icons/location.png"
@@ -77,7 +77,7 @@ const Footer = () => {
                   style={{ minWidth: 24, minHeight: 24 }}
                 />
               </span>
-              <span className="font-normal text-[#ffffff] leading-snug">
+              <span className="font-normal text-[#ffffff] leading-snug text-left">
                 188 Phaya Thai Rd, Thung Phaya Thai,<br />
                 Ratchathewi, Bangkok 10400
               </span>

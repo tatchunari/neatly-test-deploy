@@ -56,7 +56,7 @@ const Roomwrapper = () => {
       <h2
         className="
           text-[#2D5A27]
-          text-[28px] md:text-[36px]
+          text-[30px] md:text-[48px]
           font-serif
           text-center
           mb-8 md:mb-14
