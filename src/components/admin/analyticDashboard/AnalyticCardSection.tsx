@@ -4,7 +4,7 @@ import { ShoppingCart, Wallet, BookCheck, Globe } from "lucide-react";
 
 const AnalyticCardSection = () => {
   return (
-    <div className="flex flex-row">
+    <div className="flex md:flex-row flex-col justify-center shadow-[0px_4px_25px_0px_#0000000D] gap-5 ">
       <StatisticsCard
         title="Total booking"
         value="76"
@@ -15,7 +15,7 @@ const AnalyticCardSection = () => {
 
       <StatisticsCard
         title="Total sales"
-        value="76"
+        value="฿58,829"
         change="Up 8.5% from last month"
         changeType="up"
         icon={Wallet}
@@ -23,15 +23,15 @@ const AnalyticCardSection = () => {
 
       <StatisticsCard
         title="Total booking users"
-        value="76"
-        change="Up 8.5% from last month"
-        changeType="up"
+        value="66"
+        change="Down 8.5% from last month"
+        changeType="down"
         icon={BookCheck}
       />
 
       <StatisticsCard
         title="Total site visitors"
-        value="76"
+        value="459"
         change="Up 8.5% from last month"
         changeType="up"
         icon={Globe}
