@@ -50,9 +50,12 @@ export default function Aboutsection() {
       className="w-full flex flex-col items-center bg-white"
       style={{
         minWidth: "100vw",
+        width: "100vw",
         maxWidth: "100vw",
         minHeight: "auto",
         margin: "0 auto",
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
         paddingTop: "0",
         paddingBottom: "0",
       }}
@@ -174,6 +177,7 @@ export default function Aboutsection() {
           </div>
         </div>
       </div>
+      
     </section>
   );
 }

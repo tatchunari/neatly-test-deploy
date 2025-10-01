@@ -1,42 +1,44 @@
+/**
+ * Navbar.tsx
+ * 
+ * คอมโพเนนต์ Navbar สำหรับ Next.js (Client Component)
+ * 
+ * - รองรับ Responsive: Desktop (1440x100) และ Mobile (375x48)
+ * - Desktop: แสดงโลโก้, เมนูนำทาง, ปุ่ม Login หรือ User Menu
+ * - Mobile: แสดงโลโก้, Hamburger menu, เมนูเลื่อนออกด้านข้าง
+ * - ใช้ Supabase สำหรับจัดการสถานะผู้ใช้ (login/logout, ดึงข้อมูลโปรไฟล์)
+ * - ใช้ TailwindCSS สำหรับ styling
+ * - สามารถปรับ navItems, loginLabel, logo ได้ผ่าน props
+ */
+
 "use client"; // บอก Next.js ว่าคอมโพเนนต์นี้รันฝั่ง client
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-
-// ใช้ supabase โดยตรง ไม่พึ่ง useAuth context
 import { supabase } from "@/lib/supabaseClient";
 
-// /**
-//  * Responsive Navbar
-//  * - Desktop: 1440x100, shows logo, nav items, and login button/user menu
-//  * - Mobile: 375x48, shows logo and hamburger, menu slides out on click
-//  * - Hamburger: 3 bars, only on mobile
-//  * - Login button: orange (#F47A1F)
-//  * - Uses TailwindCSS
-//  * - navItems, loginLabel, logo, etc. are props for flexible rendering
-//  */
-
+// ประเภทของเมนูนำทางแต่ละอัน
 type NavItem = {
   label: string;
   path: string;
 };
 
+// ประเภทของ props ที่ Navbar รับได้
 type NavbarProps = {
   navItems?: NavItem[];
   loginLabel?: string;
   logo?: React.ReactNode;
 };
 
-// เปลี่ยน path ของ navItems ให้ไปที่ section id สำหรับ scroll
-// ปรับ path ให้ตรงกับ id ของแต่ละ section ที่ต้องการ scroll ไป
+// เมนูนำทางเริ่มต้น (scroll ไป section ตาม id)
 const defaultNavItems: NavItem[] = [
   { label: "About Neatly", path: "#about" },
   { label: "Service & Facilities", path: "#services" },
   { label: "Rooms & Suits", path: "#rooms" },
 ];
 
-// ใช้รูป logo.png จาก public/image/logo.png
+// โลโก้เริ่มต้น (ใช้ไฟล์ public/logo.png)
 const defaultLogo = (
   <div className="flex items-center space-x-2">
     <Image
@@ -50,8 +52,10 @@ const defaultLogo = (
   </div>
 );
 
-// โหลด displayName + avatar จาก profiles.username (คีย์คือ id = auth.users.id)
-// ถ้าไม่มี/อ่านไม่ได้ ให้ fallback เป็น email
+/**
+ * ฟังก์ชันดึงข้อมูลโปรไฟล์ผู้ใช้ (username, avatar)
+ * - ถ้าไม่มี username หรือรูป ให้ fallback เป็น email และรูป default
+ */
 async function fetchProfileInfo(user: { id: string; email: string | null }) {
   const fallbackName = user.email ?? ""; // ถ้าไม่มี username ใช้อีเมลแทน
   const fallbackAvatar = "/Images/avatar.png"; // รูป default
@@ -69,29 +73,31 @@ async function fetchProfileInfo(user: { id: string; email: string | null }) {
     const profileImage = (data?.profile_image ?? "").toString().trim();
 
     return {
-      displayName: username || fallbackName, // ถ้าusernameมีค่า จะใช้usernameแสดง
-      avatarUrl: profileImage || fallbackAvatar, // แต่ถ้ามีรูปจะใช้รูปแสดง
+      displayName: username || fallbackName,
+      avatarUrl: profileImage || fallbackAvatar,
     };
   } catch {
     return { displayName: fallbackName, avatarUrl: fallbackAvatar };
   }
 }
 
-// UserMenu component (inline) ใช้ supabase โดยตรง
+/**
+ * UserMenu
+ * - แสดงปุ่ม Login ถ้ายังไม่ได้ล็อกอิน
+ * - แสดงชื่อผู้ใช้ (username/email) + รูป avatar + dropdown เมนู ถ้าล็อกอินแล้ว
+ * - ใช้ supabase ตรวจสอบสถานะผู้ใช้และ logout
+ */
 function UserMenu() {
-  const [user, setUser] = useState<null | { id: string; email: string | null }>(
-    null
-  );
+  const [user, setUser] = useState<null | { id: string; email: string | null }>(null);
   const [displayName, setDisplayName] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("/Images/avatar.png");
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // โหลดสถานะผู้ใช้
+  // โหลดสถานะผู้ใช้และ subscribe การเปลี่ยนแปลง auth
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       setLoading(true);
       const { data } = await supabase.auth.getUser();
@@ -103,7 +109,6 @@ function UserMenu() {
       setLoading(false);
     })();
 
-    // Subscribe การเปลี่ยนแปลงสถานะ auth (เช่น login/logout)
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user
         ? { id: session.user.id, email: (session.user.email as string) ?? null }
@@ -113,11 +118,11 @@ function UserMenu() {
 
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe(); // cleanup subscription
+      sub.subscription.unsubscribe();
     };
   }, []);
 
-  // ดึงชื่อ กับ รูปprofile
+  // โหลดชื่อและรูปโปรไฟล์
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -148,7 +153,7 @@ function UserMenu() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
-  // ใช้suppabase เพื่อlogout
+  // ฟังก์ชัน logout
   const handleLogout = async () => {
     try {
       setOpen(false);
@@ -160,12 +165,11 @@ function UserMenu() {
   };
 
   if (loading) {
-    // กำลังโหลด session → กันจอว่าง
     return <span className="text-gray-400 text-sm">Loading...</span>;
   }
 
   if (!user) {
-    // ยังไม่ล็อกอิน → แสดงปุ่ม Log in
+    // ยังไม่ล็อกอิน
     return (
       <Link
         href="/customer/login"
@@ -176,11 +180,7 @@ function UserMenu() {
     );
   }
 
-  // ล็อกอินแล้ว → แสดงเมนูผู้ใช้
-  // แก้ให้ขึ้น username แทน email
-  // displayName จะเป็น username จาก profiles เสมอ (ถ้าไม่มี username จะ fallback เป็น email)
-  const userDisplayName = displayName;
-
+  // ล็อกอินแล้ว
   return (
     <div ref={ref} className="relative">
       <button
@@ -195,7 +195,7 @@ function UserMenu() {
           className="w-7 h-7 rounded-full object-cover"
           alt="User avatar"
         />
-        <span className="hidden md:inline">{userDisplayName}</span>
+        <span className="hidden md:inline">{displayName}</span>
         <svg
           className="w-3 h-3"
           viewBox="0 0 20 20"
@@ -232,7 +232,10 @@ function UserMenu() {
   );
 }
 
-// Mobile user menu for hamburger (when logged in)
+/**
+ * MobileUserMenu
+ * - แสดงข้อมูลผู้ใช้และเมนูต่าง ๆ สำหรับ mobile drawer เมื่อ login แล้ว
+ */
 function MobileUserMenu({
   user,
   onLogout,
@@ -274,7 +277,6 @@ function MobileUserMenu({
           alt="User avatar"
           className="w-10 h-10 rounded-full object-cover"
         />
-        {/* แก้ให้ขึ้น username แทน email */}
         <span className="font-medium text-[#222] text-sm">{name}</span>
       </div>
       <hr className="my-2 border-t border-gray-200" />
@@ -309,7 +311,10 @@ function MobileUserMenu({
   );
 }
 
-// ฟังก์ชัน scroll ไปยัง section ตาม id
+/**
+ * scrollToSection
+ * - ฟังก์ชันช่วย scroll ไปยัง section ตาม id (ใช้สำหรับ anchor menu)
+ */
 function scrollToSection(id: string) {
   if (typeof window === "undefined") return;
   const sectionId = id.replace(/^#/, "");
@@ -320,18 +325,23 @@ function scrollToSection(id: string) {
   window.scrollTo({ top: y, behavior: "smooth" });
 }
 
+/**
+ * Navbar
+ * - คอมโพเนนต์หลักของ Navbar
+ * - แสดงโลโก้, เมนู, user menu, hamburger, mobile drawer
+ * 
+ * ปรับตามคำขอ: ให้เมนูไปอยู่ติดกับโลโก้ (ด้านขวา) และเว้นช่องว่างมากขึ้น
+ */
 const Navbar = ({
   navItems = defaultNavItems,
   loginLabel = "Log in",
   logo = defaultLogo,
 }: NavbarProps) => {
-  const [open, setOpen] = useState(false); // mobile drawer
-  const [user, setUser] = useState<null | { id: string; email: string | null }>(
-    null
-  );
+  const [open, setOpen] = useState(false); // สถานะเปิด/ปิด mobile drawer
+  const [user, setUser] = useState<null | { id: string; email: string | null }>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user for mobile menu
+  // โหลดสถานะผู้ใช้ (สำหรับ mobile menu)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -358,7 +368,7 @@ const Navbar = ({
     };
   }, []);
 
-  // Desktop: scroll ไปยัง section ตาม id
+  // ฟังก์ชัน render เมนูนำทาง (desktop)
   const renderNavItems = (onClick?: () => void) =>
     navItems.map((item) => (
       <button
@@ -374,7 +384,7 @@ const Navbar = ({
       </button>
     ));
 
-  // Hamburger icon (toggle open/close)
+  // Hamburger icon (mobile)
   const Hamburger = (
     <button
       className="flex flex-col justify-center items-center w-8 h-8 md:hidden"
@@ -399,7 +409,7 @@ const Navbar = ({
     </button>
   );
 
-  // Mobile menu
+  // Mobile drawer menu
   const MobileMenu = (
     <div
       className={`fixed top-0 left-0 h-full w-full z-50 bg-white transition-transform duration-300 md:hidden ${
@@ -423,7 +433,7 @@ const Navbar = ({
         <div className="ml-auto">{Hamburger}</div>
       </div>
       <nav className="flex flex-col px-4 pt-6">
-        {/* ถ้ายังไม่ได้login จะแสดงรายการเมนู และ ปุ่มlogin */}
+        {/* ถ้ายังไม่ได้ login แสดงเมนูและปุ่ม login */}
         {!user ? (
           <>
             {navItems.map((item) => (
@@ -449,16 +459,12 @@ const Navbar = ({
             </Link>
           </>
         ) : (
-          // แสดงเมนูของuserบนมือถือ เมื่อuser loginอยู่
+          // ถ้า login แล้ว แสดงเมนูผู้ใช้
           <MobileUserMenu
-            // ส่งข้อมูลuser เพื่อใช้แสดงusername, email หรือรูปprofile
             user={user}
-            // เมื่อuser กดปุ่มlogin ในเมนู
             onLogout={async () => {
               setOpen(false);
-              // เรียกคำสั่ง logout ของ supabase เพื่อลบ session และ token
               await supabase.auth.signOut();
-              // เปลี่ยนหน้าไปยังหน้า http://localhost:3000/
               window.location.replace("http://localhost:3000/");
             }}
           />
@@ -469,13 +475,13 @@ const Navbar = ({
 
   return (
     <>
-      {/* Navbar container */}
+      {/* Navbar หลัก (fixed) */}
       <header className="fixed top-0 left-0 w-full z-40 bg-white shadow-sm">
         <div
           className="mx-auto flex items-center justify-between px-4 md:px-12"
           style={{ maxWidth: 1440, height: 100 }}
         >
-          {/* Logo clickable */}
+          {/* โลโก้ (คลิกกลับหน้าแรก) */}
           <div
             className="flex-shrink-0 cursor-pointer"
             onClick={() => {
@@ -485,25 +491,29 @@ const Navbar = ({
             {logo}
           </div>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center space-x-2">
-            {renderNavItems()}
+          {/* Desktop: เมนูนำทางอยู่ติดกับโลโก้ (ด้านขวา) และเว้นช่องว่างมากขึ้น */}
+          <nav className="hidden md:flex items-center"
+            style={{ marginLeft: 48, gap: 32, flex: 1 }}
+          >
+            <div className="flex items-center space-x-8">
+              {renderNavItems()}
+            </div>
           </nav>
 
-          {/* Desktop: user menu (ชื่อ+รูปจาก profiles) */}
-          <div className="hidden md:inline-block">
+          {/* Desktop: user menu (ชื่อ+รูปจาก profiles) ชิดขวาสุด */}
+          <div className="hidden md:inline-block ml-16">
             <UserMenu />
           </div>
 
-          {/* Hamburger for mobile */}
+          {/* Hamburger (mobile) */}
           <div className="md:hidden">{Hamburger}</div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile drawer menu */}
         {MobileMenu}
       </header>
 
-      {/* Spacer for fixed navbar */}
+      {/* Spacer สำหรับ fixed navbar (กันเนื้อหาถูกบัง) */}
       <div className="block md:hidden" style={{ height: 48 }} />
       <div className="hidden md:block" style={{ height: 100 }} />
     </>

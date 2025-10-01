@@ -13,18 +13,24 @@ export default function Herosection() {
   return (
     <section
       id="hero"
-      className="relative flex flex-col overflow-hidden"
+      className="fixed top-0 left-0 w-screen h-screen min-h-[600px] max-h-none z-0 flex flex-col overflow-hidden"
       style={{
-        width: "100%",
-        minWidth: "375px",
-        maxWidth: "1440px",
-        minHeight: "500px",
-        height: "600px",
-        maxHeight: "600px",
-        position: "relative",
-        margin: "0 auto",
+        minWidth: "100vw",
+        width: "100vw",
+        maxWidth: "100vw",
+        minHeight: "600px",
+        height: "100vh",
+        maxHeight: "none",
+        position: "relative", // Ensure fixed positioning
+        top: 0,
+        left: 0,
+        margin: "0",
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
         border: "none",
         boxShadow: "none",
+        padding: "0",
+        background: "transparent", // Remove any background that could cause a white bar
       }}
     >
       {/* Background Image */}
@@ -38,23 +44,18 @@ export default function Herosection() {
             objectPosition: "center",
           }}
           priority
-          sizes="(max-width: 1440px) 100vw, 1440px"
+          sizes="100vw"
         />
       </div>
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/40 z-10" />
       {/* Centered content */}
       <div className="relative z-20 flex flex-col items-center w-full h-full">
-        <div
-          className="flex flex-col items-center justify-center w-full h-full"
-          style={{
-            marginTop: "0",
-          }}
-        >
+        <div className="flex flex-col items-center justify-center w-full h-full">
           <h1
-            className="text-white text-center font-noto"
+            className="text-white text-center font-serif"
             style={{
-              fontSize: "clamp(2.2rem, 6vw, 56px)",
+              fontSize: "clamp(2.5rem, 6vw, 56px)",
               lineHeight: "clamp(2.5rem, 7vw, 68px)",
               marginTop: "0",
               marginBottom: "32px",
@@ -68,6 +69,7 @@ export default function Herosection() {
           >
             A Best Place for Your<br />Neatly Experience
           </h1>
+          <div style={{ height: 40 }} />
           {/* Search Box */}
           <div
             className={`
