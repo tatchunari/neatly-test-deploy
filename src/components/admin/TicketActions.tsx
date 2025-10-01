@@ -74,7 +74,7 @@ export default function TicketActions({
           onClick={handleViewDetail}
           size={buttonSize}
           variant="outline"
-          className={`text-gray-800 hover:text-gray-900 ${buttonClassName}`}
+          className={`border-orange-500 text-orange-500 hover:bg-orange-50 ${buttonClassName}`}
         >
           View Detail
         </Button>
@@ -85,8 +85,7 @@ export default function TicketActions({
         <Button
           onClick={() => handleUpdateStatus('in_progress')}
           size={buttonSize}
-          variant="outline"
-          className={`bg-green-600 hover:bg-green-700 text-white ${buttonClassName}`}
+          className={`bg-orange-600 hover:bg-orange-700 text-white ${buttonClassName}`}
         >
           {variant === 'list' ? 'Accept' : 'Accept Ticket'}
         </Button>
@@ -97,20 +96,18 @@ export default function TicketActions({
         <Button
           onClick={() => handleUpdateStatus('solved')}
           size={buttonSize}
-          variant="outline"
-          className={`text-blue-600 hover:text-blue-700 ${buttonClassName}`}
+          className={`bg-orange-500 hover:bg-orange-600 text-white ${buttonClassName}`}
         >
           {variant === 'list' ? 'Solved' : 'Solve Ticket'}
         </Button>
       )}
 
-      {/* Delete Button - แสดงเมื่อ status = solved หรือ closed */}
-      {(status === 'solved' || status === 'closed') && (
+      {/* Delete Button - แสดงเมื่อ status = solved */}
+      {status === 'solved' && (
         <Button
           onClick={handleDeleteTicket}
           size={buttonSize}
-          variant="outline"
-          className={`text-red-600 hover:text-red-700 ${buttonClassName}`}
+          className={`bg-orange-700 hover:bg-orange-800 text-white ${buttonClassName}`}
         >
           {variant === 'list' ? 'Delete' : 'Delete Ticket'}
         </Button>
@@ -121,6 +118,7 @@ export default function TicketActions({
         <Button 
           onClick={() => router.push('/admin/ticket')} 
           variant="outline"
+          className="border-orange-500 text-orange-500 hover:bg-orange-50"
         >
           Back to Tickets
         </Button>

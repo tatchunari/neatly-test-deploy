@@ -963,20 +963,27 @@ export default function Chatbot() {
                 <Image
                   src="/chatbot.svg"
                   alt="Neatly Assistant"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6"
+                  width={36}
+                  height={36}
                 />
                 <h2 className="font-semibold text-gray-800">
                   Neatly Assistant
                 </h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
+                {/* <Button
+                  variant="default"
                   size="sm"
                   onClick={() => setShowTopics(!showTopics)}
                   className="text-gray-500 hover:text-gray-700 text-xs px-2 py-1"
+                >
+                  Topics
+                </Button> */}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowTopics(!showTopics)}
+                  className="text-gray-600 hover:text-gray-800 text-xs px-2 py-1"
                 >
                   Topics
                 </Button>
@@ -984,9 +991,9 @@ export default function Chatbot() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleClose()}
-                  className="text-gray-500 hover:bg-gray-100 h-8 w-8"
+                  className="text-gray-500 hover:text-gray-700 h-8 w-8"
                 >
-                  ✖
+                  ╳
                 </Button>
               </div>
             </div>
@@ -996,9 +1003,9 @@ export default function Chatbot() {
               <div
                 className={`px-4 py-2 border-b ${
                   currentTicket.status === "open"
-                    ? "bg-blue-50 border-blue-100"
+                    ? "bg-gray-100 border-gray-300"
                     : currentTicket.live_chat_enabled
-                    ? "bg-red-50 border-red-100"
+                    ? "bg-orange-50 border-orange-100"
                     : "bg-green-50 border-green-100"
                 }`}
               >
@@ -1007,26 +1014,26 @@ export default function Chatbot() {
                     <div
                       className={`w-2 h-2 rounded-full animate-pulse ${
                         currentTicket.status === "open"
-                          ? "bg-blue-500"
+                          ? "bg-gray-600"
                           : currentTicket.live_chat_enabled
-                          ? "bg-red-500"
+                          ? "bg-orange-500"
                           : "bg-green-500"
                       }`}
                     ></div>
                     <span
                       className={`text-xs font-medium ${
                         currentTicket.status === "open"
-                          ? "text-blue-700"
+                          ? "text-gray-800"
                           : currentTicket.live_chat_enabled
-                          ? "text-red-700"
+                          ? "text-orange-700"
                           : "text-green-700"
                       }`}
                     >
                       {currentTicket.status === "open"
-                        ? "🎫 Ticket Pending"
+                        ? "Ticket Pending"
                         : currentTicket.live_chat_enabled
-                        ? "🔴 Live Chat: Bot Disabled"
-                        : "👨‍💼 Ticket Accepted"}
+                        ? "Live Chat: Bot Disabled"
+                        : "Ticket Accepted"}
                     </span>
                   </div>
                 </div>
@@ -1040,7 +1047,7 @@ export default function Chatbot() {
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
                     <span className="text-xs font-medium text-green-700">
-                      ✅ Ticket Solved - Thank you for your patience!
+                      Ticket Solved - Thank you for your patience!
                     </span>
                   </div>
                 </div>
@@ -1067,7 +1074,7 @@ export default function Chatbot() {
                 {/* Greeting message */}
                 {!isLoadingSession && greetingMessage && (
                   <div className="flex flex-col items-start">
-                    <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800 shadow-sm">
+                    <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800">
                       <p className="text-sm">{greetingMessage}</p>
                     </div>
                   </div>
@@ -1082,7 +1089,7 @@ export default function Chatbot() {
                         onClick={() => sendMessage(faq.question)}
                         variant="outline"
                         size="sm"
-                        className="px-3 py-1.5 rounded-full border border-green-300 bg-green-50 text-green-700 text-sm shadow-sm hover:bg-green-100 cursor-pointer"
+                        className="px-3 py-1.5 rounded-full border-2 border-green-300 bg-green-100 text-green-700 text-sm hover:bg-green-200 cursor-pointer"
                       >
                         {faq.question}
                       </Button>
@@ -1102,7 +1109,7 @@ export default function Chatbot() {
                       <div
                         className={`max-w-[80%] p-3 rounded-lg ${
                           message.is_bot
-                            ? "bg-white text-gray-800 shadow-sm"
+                            ? "bg-white text-gray-800"
                             : "bg-orange-500 text-white"
                         }`}
                       >
@@ -1119,7 +1126,7 @@ export default function Chatbot() {
                             variant="outline"
                             size="sm"
                             disabled={!!currentTicket}
-                            className={`px-3 py-1.5 rounded-full text-sm shadow-sm ${
+                            className={`px-3 py-1.5 border-2 rounded-full text-sm ${
                               currentTicket
                                 ? "border-gray-300 bg-gray-50 text-gray-500 cursor-not-allowed"
                                 : "border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer"
@@ -1213,7 +1220,7 @@ export default function Chatbot() {
                       }}
                       variant="outline"
                       size="sm"
-                      className="px-3 py-1.5 rounded-full border border-blue-300 bg-blue-50 text-blue-700 text-sm shadow-sm hover:bg-blue-100 cursor-pointer"
+                      className="px-3 py-1.5 rounded-full border-2 border-green-300 bg-green-100 text-green-700 text-sm hover:bg-green-200 cursor-pointer"
                     >
                       {faq.question}
                     </Button>
@@ -1231,12 +1238,12 @@ export default function Chatbot() {
                     onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
                     placeholder="Write your message"
-                    className="flex-1 border-gray-200 focus:ring-orange-500 focus:border-orange-500 rounded-full px-4 py-2"
+                    className="flex-1 border-gray-200 hover:border-orange-400 focus:ring-orange-500 focus:border-orange-500 rounded-full px-4 py-2"
                   />
                   <Button
                     onClick={() => sendMessage()}
                     disabled={!inputValue.trim()}
-                    className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 rounded-full p-2 w-10 h-10 flex items-center justify-center"
+                    className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 rounded-full p-2 w-10 h-10 flex items-center justify-center"
                   >
                     <svg
                       width="16"
@@ -1285,14 +1292,14 @@ export default function Chatbot() {
                   value={ticketTopic}
                   onChange={(e) => setTicketTopic(e.target.value)}
                   placeholder="Describe your issue or question..."
-                  className="w-full p-3 border border-gray-300 rounded-md h-24 resize-none"
+                  className="w-full p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-24 resize-none outline-none"
                 />
               </div>
               <div className="flex gap-2">
                 <Button
                   onClick={handleCreateTicket}
                   disabled={isCreatingTicket || !ticketTopic.trim()}
-                  className="bg-orange-500 hover:bg-orange-600 cursor-pointer flex-1"
+                  className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer flex-1"
                 >
                   {isCreatingTicket ? "Creating..." : "Create Ticket"}
                 </Button>

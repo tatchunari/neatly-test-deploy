@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/admin/Layout";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
+import { Pencil } from "lucide-react";
 
 interface FAQ {
   id: string;
@@ -468,9 +469,9 @@ export default function ChatbotAdmin() {
                     value={greetingMessage}
                     onChange={(e) => setGreetingMessage(e.target.value)}
                     placeholder="Enter greeting message..."
-                    className={`w-full p-3 border border-gray-300 rounded-md h-24 resize-none ${
+                    className={`w-full p-3 border border-gray-300 rounded-md h-24 resize-none outline-none ${
                       isEditingGreeting
-                        ? "hover:border-gray-400 text-black"
+                        ? "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                         : "text-gray-500"
                     }`}
                     disabled={!isEditingGreeting}
@@ -481,8 +482,8 @@ export default function ChatbotAdmin() {
                       disabled={loading || !isEditingGreeting}
                       className={`cursor-pointer ${
                         isEditingGreeting
-                          ? "bg-orange-500 hover:bg-orange-600"
-                          : "bg-gray-300 cursor-not-allowed"
+                          ? "bg-orange-500 hover:bg-orange-600 text-white"
+                          : "bg-gray-300 cursor-not-allowed text-gray-600"
                       }`}
                     >
                       {loading ? "Saving..." : "Save"}
@@ -494,7 +495,7 @@ export default function ChatbotAdmin() {
                           : () => setIsEditingGreeting(true)
                       }
                       variant="outline"
-                      className="cursor-pointer"
+                      className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
                     >
                       {isEditingGreeting ? "Cancel" : "Edit"}
                     </Button>
@@ -512,9 +513,9 @@ export default function ChatbotAdmin() {
                     value={fallbackMessage}
                     onChange={(e) => setFallbackMessage(e.target.value)}
                     placeholder="Enter fallback message..."
-                    className={`w-full p-3 border border-gray-300 rounded-md h-24 resize-none ${
+                    className={`w-full p-3 border border-gray-300 rounded-md h-24 resize-none outline-none ${
                       isEditingFallback
-                        ? "hover:border-gray-400 text-black"
+                        ? "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
                         : "text-gray-500"
                     }`}
                     disabled={!isEditingFallback}
@@ -525,8 +526,8 @@ export default function ChatbotAdmin() {
                       disabled={loading || !isEditingFallback}
                       className={`cursor-pointer ${
                         isEditingFallback
-                          ? "bg-orange-500 hover:bg-orange-600"
-                          : "bg-gray-300 cursor-not-allowed"
+                          ? "bg-orange-500 hover:bg-orange-600 text-white"
+                          : "bg-gray-300 cursor-not-allowed text-gray-600"
                       }`}
                     >
                       {loading ? "Saving..." : "Save"}
@@ -538,7 +539,7 @@ export default function ChatbotAdmin() {
                           : () => setIsEditingFallback(true)
                       }
                       variant="outline"
-                      className="cursor-pointer"
+                      className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
                     >
                       {isEditingFallback ? "Cancel" : "Edit"}
                     </Button>
@@ -570,7 +571,7 @@ export default function ChatbotAdmin() {
                           setNewFAQ({ ...newFAQ, question: e.target.value })
                         }
                         placeholder="Enter topic..."
-                        className="flex-1 border bg-white border-gray-300 rounded-md resize-none"
+                        className="flex-1 border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none"
                       />
                       <Button
                         variant="outline"
@@ -582,7 +583,7 @@ export default function ChatbotAdmin() {
                             setNewAliasInput("");
                           }
                         }}
-                        className="cursor-pointer whitespace-nowrap"
+                        className="cursor-pointer whitespace-nowrap border-orange-500 text-orange-500 hover:bg-orange-50"
                       >
                         {showAliases ? "Hide Aliases" : "Add Aliases"}
                       </Button>
@@ -598,10 +599,10 @@ export default function ChatbotAdmin() {
                           value={newAliasInput}
                           onChange={(e) => setNewAliasInput(e.target.value)}
                           placeholder="Enter alias phrase..."
-                          className="flex-1 border bg-white border-gray-300 rounded-md resize-none"
+                          className="flex-1 border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none"
                         />
                         <Button
-                          variant="secondary"
+                          variant="outline"
                           size="sm"
                           onClick={() => {
                             if (newAliasInput.trim()) {
@@ -612,7 +613,7 @@ export default function ChatbotAdmin() {
                               setNewAliasInput("");
                             }
                           }}
-                          className="cursor-pointer"
+                          className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
                         >
                           + Add
                         </Button>
@@ -631,7 +632,7 @@ export default function ChatbotAdmin() {
                                     newAliasesUI.filter((_, i) => i !== index)
                                   )
                                 }
-                                className="ml-2 text-black hover:text-red-600 cursor-pointer"
+                                className="ml-2 text-orange-500 hover:text-orange-700 cursor-pointer"
                               >
                                 ✕
                               </button>
@@ -651,13 +652,13 @@ export default function ChatbotAdmin() {
                         setNewFAQ({ ...newFAQ, answer: e.target.value })
                       }
                       placeholder="Enter reply message..."
-                      className="w-full bg-white p-3 border border-gray-300 rounded-md h-24 resize-none"
+                      className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-24 resize-none outline-none"
                     />
                   </div>
                   <Button
                     onClick={handleCreateFAQ}
                     disabled={loading}
-                    className="bg-orange-500 hover:bg-orange-600 cursor-pointer"
+                    className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
                   >
                     {loading ? "Creating..." : "Create FAQ"}
                   </Button>
@@ -714,7 +715,7 @@ export default function ChatbotAdmin() {
                                       onClick={() =>
                                         handleDeleteAlias(alias.id)
                                       }
-                                      className="text-red-500 hover:text-red-700 cursor-pointer"
+                                      className="text-orange-500 hover:text-orange-700 cursor-pointer"
                                     >
                                       ×
                                     </button>
@@ -739,15 +740,14 @@ export default function ChatbotAdmin() {
                             }}
                             size="sm"
                             variant="outline"
-                            className="cursor-pointer"
+                            className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
                           >
                             Edit
                           </Button>
                           <Button
                             onClick={() => handleDeleteFAQ(faq.id)}
                             size="sm"
-                            variant="outline"
-                            className="text-red-600 hover:text-red-700 cursor-pointer"
+                            className="bg-orange-700 text-white hover:bg-orange-800 cursor-pointer"
                           >
                             Delete
                           </Button>
@@ -771,7 +771,7 @@ export default function ChatbotAdmin() {
               {/* Context Management Section */}
               <div className="mt-8">
                 <h2 className="text-lg font-semibold text-gray-600 mb-4">
-                  Context Management
+                  Helpful Details Management
                 </h2>
 
                 {/* Create New Context */}
@@ -779,7 +779,7 @@ export default function ChatbotAdmin() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">
-                        Context Content
+                        Detail
                       </label>
                       <textarea
                         value={newContext.content}
@@ -790,15 +790,15 @@ export default function ChatbotAdmin() {
                           })
                         }
                         placeholder="Enter additional context information for chatbot responses..."
-                        className="w-full bg-white p-3 border border-gray-300 rounded-md resize-none"
+                        className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none outline-none"
                       />
                     </div>
                     <Button
                       onClick={handleCreateContext}
                       disabled={loading}
-                      className="bg-orange-500 hover:bg-orange-600 cursor-pointer"
+                      className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
                     >
-                      {loading ? "Creating..." : "Create Context"}
+                      {loading ? "Creating..." : "Create Detail"}
                     </Button>
                   </div>
                 </div>
@@ -806,14 +806,14 @@ export default function ChatbotAdmin() {
                 {/* Context List */}
                 <div className="space-y-4">
                   <h3 className="text-md font-medium text-gray-900">
-                    Existing Contexts ({contexts.length})
+                    Existing Details ({contexts.length})
                   </h3>
                   {contexts.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {contexts.map((context) => (
-                        <div
+                        <span
                           key={context.id}
-                          className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg border"
+                          className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg border border-gray-200"
                         >
                           <span
                             className="max-w-xs truncate"
@@ -823,19 +823,19 @@ export default function ChatbotAdmin() {
                           </span>
                           <button
                             onClick={() => setEditingContext(context)}
-                            className="text-blue-500 hover:text-blue-700 cursor-pointer text-xs"
+                            className="text-orange-500 hover:text-orange-700 cursor-pointer"
                             title="Edit"
                           >
-                            ✏️
+                            <Pencil className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => handleDeleteContext(context.id)}
-                            className="text-red-500 hover:text-red-700 cursor-pointer text-xs"
+                            className="text-orange-500 hover:text-orange-700 cursor-pointer text-xs"
                             title="Delete"
                           >
                             ✕
                           </button>
-                        </div>
+                        </span>
                       ))}
                     </div>
                   ) : (
@@ -867,7 +867,7 @@ export default function ChatbotAdmin() {
                     onChange={(e) =>
                       setEditingFAQ({ ...editingFAQ, question: e.target.value })
                     }
-                    className="w-full"
+                    className="w-full hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
                 </div>
                 <div>
@@ -879,14 +879,14 @@ export default function ChatbotAdmin() {
                     onChange={(e) =>
                       setEditingFAQ({ ...editingFAQ, answer: e.target.value })
                     }
-                    className="w-full p-3 border border-gray-300 rounded-md h-24 resize-none"
+                    className="w-full p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-24 resize-none outline-none"
                   />
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={handleUpdateFAQ}
                     disabled={loading}
-                    className="bg-orange-500 hover:bg-orange-600 cursor-pointer"
+                    className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
                   >
                     {loading ? "Saving..." : "Save"}
                   </Button>
@@ -896,7 +896,7 @@ export default function ChatbotAdmin() {
                       setEditAliasesUI([""]);
                     }}
                     variant="outline"
-                    className="cursor-pointer"
+                    className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
                   >
                     Cancel
                   </Button>
@@ -925,21 +925,21 @@ export default function ChatbotAdmin() {
                       })
                     }
                     placeholder="Enter context information..."
-                    className="w-full bg-white p-3 border border-gray-300 rounded-md h-32 resize-none"
+                    className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-32 resize-none outline-none"
                   />
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={handleUpdateContext}
                     disabled={loading}
-                    className="bg-orange-500 hover:bg-orange-600 cursor-pointer"
+                    className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
                   >
                     {loading ? "Saving..." : "Save"}
                   </Button>
                   <Button
                     onClick={() => setEditingContext(null)}
                     variant="outline"
-                    className="cursor-pointer"
+                    className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
                   >
                     Cancel
                   </Button>

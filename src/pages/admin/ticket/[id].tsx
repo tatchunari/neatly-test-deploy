@@ -22,12 +22,20 @@ interface Ticket {
   closed_at?: string;
 }
 
+interface UserInfo {
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+}
+
 export default function TicketDetail() {
   const router = useRouter();
   const { id } = router.query;
   
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -104,6 +112,35 @@ export default function TicketDetail() {
       
       // Set live chat status from ticket data
       setIsLiveChat(ticketData.ticket.live_chat_enabled || false);
+      
+      // Fetch session to get customer_id
+      const { data: session } = await supabase
+        .from('chatbot_sessions')
+        .select('customer_id, anonymous_id')
+        .eq('id', ticketData.ticket.session_id)
+        .single();
+      
+      // Fetch user info if customer_id exists
+      if (session?.customer_id) {
+        const { data: user } = await supabase
+          .from('profiles')
+          .select('username, first_name, last_name')
+          .eq('id', session.customer_id)
+          .single();
+        
+        if (user) {
+          setUserInfo({
+            username: user.username,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            full_name: user.first_name && user.last_name 
+              ? `${user.first_name} ${user.last_name}`
+              : user.username || 'Unknown User'
+          });
+        }
+      } else if (session?.anonymous_id) {
+        setUserInfo({ full_name: 'Guest User', username: session.anonymous_id });
+      }
       
       // Fetch chat messages for this session
       const messagesResponse = await fetch(`/api/admin/messages?session_id=${ticketData.ticket.session_id}`);
@@ -236,12 +273,10 @@ export default function TicketDetail() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open':
-        return 'bg-red-100 text-red-800';
+        return 'bg-orange-100 text-orange-800';
       case 'in_progress':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'solved':
         return 'bg-green-100 text-green-800';
-      case 'closed':
+      case 'solved':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -251,13 +286,11 @@ export default function TicketDetail() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'open':
-        return 'Open';
+        return 'Pending';
       case 'in_progress':
-        return 'In Progress';
+        return 'Accepted';
       case 'solved':
         return 'Solved';
-      case 'closed':
-        return 'Closed';
       default:
         return status;
     }
@@ -330,17 +363,25 @@ export default function TicketDetail() {
         <div className="w-full px-6 py-8">
           <div className="bg-white rounded-lg shadow-sm p-6">
             {/* Ticket Info */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-600 mb-4">Ticket Information</h2>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-800">
-                  <strong>Issue:</strong> {ticket.user_message}
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  <strong>Session ID:</strong> {ticket.session_id}
-                </p>
-              </div>
-            </div>
+             <div className="mb-6">
+               <h2 className="text-lg font-semibold text-gray-600 mb-4">Ticket Information</h2>
+               <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                 {userInfo && (
+                   <p className="text-gray-800">
+                     <strong>User:</strong> {userInfo.full_name || userInfo.username || 'Unknown'}
+                     {userInfo.username && userInfo.full_name && userInfo.username !== userInfo.full_name && (
+                       <span className="text-sm text-gray-500 ml-2">(@{userInfo.username})</span>
+                     )}
+                   </p>
+                 )}
+                 <p className="text-gray-800">
+                   <strong>Issue:</strong> {ticket.user_message}
+                 </p>
+                 <p className="text-sm text-gray-500">
+                   <strong>Session ID:</strong> {ticket.session_id}
+                 </p>
+               </div>
+             </div>
 
             {/* Chat History */}
             <div>
@@ -450,8 +491,8 @@ export default function TicketDetail() {
                       }}
                       className={`px-4 py-1 text-sm ${
                         isLiveChat 
-                          ? 'bg-red-500 hover:bg-red-600 text-white' 
-                          : 'bg-green-500 hover:bg-green-600 text-white'
+                          ? 'bg-orange-700 hover:bg-orange-800 text-white' 
+                          : 'bg-orange-500 hover:bg-orange-600 text-white'
                       }`}
                     >
                       {isLiveChat ? 'Turn OFF' : 'Turn ON'}
@@ -477,7 +518,7 @@ export default function TicketDetail() {
                         onChange={handleInputChange}
                         onKeyPress={handleKeyPress}
                         placeholder="Type your message to the customer..." 
-                        className="flex-1 border-gray-200 focus:ring-orange-500 focus:border-orange-500 rounded-full px-4 py-2"
+                        className="flex-1 border-gray-200 hover:border-orange-400 focus:ring-orange-500 focus:border-orange-500 rounded-full px-4 py-2"
                         disabled={sendingMessage}
                       />
                       <Button 
