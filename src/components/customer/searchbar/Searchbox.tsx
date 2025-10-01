@@ -41,13 +41,22 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
 
   const [checkIn, setCheckIn] = useState<string>(defaultValues?.checkIn || getTodayDateString());
   const [checkOut, setCheckOut] = useState<string>(defaultValues?.checkOut || getTodayDateString());
+  
+  // Format dates for display
+  const checkInDisplay = formatDateString(checkIn);
+  const checkOutDisplay = formatDateString(checkOut);
   const [room, setRoom] = useState<number>(defaultRoom);
   const [guest, setGuest] = useState<number>(defaultGuest);
 
   // For dropdown
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState<'checkin' | 'checkout' | null>(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const dropdownButtonRef = useRef<HTMLDivElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
   React.useEffect(() => {
@@ -60,14 +69,20 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
       ) {
         setDropdownOpen(false);
       }
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(event.target as Node)
+      ) {
+        setCalendarOpen(null);
+      }
     }
-    if (dropdownOpen) {
+    if (dropdownOpen || calendarOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownOpen]);
+  }, [dropdownOpen, calendarOpen]);
 
   // Label for the selector
   const roomGuestLabel = `${room} room${room > 1 ? "s" : ""}, ${guest} guest${guest > 1 ? "s" : ""}`;
@@ -80,6 +95,67 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
   const maxRoom = 10;
   const maxGuest = 20;
 
+  // Calendar functions
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const getDaysArray = (date: Date) => {
+    const daysInMonth = getDaysInMonth(date);
+    const firstDay = getFirstDayOfMonth(date);
+    const days = [];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(null);
+    }
+    
+    // Add days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(date.getFullYear(), date.getMonth(), i));
+    }
+    
+    return days;
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+
+  const isSameDate = (date1: Date | null, date2: Date | null) => {
+    if (!date1 || !date2) return false;
+    return date1.getDate() === date2.getDate() && 
+           date1.getMonth() === date2.getMonth() && 
+           date1.getFullYear() === date2.getFullYear();
+  };
+
+  const handleDateClick = (date: Date) => {
+    if (calendarOpen === 'checkin') {
+      setCheckIn(date.toISOString().split('T')[0]);
+      setCalendarOpen('checkout');
+    } else if (calendarOpen === 'checkout') {
+      setCheckOut(date.toISOString().split('T')[0]);
+      setCalendarOpen(null);
+    }
+    setSelectedDate(date);
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentMonth(prev => {
+      const newMonth = new Date(prev);
+      if (direction === 'prev') {
+        newMonth.setMonth(prev.getMonth() - 1);
+      } else {
+        newMonth.setMonth(prev.getMonth() + 1);
+      }
+      return newMonth;
+    });
+  };
+
   // Calendar SVG
   const calendarIcon = (
     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
@@ -91,6 +167,10 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
       </svg>
     </span>
   );
+
+  // --- MOBILE SIZE 375*364 ---
+  // We'll use inline style for the outermost container to force the size on mobile.
+  // On desktop, let it be responsive as before.
 
   return (
     <div
@@ -112,70 +192,73 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
         {`
           @media (max-width: 767px) {
             .searchbox-outer-border {
-              width: 343px !important;
-              min-width: 343px !important;
-              max-width: 343px !important;
-              height: 396px !important;
-              min-height: 396px !important;
-              max-height: 396px !important;
-              border: 6px solid #fff;
-              border-radius: 1.25rem;
-              box-sizing: border-box;
-              background: #fff;
-              box-shadow: 0 6px 32px 0 rgba(0,0,0,0.08);
-              padding: 0.5rem;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            }
-            .searchbox-mobile-size {
-              width: 343px !important;
-              min-width: 343px !important;
-              max-width: 343px !important;
+              width: 375px !important;
+              min-width: 375px !important;
+              max-width: 375px !important;
               height: 364px !important;
               min-height: 364px !important;
               max-height: 364px !important;
+              border: 1px solid #e5e7eb;
+              border-radius: 12px;
+              box-sizing: border-box;
+              background: #fff;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              padding: 20px;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              margin: 0 auto;
+            }
+            .searchbox-mobile-size {
+              width: 100% !important;
+              min-width: 100% !important;
+              max-width: 100% !important;
+              height: auto !important;
+              min-height: auto !important;
+              max-height: none !important;
               padding-left: 0 !important;
               padding-right: 0 !important;
               flex-direction: column !important;
               gap: 16px !important;
             }
             .searchbox-field {
-              width: 343px !important;
-              min-width: 343px !important;
-              max-width: 343px !important;
-              height: 48px !important;
-              min-height: 48px !important;
-              max-height: 48px !important;
+              width: 100% !important;
+              min-width: 100% !important;
+              max-width: 100% !important;
+              height: auto !important;
+              min-height: auto !important;
+              max-height: none !important;
             }
             .searchbox-btn {
-              width: 343px !important;
-              min-width: 343px !important;
-              max-width: 343px !important;
+              width: 100% !important;
+              min-width: 100% !important;
+              max-width: 100% !important;
               height: 48px !important;
               min-height: 48px !important;
               max-height: 48px !important;
-              align-self: flex-end !important;
+              align-self: stretch !important;
             }
             .searchbox-input {
-              width: 343px !important;
-              min-width: 343px !important;
-              max-width: 343px !important;
+              width: 100% !important;
+              min-width: 100% !important;
+              max-width: 100% !important;
               height: 48px !important;
               min-height: 48px !important;
               max-height: 48px !important;
             }
             .searchbox-btn button {
-              width: 343px !important;
-              min-width: 343px !important;
-              max-width: 343px !important;
+              width: 100% !important;
+              min-width: 100% !important;
+              max-width: 100% !important;
               height: 48px !important;
               min-height: 48px !important;
               max-height: 48px !important;
             }
-            /* เพิ่ม gap ระหว่างช่อง checkin, checkout, room&guest เฉพาะ mobile */
             .searchbox-row-equal {
-              gap: 100px !important;
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 16px !important;
+              width: 100% !important;
             }
           }
           @media (min-width: 768px) {
@@ -322,7 +405,18 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
           }
         `}
       </style>
-      <div className="searchbox-outer-border flex justify-center items-center">
+      <div
+        className="searchbox-outer-border flex justify-center items-center"
+        style={{
+          // Forcibly set for mobile, but let desktop be responsive
+          width: "375px",
+          minWidth: "375px",
+          maxWidth: "375px",
+          height: "364px",
+          minHeight: "364px",
+          maxHeight: "364px",
+        }}
+      >
         <div
           className={`
             bg-white
@@ -378,24 +472,129 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                   marginRight: 0,
                 }}
               >
-                <label className="text-xs text-black-500 mb-1" htmlFor="checkin">
+                <label className="text-sm text-gray-700 mb-2 font-medium" htmlFor="checkin">
                   Check In
                 </label>
                 <div className="relative h-full">
                   <input
                     id="checkin"
-                    type="date"
-                    className="searchbox-input w-full h-[48px] border border-gray-200 rounded-md px-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                    value={checkIn}
-                    min={getTodayDateString()}
-                    onChange={(e) => setCheckIn(e.target.value)}
+                    type="text"
+                    className="searchbox-input w-full h-[48px] border border-gray-300 rounded-lg px-3 pr-10 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 cursor-pointer bg-white"
+                    value={checkInDisplay}
+                    readOnly
+                    onClick={() => {
+                      setCalendarOpen('checkin');
+                      setCurrentMonth(new Date(checkIn));
+                    }}
                     style={{
                       height: "48px",
                       minHeight: "48px",
                       maxHeight: "48px",
                     }}
                   />
-                  {/* Calendar icon removed */}
+                  {calendarIcon}
+                  
+                  {/* Calendar Dropdown for Check In */}
+                  {calendarOpen === 'checkin' && (
+                    <div 
+                      ref={calendarRef}
+                      className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-30 w-full max-w-md"
+                      style={{
+                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                      }}
+                    >
+                      <div className="p-4">
+                        {/* Calendar Header */}
+                        <div className="flex items-center justify-between mb-4">
+                          <button
+                            onClick={() => navigateMonth('prev')}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          >
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {formatMonthYear(currentMonth)}
+                          </h3>
+                          <button
+                            onClick={() => navigateMonth('next')}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          >
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        {/* Days of week */}
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
+                            <div key={index} className="text-center text-sm font-medium text-gray-500 py-2">
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 gap-1">
+                          {getDaysArray(currentMonth).map((date, index) => {
+                            if (!date) {
+                              return <div key={index} className="h-10"></div>;
+                            }
+
+                            const isSelected = isSameDate(date, selectedDate);
+                            const isToday = isSameDate(date, new Date());
+                            const isHovered = isSameDate(date, hoveredDate);
+                            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => !isPast && handleDateClick(date)}
+                                onMouseEnter={() => setHoveredDate(date)}
+                                onMouseLeave={() => setHoveredDate(null)}
+                                disabled={isPast}
+                                className={`
+                                  h-10 w-10 rounded-full text-sm font-medium transition-colors
+                                  ${isPast 
+                                    ? 'text-gray-300 cursor-not-allowed' 
+                                    : 'text-gray-700 hover:bg-orange-50 cursor-pointer'
+                                  }
+                                  ${isSelected 
+                                    ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                                    : isHovered && !isSelected
+                                    ? 'bg-orange-100 text-orange-700'
+                                    : isToday && !isSelected
+                                    ? 'bg-gray-100 text-gray-900'
+                                    : ''
+                                  }
+                                `}
+                              >
+                                {date.getDate()}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
+                          <button
+                            onClick={() => setCalendarOpen(null)}
+                            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => setCalendarOpen(null)}
+                            className="px-4 py-2 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
+                          >
+                            Done
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Check Out */}
@@ -409,32 +608,129 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                   marginRight: 0,
                 }}
               >
-                <label className="text-xs text-black-500 mb-1" htmlFor="checkout">
+                <label className="text-sm text-gray-700 mb-2 font-medium" htmlFor="checkout">
                   Check Out
                 </label>
                 <div className="relative h-full">
                   <input
                     id="checkout"
-                    type="date"
-                    className="searchbox-input w-full h-[48px] border border-gray-200 rounded-md px-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                    value={checkOut}
-                    min={
-                      checkIn
-                        ? (() => {
-                            const d = new Date(checkIn);
-                            d.setDate(d.getDate() + 1);
-                            return d.toISOString().split("T")[0];
-                          })()
-                        : getTodayDateString()
-                    }
-                    onChange={(e) => setCheckOut(e.target.value)}
+                    type="text"
+                    className="searchbox-input w-full h-[48px] border border-gray-300 rounded-lg px-3 pr-10 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 cursor-pointer bg-white"
+                    value={checkOutDisplay}
+                    readOnly
+                    onClick={() => {
+                      setCalendarOpen('checkout');
+                      setCurrentMonth(new Date(checkOut));
+                    }}
                     style={{
                       height: "48px",
                       minHeight: "48px",
                       maxHeight: "48px",
                     }}
                   />
-                  {/* Calendar icon removed */}
+                  {calendarIcon}
+                  
+                  {/* Calendar Dropdown for Check Out */}
+                  {calendarOpen === 'checkout' && (
+                    <div 
+                      ref={calendarRef}
+                      className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-30 w-full max-w-md"
+                      style={{
+                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                      }}
+                    >
+                      <div className="p-4">
+                        {/* Calendar Header */}
+                        <div className="flex items-center justify-between mb-4">
+                          <button
+                            onClick={() => navigateMonth('prev')}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          >
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {formatMonthYear(currentMonth)}
+                          </h3>
+                          <button
+                            onClick={() => navigateMonth('next')}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          >
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        {/* Days of week */}
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
+                            <div key={index} className="text-center text-sm font-medium text-gray-500 py-2">
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 gap-1">
+                          {getDaysArray(currentMonth).map((date, index) => {
+                            if (!date) {
+                              return <div key={index} className="h-10"></div>;
+                            }
+
+                            const isSelected = isSameDate(date, selectedDate);
+                            const isToday = isSameDate(date, new Date());
+                            const isHovered = isSameDate(date, hoveredDate);
+                            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => !isPast && handleDateClick(date)}
+                                onMouseEnter={() => setHoveredDate(date)}
+                                onMouseLeave={() => setHoveredDate(null)}
+                                disabled={isPast}
+                                className={`
+                                  h-10 w-10 rounded-full text-sm font-medium transition-colors
+                                  ${isPast 
+                                    ? 'text-gray-300 cursor-not-allowed' 
+                                    : 'text-gray-700 hover:bg-orange-50 cursor-pointer'
+                                  }
+                                  ${isSelected 
+                                    ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                                    : isHovered && !isSelected
+                                    ? 'bg-orange-100 text-orange-700'
+                                    : isToday && !isSelected
+                                    ? 'bg-gray-100 text-gray-900'
+                                    : ''
+                                  }
+                                `}
+                              >
+                                {date.getDate()}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
+                          <button
+                            onClick={() => setCalendarOpen(null)}
+                            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => setCalendarOpen(null)}
+                            className="px-4 py-2 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
+                          >
+                            Done
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Rooms & Guests */}
@@ -450,14 +746,14 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                   marginRight: 0,
                 }}
               >
-                <label className="text-xs text-black-500 mb-1" htmlFor="roomguest">
+                <label className="text-sm text-gray-700 mb-2 font-medium" htmlFor="roomguest">
                   Rooms & Guests
                 </label>
                 <div className="relative h-full">
                   <button
                     id="roomguest"
                     type="button"
-                    className="searchbox-select w-full h-[48px] border border-gray-200 rounded-md px-3 pr-8 text-sm text-left bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 appearance-none flex items-center"
+                    className="searchbox-select w-full h-[48px] border border-gray-300 rounded-lg px-3 pr-8 text-sm text-left bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 appearance-none flex items-center"
                     style={{
                       height: "48px",
                       minHeight: "48px",
@@ -547,6 +843,8 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                   )}
                 </div>
               </div>
+
+
               {/* Search Button */}
               <div
                 className={`
@@ -564,13 +862,13 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                 <button
                   type="submit"
                   className={`
-                    bg-orange-400 text-white
-                    border border-orange-400
-                    rounded-md text-sm font-medium
-                    hover:bg-orange-500 hover:text-white transition
+                    bg-orange-500 text-white
+                    border border-orange-500
+                    rounded-lg text-sm font-semibold
+                    hover:bg-orange-600 hover:border-orange-600 transition-colors
                     w-full
                     h-[48px]
-                    focus:outline-none
+                    focus:outline-none focus:ring-2 focus:ring-orange-400
                   `}
                 >
                   Search
