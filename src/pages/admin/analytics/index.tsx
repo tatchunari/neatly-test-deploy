@@ -1,4 +1,5 @@
 import AnalyticCardSection from "@/components/admin/analyticDashboard/AnalyticCardSection";
+import BookingTrendsChart from "@/components/admin/analyticDashboard/BookingTrendsChart";
 import RoomAvailabilityChart from "@/components/admin/analyticDashboard/RoomAvailabilityChart.tsx";
 import Layout from "@/components/admin/Layout";
 
@@ -13,15 +14,16 @@ function AnalyticDashboard() {
           </p>
         </div>
 
-        <div className=" flex flex-col max-w-7xl mx-auto p-6 bg-gray-50 border-t border-gray-400 min-h-screen min-w-3">
+        <div className=" flex flex-col max-w-7xl mx-auto p-6 bg-gray-50 border-t border-gray-400 min-w-3">
           {/* Analytic Statistics */}
           <div className="flex flex-col">
             <AnalyticCardSection />
           </div>
 
           {/* Availability Chart & Booking Trends  */}
-          <div className="flex flex-row">
+          <div className="flex flex-col md:flex-row md:gap-5">
             <RoomAvailabilityChart />
+            <BookingTrendsChart />
           </div>
         </div>
       </div>
