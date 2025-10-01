@@ -7,21 +7,21 @@ const testimonials = [
   {
     id: 1,
     text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    customer: "Katherine",
+    customer: "Katherine,",
     company: "Company®",
     avatar: "/image/customer.png"
   },
   {
     id: 2,
     text: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    customer: "Sarah",
+    customer: "Sarah,",
     company: "Tech Corp",
     avatar: "/image/customer.png"
   },
   {
     id: 3,
     text: "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
-    customer: "Michael",
+    customer: "Michael,",
     company: "Design Studio",
     avatar: "/image/customer.png"
   }
@@ -79,10 +79,11 @@ const Testimonial = () => {
         <h2
           className="
             text-[#2D5A27]
-            text-[32px] md:text-[40px]
+            text-[30px] md:text-[48px]
             font-normal
             text-center
             mb-8 md:mb-12
+            font-serif
           "
         >
           Our Customer Says
@@ -174,13 +175,14 @@ const Testimonial = () => {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="text-left">
-                  <p className="text-[#999] text-[12px] md:text-[14px] font-medium">
+                {/* ชื่อและบริษัทอยู่บรรทัดเดียวกัน */}
+                <div className="flex flex-row items-center space-x-2 text-left">
+                  <span className="text-[#999] text-[12px] md:text-[14px] font-medium">
                     {testimonials[currentSlide].customer}
-                  </p>
-                  <p className="text-[#999] text-[12px] md:text-[14px]">
+                  </span>
+                  <span className="text-[#999] text-[12px] md:text-[14px]">
                     {testimonials[currentSlide].company}
-                  </p>
+                  </span>
                 </div>
               </div>
             </div>
