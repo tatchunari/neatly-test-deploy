@@ -43,9 +43,8 @@ export default function TicketAdmin() {
     let matchesStatus = false;
     if (filterStatus === "all") {
       matchesStatus = true;
-    } else if (filterStatus === "closed") {
-      // Include both 'closed' and 'solved' statuses for closed filter
-      matchesStatus = ticket.status === "closed" || ticket.status === "solved";
+    } else if (filterStatus === "solved") {
+      matchesStatus = ticket.status === "solved";
     } else {
       matchesStatus = ticket.status === filterStatus;
     }
@@ -60,13 +59,11 @@ export default function TicketAdmin() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "open":
-        return "bg-red-100 text-red-800";
+        return "bg-orange-100 text-orange-800";
       case "in_progress":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-green-100 text-green-800";
       case "solved":
         return "bg-gray-100 text-gray-800";
-      case "closed":
-        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -75,13 +72,11 @@ export default function TicketAdmin() {
   const getStatusText = (status: string) => {
     switch (status) {
       case "open":
-        return "Open";
+        return "Pending";
       case "in_progress":
-        return "In Progress";
+        return "Accepted";
       case "solved":
         return "Solved";
-      case "closed":
-        return "Closed";
       default:
         return status;
     }
@@ -111,7 +106,7 @@ export default function TicketAdmin() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search by message or session ID..."
-                    className="w-full"
+                    className="w-full hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
                 </div>
 
@@ -119,39 +114,48 @@ export default function TicketAdmin() {
                 <div className="flex gap-2">
                   <Button
                     onClick={() => setFilterStatus("all")}
-                    variant={filterStatus === "all" ? "default" : "outline"}
-                    className="cursor-pointer"
+                    variant={filterStatus === "all" ? undefined : "outline"}
+                    className={`cursor-pointer ${
+                      filterStatus === "all"
+                        ? "bg-orange-500 text-white hover:bg-orange-600"
+                        : "border-orange-500 text-orange-500 hover:bg-orange-50"
+                    }`}
                   >
                     All ({tickets.length})
                   </Button>
                   <Button
                     onClick={() => setFilterStatus("open")}
-                    variant={filterStatus === "open" ? "default" : "outline"}
-                    className="cursor-pointer"
+                    variant={filterStatus === "open" ? undefined : "outline"}
+                    className={`cursor-pointer ${
+                      filterStatus === "open"
+                        ? "bg-orange-500 text-white hover:bg-orange-600"
+                        : "border-orange-500 text-orange-500 hover:bg-orange-50"
+                    }`}
                   >
-                    Open ({tickets.filter((t) => t.status === "open").length})
+                    Pending ({tickets.filter((t) => t.status === "open").length})
                   </Button>
                   <Button
                     onClick={() => setFilterStatus("in_progress")}
-                    variant={
-                      filterStatus === "in_progress" ? "default" : "outline"
-                    }
-                    className="cursor-pointer"
+                    variant={filterStatus === "in_progress" ? undefined : "outline"}
+                    className={`cursor-pointer ${
+                      filterStatus === "in_progress"
+                        ? "bg-orange-500 text-white hover:bg-orange-600"
+                        : "border-orange-500 text-orange-500 hover:bg-orange-50"
+                    }`}
                   >
-                    In Progress (
+                    Accepted (
                     {tickets.filter((t) => t.status === "in_progress").length})
                   </Button>
                   <Button
-                    onClick={() => setFilterStatus("closed")}
-                    variant={filterStatus === "closed" ? "default" : "outline"}
-                    className="cursor-pointer"
+                    onClick={() => setFilterStatus("solved")}
+                    variant={filterStatus === "solved" ? undefined : "outline"}
+                    className={`cursor-pointer ${
+                      filterStatus === "solved"
+                        ? "bg-orange-500 text-white hover:bg-orange-600"
+                        : "border-orange-500 text-orange-500 hover:bg-orange-50"
+                    }`}
                   >
-                    Solved (
-                    {
-                      tickets.filter(
-                        (t) => t.status === "closed" || t.status === "solved"
-                      ).length
-                    }
+                    Solved ({tickets.filter((t) => t.status === "solved").length}
                     )
                   </Button>
                 </div>
