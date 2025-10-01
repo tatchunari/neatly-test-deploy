@@ -172,6 +172,10 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
               min-height: 48px !important;
               max-height: 48px !important;
             }
+            /* เพิ่ม gap ระหว่างช่อง checkin, checkout, room&guest เฉพาะ mobile */
+            .searchbox-row-equal {
+              gap: 100px !important;
+            }
           }
           @media (min-width: 768px) {
             .searchbox-outer-border {
@@ -235,6 +239,86 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
               max-height: 48px !important;
             }
           }
+          /* Custom: Make Rooms & Guests and Search button in a row, no gap between them */
+          @media (min-width: 768px) {
+            .searchbox-row-group {
+              display: flex;
+              flex-direction: row;
+              align-items: flex-end;
+              gap: 0 !important;
+            }
+            .searchbox-field.searchbox-roomguest {
+              margin-right: 0 !important;
+              border-top-right-radius: 0 !important;
+              border-bottom-right-radius: 0 !important;
+            }
+            .searchbox-btn {
+              margin-left: 0 !important;
+              border-top-left-radius: 0 !important;
+              border-bottom-left-radius: 0 !important;
+            }
+          }
+          @media (max-width: 767px) {
+            .searchbox-row-group {
+              display: flex;
+              flex-direction: column;
+              gap: 0 !important;
+              width: 100%;
+            }
+            .searchbox-field.searchbox-roomguest,
+            .searchbox-btn {
+              width: 100% !important;
+              margin-right: 0 !important;
+              margin-left: 0 !important;
+            }
+          }
+          /* Make checkin, checkout, and roomguest fields the same width in row layout */
+          @media (min-width: 768px) {
+            .searchbox-row-equal {
+              display: flex;
+              flex-direction: row;
+              align-items: flex-end;
+              gap: 0 !important;
+              width: 100%;
+            }
+            .searchbox-field.searchbox-checkin,
+            .searchbox-field.searchbox-checkout,
+            .searchbox-field.searchbox-roomguest {
+              flex: 1 1 0%;
+              width: 0 !important;
+              min-width: 0 !important;
+              max-width: none !important;
+            }
+            .searchbox-field.searchbox-checkin {
+              border-top-right-radius: 0 !important;
+              border-bottom-right-radius: 0 !important;
+            }
+            .searchbox-field.searchbox-checkout {
+              border-radius: 0 !important;
+            }
+            .searchbox-field.searchbox-roomguest {
+              border-top-left-radius: 0 !important;
+              border-bottom-left-radius: 0 !important;
+            }
+          }
+          @media (max-width: 767px) {
+            .searchbox-row-equal {
+              display: flex;
+              flex-direction: column;
+              gap: 16px !important;
+              width: 100%;
+            }
+            .searchbox-field.searchbox-checkin,
+            .searchbox-field.searchbox-checkout,
+            .searchbox-field.searchbox-roomguest,
+            .searchbox-btn {
+              width: 100% !important;
+              min-width: 0 !important;
+              max-width: 100% !important;
+              margin-right: 0 !important;
+              margin-left: 0 !important;
+            }
+          }
         `}
       </style>
       <div className="searchbox-outer-border flex justify-center items-center">
@@ -280,201 +364,217 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
               }
             }}
           >
-            {/* Check In */}
-            <div
-              className={`
-                searchbox-field
-                flex flex-col
-                justify-end
-              `}
-            >
-              <label className="text-xs text-black-500 mb-1" htmlFor="checkin">
-                Check In
-              </label>
-              <div className="relative h-full">
-                <input
-                  id="checkin"
-                  type="date"
-                  className="searchbox-input w-full h-[48px] border border-gray-200 rounded-md px-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  value={checkIn}
-                  min={getTodayDateString()}
-                  onChange={(e) => setCheckIn(e.target.value)}
-                  style={{
-                    height: "48px",
-                    minHeight: "48px",
-                    maxHeight: "48px",
-                  }}
-                />
-                {/* Calendar icon removed */}
-              </div>
-            </div>
-            {/* Check Out */}
-            <div
-              className={`
-                searchbox-field
-                flex flex-col
-                justify-end
-              `}
-            >
-              <label className="text-xs text-black-500 mb-1" htmlFor="checkout">
-                Check Out
-              </label>
-              <div className="relative h-full">
-                <input
-                  id="checkout"
-                  type="date"
-                  className="searchbox-input w-full h-[48px] border border-gray-200 rounded-md px-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  value={checkOut}
-                  min={
-                    checkIn
-                      ? (() => {
-                          const d = new Date(checkIn);
-                          d.setDate(d.getDate() + 1);
-                          return d.toISOString().split("T")[0];
-                        })()
-                      : getTodayDateString()
-                  }
-                  onChange={(e) => setCheckOut(e.target.value)}
-                  style={{
-                    height: "48px",
-                    minHeight: "48px",
-                    maxHeight: "48px",
-                  }}
-                />
-                {/* Calendar icon removed */}
-              </div>
-            </div>
-            {/* Rooms & Guests */}
-            <div
-              className={`
-                searchbox-field
-                flex flex-col
-                justify-end
-                relative
-              `}
-              ref={dropdownButtonRef}
-            >
-              <label className="text-xs text-black-500 mb-1" htmlFor="roomguest">
-                Rooms & Guests
-              </label>
-              <div className="relative h-full">
-                <button
-                  id="roomguest"
-                  type="button"
-                  className="searchbox-select w-full h-[48px] border border-gray-200 rounded-md px-3 pr-8 text-sm text-left bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 appearance-none flex items-center"
-                  style={{
-                    height: "48px",
-                    minHeight: "48px",
-                    maxHeight: "48px",
-                  }}
-                  onClick={() => setDropdownOpen((v) => !v)}
-                  tabIndex={0}
-                >
-                  {roomGuestLabel}
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 20 20">
-                      <path d="M6 8l4 4 4-4" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                </button>
-                {dropdownOpen && (
-                  <div
-                    className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-lg py-3 px-4 z-20 w-full min-w-[240px] max-w-[320px]"
-                    style={{
-                      boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08)",
-                    }}
-                    ref={dropdownPanelRef}
-                  >
-                    {/* Room */}
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-700">Room</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition disabled:opacity-50"
-                          onClick={() => setRoom((r) => Math.max(minRoom, r - 1))}
-                          disabled={room <= minRoom}
-                          aria-label="Decrease room"
-                        >
-                          <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                            <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
-                            <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
-                          </svg>
-                        </button>
-                        <span className="w-5 text-center text-base text-gray-700">{room}</span>
-                        <button
-                          type="button"
-                          className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition"
-                          onClick={() => setRoom((r) => Math.min(maxRoom, r + 1))}
-                          aria-label="Increase room"
-                        >
-                          <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                            <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
-                            <rect x="8.25" y="5" width="1.5" height="8" rx="0.75" fill="#F47A1F"/>
-                            <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    {/* Guest */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700">Guest</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition disabled:opacity-50"
-                          onClick={() => setGuest((g) => Math.max(minGuest, g - 1))}
-                          disabled={guest <= minGuest}
-                          aria-label="Decrease guest"
-                        >
-                          <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                            <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
-                            <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
-                          </svg>
-                        </button>
-                        <span className="w-5 text-center text-base text-gray-700">{guest}</span>
-                        <button
-                          type="button"
-                          className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition"
-                          onClick={() => setGuest((g) => Math.min(maxGuest, g + 1))}
-                          aria-label="Increase guest"
-                        >
-                          <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                            <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
-                            <rect x="8.25" y="5" width="1.5" height="8" rx="0.75" fill="#F47A1F"/>
-                            <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            {/* Search Button */}
-            <div
-              className={`
-                searchbox-btn
-                flex flex-row
-                justify-center
-                items-center
-                md:ml-auto
-              `}
-            >
-              <button
-                type="submit"
+            {/* Check In, Check Out, Rooms & Guests + Search Button in a row */}
+            <div className="searchbox-row-equal w-full">
+              {/* Check In */}
+              <div
                 className={`
-                  bg-orange-400 text-white
-                  border border-orange-400
-                  rounded-md text-sm font-medium
-                  hover:bg-orange-500 hover:text-white transition
-                  w-full
-                  h-[48px]
-                  focus:outline-none
+                  searchbox-field searchbox-checkin
+                  flex flex-col
+                  justify-end
                 `}
+                style={{
+                  marginRight: 0,
+                }}
               >
-                Search
-              </button>
+                <label className="text-xs text-black-500 mb-1" htmlFor="checkin">
+                  Check In
+                </label>
+                <div className="relative h-full">
+                  <input
+                    id="checkin"
+                    type="date"
+                    className="searchbox-input w-full h-[48px] border border-gray-200 rounded-md px-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    value={checkIn}
+                    min={getTodayDateString()}
+                    onChange={(e) => setCheckIn(e.target.value)}
+                    style={{
+                      height: "48px",
+                      minHeight: "48px",
+                      maxHeight: "48px",
+                    }}
+                  />
+                  {/* Calendar icon removed */}
+                </div>
+              </div>
+              {/* Check Out */}
+              <div
+                className={`
+                  searchbox-field searchbox-checkout
+                  flex flex-col
+                  justify-end
+                `}
+                style={{
+                  marginRight: 0,
+                }}
+              >
+                <label className="text-xs text-black-500 mb-1" htmlFor="checkout">
+                  Check Out
+                </label>
+                <div className="relative h-full">
+                  <input
+                    id="checkout"
+                    type="date"
+                    className="searchbox-input w-full h-[48px] border border-gray-200 rounded-md px-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    value={checkOut}
+                    min={
+                      checkIn
+                        ? (() => {
+                            const d = new Date(checkIn);
+                            d.setDate(d.getDate() + 1);
+                            return d.toISOString().split("T")[0];
+                          })()
+                        : getTodayDateString()
+                    }
+                    onChange={(e) => setCheckOut(e.target.value)}
+                    style={{
+                      height: "48px",
+                      minHeight: "48px",
+                      maxHeight: "48px",
+                    }}
+                  />
+                  {/* Calendar icon removed */}
+                </div>
+              </div>
+              {/* Rooms & Guests */}
+              <div
+                className={`
+                  searchbox-field searchbox-roomguest
+                  flex flex-col
+                  justify-end
+                  relative
+                `}
+                ref={dropdownButtonRef}
+                style={{
+                  marginRight: 0,
+                }}
+              >
+                <label className="text-xs text-black-500 mb-1" htmlFor="roomguest">
+                  Rooms & Guests
+                </label>
+                <div className="relative h-full">
+                  <button
+                    id="roomguest"
+                    type="button"
+                    className="searchbox-select w-full h-[48px] border border-gray-200 rounded-md px-3 pr-8 text-sm text-left bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 appearance-none flex items-center"
+                    style={{
+                      height: "48px",
+                      minHeight: "48px",
+                      maxHeight: "48px",
+                    }}
+                    onClick={() => setDropdownOpen((v) => !v)}
+                    tabIndex={0}
+                  >
+                    {roomGuestLabel}
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <svg width="16" height="16" fill="none" viewBox="0 0 20 20">
+                        <path d="M6 8l4 4 4-4" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  </button>
+                  {dropdownOpen && (
+                    <div
+                      className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-lg py-3 px-4 z-20 w-full min-w-[240px] max-w-[320px]"
+                      style={{
+                        boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08)",
+                      }}
+                      ref={dropdownPanelRef}
+                    >
+                      {/* Room */}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-700">Room</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition disabled:opacity-50"
+                            onClick={() => setRoom((r) => Math.max(minRoom, r - 1))}
+                            disabled={room <= minRoom}
+                            aria-label="Decrease room"
+                          >
+                            <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
+                              <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
+                              <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                            </svg>
+                          </button>
+                          <span className="w-5 text-center text-base text-gray-700">{room}</span>
+                          <button
+                            type="button"
+                            className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition"
+                            onClick={() => setRoom((r) => Math.min(maxRoom, r + 1))}
+                            aria-label="Increase room"
+                          >
+                            <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
+                              <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
+                              <rect x="8.25" y="5" width="1.5" height="8" rx="0.75" fill="#F47A1F"/>
+                              <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      {/* Guest */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Guest</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition disabled:opacity-50"
+                            onClick={() => setGuest((g) => Math.max(minGuest, g - 1))}
+                            disabled={guest <= minGuest}
+                            aria-label="Decrease guest"
+                          >
+                            <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
+                              <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
+                              <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                            </svg>
+                          </button>
+                          <span className="w-5 text-center text-base text-gray-700">{guest}</span>
+                          <button
+                            type="button"
+                            className="w-7 h-7 flex items-center justify-center rounded-full border border-orange-400 text-orange-400 hover:bg-orange-50 transition"
+                            onClick={() => setGuest((g) => Math.min(maxGuest, g + 1))}
+                            aria-label="Increase guest"
+                          >
+                            <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
+                              <circle cx="9" cy="9" r="8" stroke="#F47A1F" strokeWidth="1.5" fill="none"/>
+                              <rect x="8.25" y="5" width="1.5" height="8" rx="0.75" fill="#F47A1F"/>
+                              <rect x="5" y="8.25" width="8" height="1.5" rx="0.75" fill="#F47A1F"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Search Button */}
+              <div
+                className={`
+                  searchbox-btn
+                  flex flex-row
+                  justify-center
+                  items-center
+                `}
+                style={{
+                  marginLeft: 0,
+                  height: "48px",
+                  alignSelf: "flex-end",
+                }}
+              >
+                <button
+                  type="submit"
+                  className={`
+                    bg-orange-400 text-white
+                    border border-orange-400
+                    rounded-md text-sm font-medium
+                    hover:bg-orange-500 hover:text-white transition
+                    w-full
+                    h-[48px]
+                    focus:outline-none
+                  `}
+                >
+                  Search
+                </button>
+              </div>
             </div>
           </form>
         </div>
