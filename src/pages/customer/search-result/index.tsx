@@ -64,6 +64,7 @@ function SearchResultPage() {
   return (
     <div className="bg-[#F7F7FA] min-h-screen">
       <Navbar />
+      <div className="h-6" />
       <div className="max-w-[1200px] mx-auto px-4">
         <div className="pt-6 pb-2">
           <SearchBox
