@@ -187,7 +187,8 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
       if (startOfDay(date) <= ci) {
         return; // ignore invalid selection
       }
-      setCheckOut(formatLocalYmd(date));
+      const newCheckout = formatLocalYmd(date);
+      setCheckOut(newCheckout);
       setCalendarOpen(null);
       setSelectedDate(startOfDay(date));
       return;
@@ -559,7 +560,7 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                       <div className="p-4">
                         {/* Calendar Header */}
                         <div className="flex items-center justify-between mb-4">
-                          <button
+                          <button type="button"
                             onClick={() => navigateMonth('prev')}
                             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                           >
@@ -570,7 +571,7 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                           <h3 className="text-lg font-semibold text-gray-900">
                             {formatMonthYear(currentMonth)}
                           </h3>
-                          <button
+                          <button type="button"
                             onClick={() => navigateMonth('next')}
                             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                           >
@@ -606,7 +607,7 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
                           : startOfDay(date) <= checkInBase;
 
                             return (
-                              <button
+                              <button type="button"
                                 key={index}
                                 onClick={() => !isPast && handleDateClick(date)}
                                 onMouseEnter={() => setHoveredDate(date)}
@@ -636,18 +637,20 @@ export default function SearchBox({ onSearch, defaultValues }: SearchBoxProps) {
 
                         {/* Action Buttons */}
                         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
-                          <button
+                      <button type="button"
                             onClick={() => setCalendarOpen(null)}
                             className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
                           >
                             Cancel
                           </button>
-                          <button
-                            onClick={() => setCalendarOpen(null)}
-                            className="px-4 py-2 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
-                          >
-                            Done
-                          </button>
+                      <button type="button"
+                        onClick={() => {
+                          setCalendarOpen(null);
+                        }}
+                        className="px-4 py-2 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
+                      >
+                        Done
+                      </button>
                         </div>
                       </div>
                     </div>
