@@ -36,7 +36,7 @@ const RoomAvailabilityChart = () => {
 
         <div className="flex items-center justify-between">
           <div className="relative w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] md:w-[300px] md:h-[300px] md:bottom-10">
-            <div className="bg-white/30 w-50 h-50 absolute rounded-full z-100 top-12 left-12"></div>
+            <div className="bg-white/30 w-50 h-50 absolute rounded-full z-30 top-12 left-12"></div>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
