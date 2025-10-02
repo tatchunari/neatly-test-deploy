@@ -8,19 +8,22 @@ export type LayoutProps = {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex md:flex-row flex-col overflow-hidden min-h-screen transition-all">
-      {/* Show MobileNavbar only on mobile */}
+    <div className="flex md:flex-row flex-col min-h-screen transition-all">
+      {/* Mobile Navbar */}
       <div className="md:hidden">
         <MobileNavbar />
       </div>
 
-      {/* Show Sidebar only on desktop */}
-      <div className="hidden md:block">
+      {/* Fixed Sidebar on desktop */}
+      <div className="hidden md:block fixed left-0 top-0 h-screen w-64">
         <Sidebar />
       </div>
 
-      <Toaster position="top-right" />
-      {children}
+      {/* Main content */}
+      <main className="flex-1 md:ml-70">
+        <Toaster position="top-right" />
+        {children}
+      </main>
     </div>
   );
 }
