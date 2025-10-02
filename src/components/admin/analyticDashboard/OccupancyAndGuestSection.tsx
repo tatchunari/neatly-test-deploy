@@ -27,13 +27,13 @@ const OccupancyAndGuestSection = () => {
   };
   return (
     <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full min-h-screen mt-10">
-      <div className="flex w-full justify-between">
+      <div className="flex md:flex-row flex-col w-full justify-between">
         <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
           Occupancy & Guest
         </h2>
 
         {/* Right Side */}
-        <div className="flex gap-4 items-center">
+        <div className="flex md:flex-row flex-col gap-4 items-center">
           <p className="text-gray-700 w-full text-right">View by</p>
           <DropDownInput options={options} name="options" setValue={setValue} />
           <DateRangePicker />
