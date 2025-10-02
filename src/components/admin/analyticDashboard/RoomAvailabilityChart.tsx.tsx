@@ -4,7 +4,7 @@ import { SelectInput } from "./SelectInput";
 
 const RoomAvailabilityChart = () => {
   const data = [
-    { name: "Occupied", value: 21, color: "#E87B5A" },
+    { name: "Occupied", value: 21, color: "#E76B39" },
     { name: "Booked", value: 16, color: "#3D4F44" },
     { name: "Available", value: 8, color: "#C5CFDA" },
   ];
@@ -16,7 +16,7 @@ const RoomAvailabilityChart = () => {
   const total = data.reduce((sum, entry) => sum + entry.value, 0);
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 mt-8 w-full sm:w-full mx-auto">
+    <div className="flex flex-col items-center bg-gray-50 mt-8 w-full sm:w-full mx-auto">
       <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-90 sm:max-w-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
@@ -36,30 +36,20 @@ const RoomAvailabilityChart = () => {
 
         <div className="flex items-center justify-between">
           <div className="relative w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] md:w-[300px] md:h-[300px] md:bottom-10">
+            <div className="bg-white/30 w-50 h-50 absolute rounded-full z-100 top-12 left-12"></div>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
+                  innerRadius={75}
+                  outerRadius={125}
                   paddingAngle={0}
                   dataKey="value"
                   startAngle={90}
                   endAngle={450}
                 >
-                  <Pie
-                    data={data}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={35}
-                    outerRadius={50}
-                    paddingAngle={0}
-                    dataKey="value"
-                    startAngle={90}
-                    endAngle={450}
-                  ></Pie>
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
