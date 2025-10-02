@@ -1,6 +1,6 @@
-import DateRangePicker from "../ui/DateRangePicker";
-import { LineChartComponent } from "./LineChartComponent";
-import { Button } from "../ui/Button";
+import DateRangePicker from "../../ui/DateRangePicker";
+import { LineChartComponent } from "../LineChartComponent";
+import { Button } from "../../ui/Button";
 
 const revenueData = [
   { month: "January", value: 40000 },

@@ -1,9 +1,10 @@
-import AnalyticCardSection from "@/components/admin/analyticDashboard/AnalyticCardSection";
+import AnalyticCardSection from "@/components/admin/analyticDashboard/sections/AnalyticCardSection";
 import BookingTrendsChart from "@/components/admin/analyticDashboard/BookingTrendsChart";
-import OccupancyAndGuestSection from "@/components/admin/analyticDashboard/OccupancyAndGuestSection";
-import RevenueTrendSection from "@/components/admin/analyticDashboard/RevenueTrendSection";
+import OccupancyAndGuestSection from "@/components/admin/analyticDashboard/sections/OccupancyAndGuestSection";
+import RevenueTrendSection from "@/components/admin/analyticDashboard/sections/RevenueTrendSection";
 import RoomAvailabilityChart from "@/components/admin/analyticDashboard/RoomAvailabilityChart.tsx";
 import Layout from "@/components/admin/Layout";
+import TimeAveragesSection from "@/components/admin/analyticDashboard/sections/TimeAveragesSection";
 
 function AnalyticDashboard() {
   return (
@@ -36,6 +37,10 @@ function AnalyticDashboard() {
           {/* Occupancy & Guest Section */}
           <div className="flex">
             <OccupancyAndGuestSection />
+          </div>
+
+          <div className="flex">
+            <TimeAveragesSection />
           </div>
         </div>
       </div>
