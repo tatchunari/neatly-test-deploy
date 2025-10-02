@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/admin/Layout";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
-import { Pencil } from "lucide-react";
+import { FileQuestionMark } from "lucide-react";
+import { DropDownInput } from "@/components/admin/ui/DropdownInput";
 
 interface FAQ {
   id: string;
-  question: string;
-  answer: string;
+  topic: string;
+  reply_message: string;
   created_at: string;
   updated_at: string;
   aliases?: Array<{ id: string; alias: string }>;
@@ -23,7 +24,38 @@ interface Context {
 export default function ChatbotAdmin() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(false);
-  const [newFAQ, setNewFAQ] = useState({ question: "", answer: "" });
+  const [newFAQ, setNewFAQ] = useState({ 
+    question: "", 
+    answer: "", 
+    format: "Message",
+    replyTitle: "",
+    roomType: "",
+    buttonName: "",
+    options: [{ option: "", detail: "" }]
+  });
+
+  // Stable setValue function to prevent infinite loop
+  const setFormatValue = useCallback((name: string, value: string) => {
+    setNewFAQ(prev => ({ ...prev, format: value }));
+  }, []);
+
+  // Room types state
+  const [roomTypes, setRoomTypes] = useState<string[]>([]);
+
+  // Fetch room types
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        const response = await fetch('/api/rooms');
+        const data = await response.json();
+        const types = [...new Set(data.data?.map((room: { room_type: string }) => room.room_type) || [])] as string[];
+        setRoomTypes(types);
+      } catch (error) {
+        console.error('Error fetching room types:', error);
+      }
+    };
+    fetchRoomTypes();
+  }, []);
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
 
   // Greeting and Fallback states
@@ -57,17 +89,17 @@ export default function ChatbotAdmin() {
 
       // หา greeting และ fallback messages
       const greetingFaq = faqsData.find(
-        (faq: FAQ) => faq.question === "::greeting::"
+        (faq: FAQ) => faq.topic === "::greeting::"
       );
       const fallbackFaq = faqsData.find(
-        (faq: FAQ) => faq.question === "::fallback::"
+        (faq: FAQ) => faq.topic === "::fallback::"
       );
 
       if (greetingFaq) {
-        setGreetingMessage(greetingFaq.answer);
+        setGreetingMessage(greetingFaq.reply_message);
       }
       if (fallbackFaq) {
-        setFallbackMessage(fallbackFaq.answer);
+        setFallbackMessage(fallbackFaq.reply_message);
       }
 
       // ดึง aliases สำหรับแต่ละ FAQ
@@ -150,7 +182,15 @@ export default function ChatbotAdmin() {
           }
         }
 
-        setNewFAQ({ question: "", answer: "" });
+        setNewFAQ({ 
+          question: "", 
+          answer: "", 
+          format: "Message",
+          replyTitle: "",
+          roomType: "",
+          buttonName: "",
+          options: [{ option: "", detail: "" }]
+        });
         setNewAliasesUI([]);
         setNewAliasInput("");
         setShowAliases(false);
@@ -167,8 +207,8 @@ export default function ChatbotAdmin() {
   const handleUpdateFAQ = async () => {
     if (
       !editingFAQ ||
-      !editingFAQ.question.trim() ||
-      !editingFAQ.answer.trim()
+      !editingFAQ.topic.trim() ||
+      !editingFAQ.reply_message.trim()
     ) {
       return;
     }
@@ -179,8 +219,8 @@ export default function ChatbotAdmin() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: editingFAQ.question,
-          answer: editingFAQ.answer,
+          question: editingFAQ.topic,
+          answer: editingFAQ.reply_message,
         }),
       });
 
@@ -267,7 +307,7 @@ export default function ChatbotAdmin() {
     try {
       // หา greeting message ที่มีอยู่
       const existingGreeting = faqs.find(
-        (faq) => faq.question === "::greeting::"
+        (faq) => faq.topic === "::greeting::"
       );
 
       const response = await fetch(
@@ -299,7 +339,7 @@ export default function ChatbotAdmin() {
     try {
       // หา fallback message ที่มีอยู่
       const existingFallback = faqs.find(
-        (faq) => faq.question === "::fallback::"
+        (faq) => faq.topic === "::fallback::"
       );
 
       const response = await fetch(
@@ -558,41 +598,61 @@ export default function ChatbotAdmin() {
               </h2>
 
               {/* Create New FAQ */}
-              <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-100">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Topic
-                    </label>
-                    <div className="flex gap-2">
-                      <Input
-                        value={newFAQ.question}
-                        onChange={(e) =>
-                          setNewFAQ({ ...newFAQ, question: e.target.value })
-                        }
-                        placeholder="Enter topic..."
-                        className="flex-1 border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setShowAliases(!showAliases);
-                          if (!showAliases) {
-                            setNewAliasesUI([]);
-                            setNewAliasInput("");
-                          }
-                        }}
-                        className="cursor-pointer whitespace-nowrap border-orange-500 text-orange-500 hover:bg-orange-50"
-                      >
-                        {showAliases ? "Hide Aliases" : "Add Aliases"}
-                      </Button>
-                    </div>
-                  </div>
+              <div className="mb-6 pl-4 pr-0 py-4 border border-gray-200 rounded-lg bg-gray-100">
+                <div className="flex gap-0">
+                  {/* Left side - Form fields (95%) */}
+                  <div className="flex-1 w-[95%] space-y-4">
+                     <div>
+                       <div className="flex gap-2 items-end">
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-2">
+                             Topic *
+                           </label>
+                           <div className="relative">
+                             <Input
+                               value={newFAQ.question}
+                               onChange={(e) =>
+                                 setNewFAQ({ ...newFAQ, question: e.target.value })
+                               }
+                               placeholder="Enter topic..."
+                               className="w-full border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none pr-10"
+                             />
+                             <button
+                               onClick={() => {
+                                 setShowAliases(!showAliases);
+                                 if (!showAliases) {
+                                   setNewAliasesUI([]);
+                                   setNewAliasInput("");
+                                 }
+                               }}
+                               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-orange-500 hover:text-orange-700 cursor-pointer"
+                               title={showAliases ? "Hide Aliases" : "Add Aliases"}
+                             >
+                               <FileQuestionMark className="w-4 h-4" />
+                             </button>
+                           </div>
+                         </div>
+                         <div className="flex-1">
+                           <DropDownInput
+                             label="Reply format"
+                             options={["Message", "Room Type", "Option with details"]}
+                             register={{ 
+                               name: "format",
+                               onChange: async () => {},
+                               onBlur: async () => {},
+                               ref: () => {}
+                             }}
+                             setValue={setFormatValue}
+                             name="format"
+                             defaultValue="Message"
+                           />
+                         </div>
+                       </div>
+                     </div>
                   {showAliases && (
                     <div className="space-y-2">
                       <label className="block text-sm font-medium mb-2">
-                        Aliases
+                        Linked Questions
                       </label>
                       <div className="flex gap-2">
                         <Input
@@ -642,19 +702,157 @@ export default function ChatbotAdmin() {
                       )}
                     </div>
                   )}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Reply message
-                    </label>
-                    <textarea
-                      value={newFAQ.answer}
-                      onChange={(e) =>
-                        setNewFAQ({ ...newFAQ, answer: e.target.value })
-                      }
-                      placeholder="Enter reply message..."
-                      className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-24 resize-none outline-none"
-                    />
-                  </div>
+                  
+                  {/* Dynamic fields based on format */}
+                  {newFAQ.format === "Message" && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Reply message
+                      </label>
+                      <textarea
+                        value={newFAQ.answer}
+                        onChange={(e) =>
+                          setNewFAQ({ ...newFAQ, answer: e.target.value })
+                        }
+                        placeholder="Enter reply message..."
+                        className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-24 resize-none outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {newFAQ.format === "Room Type" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Reply title
+                        </label>
+                        <Input
+                          value={newFAQ.replyTitle}
+                          onChange={(e) =>
+                            setNewFAQ({ ...newFAQ, replyTitle: e.target.value })
+                          }
+                          placeholder="Enter reply title..."
+                          className="w-full border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Room Type
+                        </label>
+                        <select
+                          value={newFAQ.roomType}
+                          onChange={(e) =>
+                            setNewFAQ({ ...newFAQ, roomType: e.target.value })
+                          }
+                          className="w-full border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md px-3 py-2"
+                        >
+                          <option value="">Select room type</option>
+                          {roomTypes.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Button Name
+                        </label>
+                        <Input
+                          value={newFAQ.buttonName}
+                          onChange={(e) =>
+                            setNewFAQ({ ...newFAQ, buttonName: e.target.value })
+                          }
+                          placeholder="Enter button name..."
+                          className="w-full border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {newFAQ.format === "Option with details" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Reply title
+                        </label>
+                        <Input
+                          value={newFAQ.replyTitle}
+                          onChange={(e) =>
+                            setNewFAQ({ ...newFAQ, replyTitle: e.target.value })
+                          }
+                          placeholder="Enter reply title..."
+                          className="w-full border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex gap-2 items-end mb-2">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Option
+                            </label>
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Detail
+                            </label>
+                          </div>
+                        </div>
+                        {newFAQ.options.map((option, index) => (
+                          <div key={index} className="flex gap-2 mb-2">
+                            <div className="flex-1">
+                              <Input
+                                value={option.option}
+                                onChange={(e) => {
+                                  const newOptions = [...newFAQ.options];
+                                  newOptions[index].option = e.target.value;
+                                  setNewFAQ({ ...newFAQ, options: newOptions });
+                                }}
+                                placeholder="Enter option..."
+                                className="w-full border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Input
+                                value={option.detail}
+                                onChange={(e) => {
+                                  const newOptions = [...newFAQ.options];
+                                  newOptions[index].detail = e.target.value;
+                                  setNewFAQ({ ...newFAQ, options: newOptions });
+                                }}
+                                placeholder="Enter detail..."
+                                className="w-full border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md"
+                              />
+                            </div>
+                            {newFAQ.options.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = newFAQ.options.filter((_, i) => i !== index);
+                                  setNewFAQ({ ...newFAQ, options: newOptions });
+                                }}
+                                className="px-2 py-1 text-red-500 hover:text-red-700 text-sm"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewFAQ({
+                              ...newFAQ,
+                              options: [...newFAQ.options, { option: "", detail: "" }]
+                            });
+                          }}
+                          className="mt-2 px-3 py-1 bg-orange-500 text-white text-sm rounded hover:bg-orange-600"
+                        >
+                          Add Option
+                        </button>
+                      </div>
+                    </>
+                  )}
                   <Button
                     onClick={handleCreateFAQ}
                     disabled={loading}
@@ -662,6 +860,20 @@ export default function ChatbotAdmin() {
                   >
                     {loading ? "Creating..." : "Create FAQ"}
                   </Button>
+                  </div>
+
+                  {/* Right side - Icons (5%) */}
+                  <div className="w-[5%] flex flex-col items-center justify-start">
+                    <button className="p-2 text-gray-700 hover:text-gray-900 cursor-pointer" title="Drag">
+                      <img src="/drag.svg" alt="Drag" className="w-5 h-5" />
+                    </button>
+                    <button className="p-2 text-gray-700 hover:text-gray-900 cursor-pointer" title="Edit">
+                      <img src="/pencil.svg" alt="Edit" className="w-5 h-5" />
+                    </button>
+                    <button className="p-2 text-gray-700 hover:text-gray-900 cursor-pointer" title="Delete">
+                      <img src="/delete.svg" alt="Delete" className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -672,8 +884,8 @@ export default function ChatbotAdmin() {
                   {
                     faqs.filter(
                       (faq) =>
-                        faq.question !== "::greeting::" &&
-                        faq.question !== "::fallback::"
+                        faq.topic !== "::greeting::" &&
+                        faq.topic !== "::fallback::"
                     ).length
                   }
                   )
@@ -681,8 +893,8 @@ export default function ChatbotAdmin() {
                 {faqs
                   .filter(
                     (faq) =>
-                      faq.question !== "::greeting::" &&
-                      faq.question !== "::fallback::"
+                      faq.topic !== "::greeting::" &&
+                      faq.topic !== "::fallback::"
                   )
                   .map((faq) => (
                     <div
@@ -692,10 +904,10 @@ export default function ChatbotAdmin() {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900 mb-2">
-                            {faq.question}
+                            {faq.topic}
                           </h4>
                           <p className="text-gray-600 text-sm mb-2">
-                            {faq.answer}
+                            {faq.reply_message}
                           </p>
 
                           {/* Display aliases */}
@@ -757,8 +969,8 @@ export default function ChatbotAdmin() {
                   ))}
                 {faqs.filter(
                   (faq) =>
-                    faq.question !== "::greeting::" &&
-                    faq.question !== "::fallback::"
+                    faq.topic !== "::greeting::" &&
+                    faq.topic !== "::fallback::"
                 ).length === 0 && (
                   <div className="p-6 text-center text-gray-500">
                     No FAQs yet
@@ -826,7 +1038,7 @@ export default function ChatbotAdmin() {
                             className="text-orange-500 hover:text-orange-700 cursor-pointer"
                             title="Edit"
                           >
-                            <Pencil className="w-3 h-3" />
+                            <img src="/pencil.svg" alt="Edit" className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => handleDeleteContext(context.id)}
@@ -863,9 +1075,9 @@ export default function ChatbotAdmin() {
                     Topic
                   </label>
                   <Input
-                    value={editingFAQ.question}
+                    value={editingFAQ.topic}
                     onChange={(e) =>
-                      setEditingFAQ({ ...editingFAQ, question: e.target.value })
+                      setEditingFAQ({ ...editingFAQ, topic: e.target.value })
                     }
                     className="w-full hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
@@ -875,9 +1087,9 @@ export default function ChatbotAdmin() {
                     Reply message
                   </label>
                   <textarea
-                    value={editingFAQ.answer}
+                    value={editingFAQ.reply_message}
                     onChange={(e) =>
-                      setEditingFAQ({ ...editingFAQ, answer: e.target.value })
+                      setEditingFAQ({ ...editingFAQ, reply_message: e.target.value })
                     }
                     className="w-full p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-24 resize-none outline-none"
                   />

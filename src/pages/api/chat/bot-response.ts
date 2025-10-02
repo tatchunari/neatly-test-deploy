@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabaseClient';
-import { chatWithGemini } from '@/lib/chat';
+import { chatWithGemini, historyType } from '@/lib/chat';
 import { createEmbedding } from '@/lib/embedding';
 
 export default async function handler(
@@ -50,14 +50,14 @@ export default async function handler(
       // Check FAQ questions first
       const { data: faqMatches, error: faqError } = await supabase
         .from('chatbot_faqs')
-        .select('question, answer')
-        .neq('question', '::greeting::')
-        // .neq('question', '::fallback::');
+        .select('topic, reply_message')
+        .neq('topic', '::greeting::')
+        .neq('topic', '::fallback::');
 
       if (!faqError && faqMatches) {
         for (const faq of faqMatches) {
-          if (userQuery === normalize(faq.question)) {
-            botResponse = faq.answer;
+          if (userQuery === normalize(faq.topic)) {
+            botResponse = faq.reply_message;
             break;
           }
         }
@@ -75,12 +75,12 @@ export default async function handler(
               // Get FAQ answer by faq_id
               const { data: faqData } = await supabase
                 .from('chatbot_faqs')
-                .select('answer')
+                .select('reply_message')
                 .eq('id', aliasMatch.faq_id)
                 .single();
 
-              if (faqData?.answer) {
-                botResponse = faqData.answer;
+              if (faqData?.reply_message) {
+                botResponse = faqData.reply_message;
                 break;
               }
             }
@@ -106,21 +106,21 @@ export default async function handler(
             console.error('Vector search error:', rpcError);
           } else if (matches && matches.length > 0) {
             const bestMatch = matches[0];
-            botResponse = bestMatch.answer;
+            botResponse = bestMatch.reply_message;
             console.log('🔍 VECTOR MATCH found:', {
               source: bestMatch.source,
               similarity: bestMatch.similarity,
-              answer: bestMatch.answer
+              reply_message: bestMatch.reply_message
             });
           }
         } catch (err) {
           console.error('Vector RPC search failed, using fallback:', err);
           const { data: fallbackFaqs } = await supabase
             .from('chatbot_faqs')
-            .select('question,answer')
-            .eq('question', '::fallback::');
-          if (fallbackFaqs && fallbackFaqs[0]?.answer) {
-            botResponse = fallbackFaqs[0].answer;
+            .select('topic,reply_message')
+            .eq('topic', '::fallback::');
+          if (fallbackFaqs && fallbackFaqs[0]?.reply_message) {
+            botResponse = fallbackFaqs[0].reply_message;
           } else {
             throw new Error('No fallback message found in database');
           }
@@ -144,45 +144,12 @@ export default async function handler(
           .order('created_at', { ascending: false })
           .limit(10);
 
-        // Step 3: Gemini Classify Intent
-        const intentResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/chat/intent-classification`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userQuestion: userMessage,
-            conversationHistory: recentMessages?.reverse() || []
-          })
-        });
-
-        if (!intentResponse.ok) {
-          throw new Error(`Intent classification failed: ${intentResponse.status}`);
-        }
-
-        const { intent } = await intentResponse.json();
+        // Classify Intent
+        const intent = await classifyIntent(userMessage, recentMessages?.reverse() || []);
         console.log('🎯 CLASSIFIED INTENT:', intent);
 
-        // Step 4: Handle Intent
-        const handleIntentResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/chat/handle-intent`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            intent,
-            userQuestion: userMessage,
-            conversationHistory: recentMessages?.reverse() || []
-          })
-        });
-
-        if (!handleIntentResponse.ok) {
-          throw new Error(`Handle intent failed: ${handleIntentResponse.status}`);
-        }
-
-        const { response: intentResponse_text } = await handleIntentResponse.json();
-        botResponse = intentResponse_text;
-        
+        // Handle Intent
+        botResponse = await handleIntent(intent, userMessage, recentMessages?.reverse() || []);
         console.log('🎯 INTENT HANDLED:', { intent, responseLength: botResponse.length });
 
       } catch (error) {
@@ -191,12 +158,12 @@ export default async function handler(
          try {
            const { data: fallbackContext, error: contextError } = await supabase
              .from('chatbot_faqs')
-             .select('answer')
-             .eq('question', '::fallback::')
+             .select('reply_message')
+             .eq('topic', '::fallback::')
              .single();
 
           if (!contextError && fallbackContext) {
-            botResponse = fallbackContext.answer;
+            botResponse = fallbackContext.reply_message;
           } else {
             throw new Error('No fallback message found in database');
           }
@@ -266,5 +233,335 @@ export default async function handler(
       error: 'Failed to generate bot response',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
+  }
+}
+
+// Intent Classification Function
+async function classifyIntent(userQuestion: string, conversationHistory: historyType[]): Promise<string> {
+  console.log("🎯 INTENT CLASSIFICATION for:", userQuestion);
+
+  // Build conversation context
+  let contextString = "";
+  if (conversationHistory && conversationHistory.length > 0) {
+    const recentHistory = conversationHistory.slice(-3); // Last 3 messages
+    contextString = recentHistory
+      .map(
+        (msg: { message: string; is_bot: boolean }) =>
+          `${msg.is_bot ? "Bot" : "User"}: ${msg.message}`
+      )
+      .join("\n");
+  }
+
+  const intentPrompt = `You are an intent classification assistant.
+Categories: faq, rooms, promo_codes, other.
+Answer only with the category name.
+
+${contextString ? `Conversation context:\n${contextString}\n` : ""}
+User question: "${userQuestion}"`;
+
+  const intentResponse = await chatWithGemini(intentPrompt);
+  const intent = intentResponse.trim().toLowerCase();
+
+  // Validate intent
+  const validIntents = ["faq", "rooms", "promo_codes", "other"];
+  const classifiedIntent = validIntents.includes(intent) ? intent : "other";
+
+  console.log("🎯 CLASSIFIED INTENT:", classifiedIntent);
+  return classifiedIntent;
+}
+
+// Handle Intent Function
+async function handleIntent(intent: string, userQuestion: string, conversationHistory: historyType[]): Promise<string> {
+  console.log("🎯 HANDLING INTENT:", { intent, userQuestion });
+
+  let botResponse = "";
+
+  switch (intent) {
+    case "faq":
+    case "other":
+      botResponse = await handleFAQIntent(userQuestion, conversationHistory);
+      break;
+
+    case "rooms":
+      botResponse = await handleRoomsIntent(userQuestion, conversationHistory);
+      break;
+
+    case "promo_codes":
+      botResponse = await handlePromoCodesIntent(userQuestion, conversationHistory);
+      break;
+
+    default:
+      botResponse = await handleFAQIntent(userQuestion, conversationHistory);
+      break;
+  }
+
+  console.log("🎯 INTENT HANDLED:", {
+    intent,
+    responseLength: botResponse.length,
+  });
+
+  return botResponse;
+}
+
+// FAQ Intent Handler
+async function handleFAQIntent(userQuestion: string, conversationHistory?: historyType[]): Promise<string> {
+  try {
+    console.log("📚 FAQ FALLBACK - Getting all FAQ and context data...");
+
+    // ดึง FAQ ทั้งหมดเป็น context
+    const { data: allFAQs, error: faqError } = await supabase
+      .from("chatbot_faqs")
+      .select("topic, reply_message")
+      .neq("topic", "::greeting::")
+      .neq("topic", "::fallback::");
+
+    if (faqError) {
+      console.error("Error fetching FAQs for context:", faqError);
+      throw faqError;
+    }
+
+    // ดึง contexts เพิ่มเติม
+    const { data: contexts, error: contextError } = await supabase
+      .from("chatbot_contexts")
+      .select("content")
+      .order("created_at", { ascending: true });
+
+    if (contextError) {
+      console.error("Error fetching contexts:", contextError);
+      // ไม่ throw error เพราะ contexts เป็น optional
+    }
+
+    // สร้าง context string จาก FAQ ทั้งหมด
+    const faqContext =
+      allFAQs
+        ?.map((faq) => `Q: ${faq.topic}\nA: ${faq.reply_message}`)
+        .join("\n\n") || "";
+
+    // สร้าง context string จาก contexts
+    const additionalContext =
+      contexts?.map((ctx) => ctx.content).join("\n") || "";
+
+    const faqPrompt = `You are a helpful hotel assistant. Use the following FAQ and additional context to answer the user's question.
+
+FAQ Context:
+${faqContext}
+
+Additional Context:
+${additionalContext}
+
+User Question: "${userQuestion}"
+
+Answer based on the FAQ and additional context above. If the question doesn't match any FAQ, provide a helpful response or ask for clarification.`;
+
+    const response = await chatWithGemini(faqPrompt, conversationHistory);
+
+    // ตรวจสอบความมั่นใจของคำตอบ
+    const confidence = await checkResponseConfidence(response, userQuestion);
+    if (confidence < 5) {
+      console.log("🤖 FAQ response confidence too low, using fallback");
+      return await getFallbackContext();
+    }
+
+    return response;
+  } catch (error) {
+    console.error("FAQ fallback failed:", error);
+    // Fallback to context table
+    return await getFallbackContext();
+  }
+}
+
+// Rooms Intent Handler
+async function handleRoomsIntent(userQuestion: string, conversationHistory?: historyType[]): Promise<string> {
+  try {
+    console.log("🏨 ROOMS INTENT - Generating SQL...");
+
+    // สร้าง SQL จาก user question
+    const roomsSchema = `rooms(id, room_type, price, promotion_price, currency, guests, is_active, room_size, amenities, bed_type, view_type, description, images)`;
+
+    const sqlPrompt = `You are a SQL assistant.
+Convert the user's question into a SQL query.
+Use ONLY the following schema:
+${roomsSchema}
+User question: "${userQuestion}"
+Return only the SQL query.`;
+
+    const sqlResponse = await chatWithGemini(sqlPrompt);
+    const sqlQuery = sqlResponse.trim();
+
+    console.log("🏨 GENERATED SQL:", sqlQuery);
+
+    // Execute SQL
+    const { data: result, error } = await supabase.from("rooms").select("*");
+
+    if (error) {
+      console.error("SQL execution error:", error);
+      throw error;
+    }
+
+    console.log("🏨 SQL RESULT:", result?.length || 0, "rooms found");
+
+    // Generate response from SQL result
+    let responsePrompt = `User Question: "${userQuestion}"
+Context from database:
+${JSON.stringify(result || [])}
+Answer only based on the context.`;
+
+    // Add conversation history context if available
+    if (conversationHistory && conversationHistory.length > 0) {
+      const historyContext = conversationHistory
+        .slice(-5) // Take last 5 messages
+        .map((msg) => `${msg.is_bot ? "Bot" : "User"}: ${msg.message}`)
+        .join("\n");
+
+      responsePrompt = `Previous conversation:
+${historyContext}
+
+Current User Question: "${userQuestion}"
+Context from database:
+${JSON.stringify(result || [])}
+Answer only based on the context and conversation history.`;
+    }
+
+    const response = await chatWithGemini(responsePrompt, conversationHistory);
+
+    // ตรวจสอบความมั่นใจของคำตอบ
+    const confidence = await checkResponseConfidence(response, userQuestion);
+    if (confidence < 5) {
+      console.log("🤖 Rooms response confidence too low, using fallback");
+      return await getFallbackContext();
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Rooms intent failed:", error);
+    return await getFallbackContext();
+  }
+}
+
+// Promo Codes Intent Handler
+async function handlePromoCodesIntent(userQuestion: string, conversationHistory?: historyType[]): Promise<string> {
+  try {
+    console.log("🎟️ PROMO CODES INTENT - Generating SQL...");
+
+    // สร้าง SQL จาก user question
+    const promoSchema = `promo_codes(id, code, discount_percent, discount_amount, expires_at, is_active, usage_limit, used_count, description)`;
+
+    const sqlPrompt = `You are a SQL assistant.
+Convert the user's question into a SQL query.
+Use ONLY the following schema:
+${promoSchema}
+User question: "${userQuestion}"
+Return only the SQL query.`;
+
+    const sqlResponse = await chatWithGemini(sqlPrompt);
+    const sqlQuery = sqlResponse.trim();
+
+    console.log("🎟️ GENERATED SQL:", sqlQuery);
+
+    // Execute SQL (ตัวอย่าง query ที่ Gemini อาจสร้าง)
+    const { data: result, error } = await supabase
+      .from("promo_codes")
+      .select("*")
+      .gt("expires_at", new Date().toISOString())
+      .eq("is_active", true);
+
+    if (error) {
+      console.error("SQL execution error:", error);
+      throw error;
+    }
+
+    console.log("🎟️ SQL RESULT:", result?.length || 0, "promo codes found");
+
+    // Generate response from SQL result
+    let responsePrompt = `User Question: "${userQuestion}"
+Context from database:
+${JSON.stringify(result || [])}
+Answer only based on the context.`;
+
+    // Add conversation history context if available
+    if (conversationHistory && conversationHistory.length > 0) {
+      const historyContext = conversationHistory
+        .slice(-5) // Take last 5 messages
+        .map((msg) => `${msg.is_bot ? "Bot" : "User"}: ${msg.message}`)
+        .join("\n");
+
+      responsePrompt = `Previous conversation:
+${historyContext}
+
+Current User Question: "${userQuestion}"
+Context from database:
+${JSON.stringify(result || [])}
+Answer only based on the context and conversation history.`;
+    }
+
+    const response = await chatWithGemini(responsePrompt, conversationHistory);
+
+    // ตรวจสอบความมั่นใจของคำตอบ
+    const confidence = await checkResponseConfidence(response, userQuestion);
+    if (confidence < 5) {
+      console.log("🤖 Promo codes response confidence too low, using fallback");
+      return await getFallbackContext();
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Promo codes intent failed:", error);
+    return await getFallbackContext();
+  }
+}
+
+// Helper function to check response confidence
+async function checkResponseConfidence(response: string, userQuestion: string): Promise<number> {
+  try {
+    const confidencePrompt = `
+Rate the confidence of this response (1-10):
+Response: "${response}"
+Question: "${userQuestion}"
+
+Consider:
+- Does the response directly answer the question?
+- Is the response specific and informative?
+- Does the response indicate uncertainty or lack of knowledge?
+- Is the response based on hotel information/data?
+- Does the response provide hotel-specific details?
+- If the response says "cannot help" or "not able to", give lower score (1-4)
+
+Answer only with a number from 1-10.`;
+
+    const confidenceText = await chatWithGemini(confidencePrompt);
+    const confidence = parseInt(confidenceText.trim());
+
+    // Validate confidence score
+    if (isNaN(confidence) || confidence < 1 || confidence > 10) {
+      console.log("🤖 Invalid confidence score, defaulting to 5");
+      return 5;
+    }
+
+    console.log("🤖 Response confidence:", confidence);
+    return confidence;
+  } catch (error) {
+    console.error("Error checking response confidence:", error);
+    return 5; // Default to medium confidence
+  }
+}
+
+// Helper function to get fallback context (จาก chatbot_faqs table)
+async function getFallbackContext(): Promise<string> {
+  try {
+    const { data: fallbackContext, error } = await supabase
+      .from("chatbot_faqs")
+      .select("reply_message")
+      .eq("topic", "::fallback::")
+      .single();
+
+    if (!error && fallbackContext) {
+      return fallbackContext.reply_message;
+    }
+
+    // No fallback message found in database
+    throw new Error("No fallback message found in database");
+  } catch (error) {
+    console.error("Error getting fallback context:", error);
+    throw error;
   }
 }

@@ -67,8 +67,8 @@ export default async function handler(
         const { data: faqEntry, error } = await supabase
           .from('chatbot_faqs')
           .insert([{ 
-            question, 
-            answer,
+            topic: question, 
+            reply_message: answer,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }])
@@ -151,8 +151,8 @@ export default async function handler(
         const { data: updatedFaq, error } = await supabase
           .from('chatbot_faqs')
           .update({ 
-            question, 
-            answer,
+            topic: question, 
+            reply_message: answer,
             updated_at: new Date().toISOString()
           })
           .eq('id', id as string)
