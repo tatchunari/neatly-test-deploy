@@ -1,5 +1,5 @@
 import React from "react";
-import { StatisticsCard } from "./StatisticsCard";
+import { StatisticsCard } from "../StatisticsCard";
 import { ShoppingCart, Wallet, BookCheck, Globe } from "lucide-react";
 
 const AnalyticCardSection = () => {

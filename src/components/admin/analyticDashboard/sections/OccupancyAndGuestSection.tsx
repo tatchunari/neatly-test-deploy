@@ -1,7 +1,7 @@
-import DateRangePicker from "../ui/DateRangePicker";
-import { LineChartComponent } from "./LineChartComponent";
-import { DropDownInput } from "../ui/DropdownInput";
-import { Button } from "../ui/Button";
+import DateRangePicker from "../../ui/DateRangePicker";
+import { LineChartComponent } from "../LineChartComponent";
+import { DropDownInput } from "../../ui/DropdownInput";
+import { Button } from "../../ui/Button";
 import { CreditCard } from "lucide-react";
 import { Banknote } from "lucide-react";
 
@@ -26,7 +26,7 @@ const OccupancyAndGuestSection = () => {
     console.log("Exporting from", from, "to", to);
   };
   return (
-    <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full min-h-screen mt-10">
+    <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full mt-10">
       <div className="flex md:flex-row flex-col w-full justify-between">
         <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
           Occupancy & Guest
