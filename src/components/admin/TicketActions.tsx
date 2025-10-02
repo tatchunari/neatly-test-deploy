@@ -85,7 +85,8 @@ export default function TicketActions({
         <Button
           onClick={() => handleUpdateStatus('in_progress')}
           size={buttonSize}
-          className={`bg-orange-600 hover:bg-orange-700 text-white ${buttonClassName}`}
+          variant="outline"
+          className={`border-orange-600 text-orange-600 hover:bg-orange-50 ${buttonClassName}`}
         >
           {variant === 'list' ? 'Accept' : 'Accept Ticket'}
         </Button>

@@ -10,7 +10,7 @@ import type { ChatMessage, ChatSession } from "@/types/chat";
 
 type SuggestionFAQ = {
   id?: string;
-  question?: string;
+  topic?: string;
 };
 
 type CurrentTicket = {
@@ -476,16 +476,16 @@ export default function Chatbot() {
 
       // หา greeting message
       const greetingFaq = faqs.find(
-        (faq: { question: string }) => faq.question === "::greeting::"
+        (faq: { topic: string }) => faq.topic === "::greeting::"
       );
       if (greetingFaq) {
-        setGreetingMessage(greetingFaq.answer);
+        setGreetingMessage(greetingFaq.reply_message);
       }
 
       // หา suggestion FAQs (ไม่รวม greeting และ fallback)
       const suggestions = faqs.filter(
-        (faq: { question: string }) =>
-          faq.question !== "::greeting::" && faq.question !== "::fallback::"
+        (faq: { topic: string }) =>
+          faq.topic !== "::greeting::" && faq.topic !== "::fallback::"
       );
       setSuggestionFAQs(suggestions);
     } catch (error) {
@@ -1057,10 +1057,10 @@ export default function Chatbot() {
             {/* Body */}
             <ScrollArea
               ref={scrollRef}
-              className="p-4 bg-gray-50 shadow-[inset_0_-16px_16px_-8px_rgba(0,0,0,0.1)] h-[calc(100%-120px)] overflow-y-auto"
+              className="bg-gray-50 shadow-[inset_0_-16px_16px_-8px_rgba(0,0,0,0.1)] h-[calc(100%-120px)] overflow-y-auto"
               onScrollCapture={handleScroll}
             >
-              <div className="space-y-4">
+              <div className="p-4 space-y-2">
                 {/* Loading Session */}
                 {isLoadingSession && (
                   <div className="flex flex-col items-center justify-center py-8">
@@ -1086,12 +1086,12 @@ export default function Chatbot() {
                     {suggestionFAQs.map((faq) => (
                       <Button
                         key={faq.id}
-                        onClick={() => sendMessage(faq.question)}
+                        onClick={() => sendMessage(faq.topic)}
                         variant="outline"
                         size="sm"
                         className="px-3 py-1.5 rounded-full border-2 border-green-300 bg-green-100 text-green-700 text-sm hover:bg-green-200 cursor-pointer"
                       >
-                        {faq.question}
+                        {faq.topic}
                       </Button>
                     ))}
                   </div>
@@ -1110,10 +1110,10 @@ export default function Chatbot() {
                         className={`max-w-[80%] p-3 rounded-lg ${
                           message.is_bot
                             ? "bg-white text-gray-800"
-                            : "bg-orange-500 text-white"
+                            : "bg-orange-600 text-white"
                         }`}
                       >
-                        <p className="text-sm">{message.message}</p>
+                        <p className="text-sm whitespace-pre-wrap">{message.message.replace(/\*\*(.*?)\*\*/g, '$1')}</p>
                       </div>
 
                       {/* Fallback message with Ticket button - outside message box */}
@@ -1215,14 +1215,14 @@ export default function Chatbot() {
                     <Button
                       key={`topic-${faq.id}`}
                       onClick={() => {
-                        sendMessage(faq.question);
+                        sendMessage(faq.topic);
                         setShowTopics(false);
                       }}
                       variant="outline"
                       size="sm"
                       className="px-3 py-1.5 rounded-full border-2 border-green-300 bg-green-100 text-green-700 text-sm hover:bg-green-200 cursor-pointer"
                     >
-                      {faq.question}
+                      {faq.topic}
                     </Button>
                   ))}
                 </div>
