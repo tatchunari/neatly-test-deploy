@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -22,6 +21,7 @@ interface LineChartComponentProps {
   height?: string;
   className?: string;
   yAxisTicks?: number[];
+  yAxisFormatter?: (value: number) => string;
 }
 
 export const LineChartComponent = ({
@@ -30,6 +30,7 @@ export const LineChartComponent = ({
   height = "h-80",
   className = "",
   yAxisTicks,
+  yAxisFormatter,
 }: LineChartComponentProps) => {
   return (
     <div className={`w-full ${height} ${className}`}>
@@ -62,7 +63,7 @@ export const LineChartComponent = ({
             tickLine={false}
             ticks={yAxisTicks}
             tick={{ fill: "#9CA3AF", fontSize: 12 }}
-            tickFormatter={(value) => value.toLocaleString()}
+            tickFormatter={yAxisFormatter}
           />
           <Area
             type="monotone"

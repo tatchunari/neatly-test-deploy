@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/select";
 
 interface RHFSelectProps<T extends FieldValues, K extends Path<T>> {
-  label: string;
+  label?: string;
   options: PathValue<T, K>[]; // 👈 ensure options match the field's type
-  register: UseFormRegisterReturn;
+  register?: UseFormRegisterReturn;
   setValue: UseFormSetValue<T>;
   name: K;
   defaultValue?: PathValue<T, K>;

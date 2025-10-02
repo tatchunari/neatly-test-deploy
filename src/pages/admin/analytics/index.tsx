@@ -1,5 +1,6 @@
 import AnalyticCardSection from "@/components/admin/analyticDashboard/AnalyticCardSection";
 import BookingTrendsChart from "@/components/admin/analyticDashboard/BookingTrendsChart";
+import OccupancyAndGuestSection from "@/components/admin/analyticDashboard/OccupancyAndGuestSection";
 import RevenueTrendSection from "@/components/admin/analyticDashboard/RevenueTrendSection";
 import RoomAvailabilityChart from "@/components/admin/analyticDashboard/RoomAvailabilityChart.tsx";
 import Layout from "@/components/admin/Layout";
@@ -9,7 +10,7 @@ function AnalyticDashboard() {
     <Layout>
       <div className="flex-1 bg-gray-50">
         {/* Header */}
-        <div className="flex flex-row justify-between pb-5 mt-20 md:mt-10 mx-10">
+        <div className="flex flex-row justify-between pb-5 mt-20 md:mt-10 mx-10 sticky">
           <p className="text-2xl md:text-xl font-semibold">
             Analytic Dashboard
           </p>
@@ -30,6 +31,11 @@ function AnalyticDashboard() {
           {/* Revenue Trend */}
           <div className="flex">
             <RevenueTrendSection />
+          </div>
+
+          {/* Occupancy & Guest Section */}
+          <div className="flex">
+            <OccupancyAndGuestSection />
           </div>
         </div>
       </div>
