@@ -24,6 +24,7 @@ interface RHFSelectProps<T extends FieldValues, K extends Path<T>> {
   setValue: UseFormSetValue<T>;
   name: K;
   defaultValue?: PathValue<T, K>;
+  onChange?: (value: PathValue<T, K>) => void;
 }
 
 export const DropDownInput = <T extends FieldValues, K extends Path<T>>({
@@ -33,6 +34,7 @@ export const DropDownInput = <T extends FieldValues, K extends Path<T>>({
   setValue,
   name,
   defaultValue,
+  onChange,
 }: RHFSelectProps<T, K>) => {
   const [selected, setSelected] = useState<PathValue<T, K>>(
     defaultValue ?? options[0]
@@ -45,6 +47,7 @@ export const DropDownInput = <T extends FieldValues, K extends Path<T>>({
   const handleChange = (value: PathValue<T, K>) => {
     setSelected(value);
     setValue(name, value);
+    onChange?.(value);
   };
 
   return (

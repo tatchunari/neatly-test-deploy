@@ -10,7 +10,7 @@ import {
 } from "recharts";
 
 interface LineChartData {
-  month: string;
+  [key: string]: string | number;
   value: number;
 }
 
@@ -22,6 +22,7 @@ interface LineChartComponentProps {
   className?: string;
   yAxisTicks?: number[];
   yAxisFormatter?: (value: number) => string;
+  datakey?: string;
 }
 
 export const LineChartComponent = ({
@@ -31,6 +32,7 @@ export const LineChartComponent = ({
   className = "",
   yAxisTicks,
   yAxisFormatter,
+  datakey,
 }: LineChartComponentProps) => {
   return (
     <div className={`w-full ${height} ${className}`}>
@@ -51,7 +53,7 @@ export const LineChartComponent = ({
             vertical={false}
           />
           <XAxis
-            dataKey="month"
+            dataKey={datakey}
             axisLine={false}
             tickLine={false}
             tick={{ fill: "#9CA3AF", fontSize: 12 }}

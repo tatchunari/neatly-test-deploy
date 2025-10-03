@@ -5,6 +5,7 @@ import RevenueTrendSection from "@/components/admin/analyticDashboard/sections/R
 import RoomAvailabilityChart from "@/components/admin/analyticDashboard/RoomAvailabilityChart.tsx";
 import Layout from "@/components/admin/Layout";
 import TimeAveragesSection from "@/components/admin/analyticDashboard/sections/TimeAveragesSection";
+import WebTrafficSection from "@/components/admin/analyticDashboard/sections/WebTrafficSection";
 
 function AnalyticDashboard() {
   return (
@@ -39,9 +40,13 @@ function AnalyticDashboard() {
             <OccupancyAndGuestSection />
           </div>
 
+          {/* Average Check-in & Check-out Time */}
           <div className="flex">
             <TimeAveragesSection />
           </div>
+
+          {/* Web Traffic */}
+          <WebTrafficSection />
         </div>
       </div>
     </Layout>
