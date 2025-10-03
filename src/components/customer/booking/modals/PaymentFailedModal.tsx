@@ -1,5 +1,5 @@
 import React from "react";
-import { BookingError } from "@/types/ิbooking";
+import { BookingError } from "@/types/booking";
 
 interface PaymentFailedModalProps {
   isOpen: boolean;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PaymentMethod, CreditCardDetails } from "@/types/ิbooking";
+import { PaymentMethod, CreditCardDetails } from "@/types/booking";
 import { PAYMENT_METHODS } from "@/constants/booking";
 
 interface PaymentMethodFormProps {

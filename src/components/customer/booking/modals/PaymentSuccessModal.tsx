@@ -1,13 +1,13 @@
 import React from "react";
-import { BookingConfirmation } from "@/types/ิbooking";
+import { BookingConfirmation } from "@/types/booking";
 import { formatCurrency, formatDate } from "@/utils/bookingUtils";
 
 interface PaymentSuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
   confirmation: BookingConfirmation;
-  guests: number; // เพิ่มบรรทัดนี้
-  paymentMethod: string; // เพิ่มบรรทัดนี้
+  guests: number;
+  paymentMethod: string;
   onViewBooking?: () => void;
   onNewBooking?: () => void;
 }
@@ -16,8 +16,8 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
   isOpen,
   onClose,
   confirmation,
-  guests, // เพิ่มบรรทัดนี้
-  paymentMethod, // เพิ่มบรรทัดนี้
+  guests,
+  paymentMethod,
   onViewBooking,
   onNewBooking,
 }) => {

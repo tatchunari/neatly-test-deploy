@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { BookingService } from "@/services/bookingService";
-import { BookingFormData } from "@/types/ิbooking";
+import { BookingFormData } from "@/types/booking";
 import { validateBookingData } from "@/utils/validation/bookingValidation";
 
 export default async function handler(

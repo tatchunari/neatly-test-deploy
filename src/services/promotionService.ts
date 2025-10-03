@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
-import { PromotionCode, BookingApiResponse } from "@/types/ิbooking";
+import { PromotionCode, BookingApiResponse } from "@/types/booking";
 import { BOOKING_ERROR_CODES, DISCOUNT_TYPES } from "@/constants/booking";
 
 export class PromotionService {

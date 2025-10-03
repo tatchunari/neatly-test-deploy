@@ -1,5 +1,5 @@
 // ===== BOOKING UTILITY FUNCTIONS =====
-import { SpecialRequest, BookingCalculation } from "@/types/ิbooking";
+import { SpecialRequest, BookingCalculation } from "@/types/booking";
 
 // ===== CALCULATION FUNCTIONS =====
 export const calculateBookingTotal = (

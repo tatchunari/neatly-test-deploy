@@ -1,4 +1,4 @@
-import { BookingFormData } from "@/types/ิbooking";
+import { BookingFormData } from "@/types/booking";
 
 export const validateBookingData = (data: BookingFormData) => {
   const errors: string[] = [];
@@ -25,14 +25,16 @@ export const validateBookingData = (data: BookingFormData) => {
     today.setHours(0, 0, 0, 0);
 
     if (checkInDate < today) errors.push("Check-in date cannot be in the past");
-    if (checkOutDate <= checkInDate) errors.push("Check-out date must be after check-in date");
+    if (checkOutDate <= checkInDate)
+      errors.push("Check-out date must be after check-in date");
   }
 
   // Validate guest count
-  if (data.guests && data.guests < 1) errors.push("Guest count must be at least 1");
+  if (data.guests && data.guests < 1)
+    errors.push("Guest count must be at least 1");
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };

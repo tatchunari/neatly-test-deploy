@@ -8,7 +8,7 @@ import {
   BookingSummary,
   RoomInfo,
   BookingStatus,
-} from "@/types/ิbooking";
+} from "@/types/booking";
 import {
   BOOKING_ERROR_CODES,
   BOOKING_STATUSES,
@@ -70,7 +70,7 @@ export class BookingService {
           check_in: bookingData.checkIn,
           check_out: bookingData.checkOut,
           total: calculation.total,
-          status: BOOKING_STATUSES.PENDING, 
+          status: BOOKING_STATUSES.PENDING,
           promo_code: bookingData.promoCode,
           special_requests: bookingData.specialRequests,
           additional_requests: bookingData.additionalRequests,
@@ -193,7 +193,7 @@ export class BookingService {
   // ===== UPDATE BOOKING STATUS =====
   static async updateBookingStatus(
     bookingId: string,
-    status: BookingStatus 
+    status: BookingStatus
   ): Promise<BookingApiResponse> {
     try {
       const { data: booking, error } = await supabase
@@ -355,7 +355,7 @@ export class BookingService {
         .from("bookings")
         .select("id")
         .eq("room_id", roomId)
-        .eq("status", BOOKING_STATUSES.CONFIRMED) 
+        .eq("status", BOOKING_STATUSES.CONFIRMED)
         .or(`and(check_in.lt.${checkOut},check_out.gt.${checkIn})`);
 
       if (error) {

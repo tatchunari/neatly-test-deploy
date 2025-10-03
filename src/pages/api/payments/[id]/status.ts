@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PaymentService } from "@/services/paymentService";
-import { PaymentStatus } from "@/types/ิbooking";
+import { PaymentStatus } from "@/types/booking";
 import { validatePaymentStatus } from "@/utils/validation/paymentValidation";
 
 export default async function handler(

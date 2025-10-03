@@ -1,5 +1,5 @@
 import React from "react";
-import { SpecialRequest } from "@/types/ิbooking";
+import { SpecialRequest } from "@/types/booking";
 import { SPECIAL_REQUESTS } from "@/constants/booking";
 import { formatCurrency } from "@/utils/bookingUtils";
 

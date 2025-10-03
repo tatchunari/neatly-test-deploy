@@ -1,4 +1,4 @@
-import { PaymentMethod } from "@/types/ิbooking";
+import { PaymentMethod } from "@/types/booking";
 import { PAYMENT_STATUSES, PAYMENT_METHODS } from "@/constants/booking";
 
 export const validatePaymentData = (data: {

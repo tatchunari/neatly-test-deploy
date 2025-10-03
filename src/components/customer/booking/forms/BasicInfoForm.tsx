@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { GuestInfo } from "@/types/ิbooking";
+import { GuestInfo } from "@/types/booking";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/lib/supabaseClient";
 

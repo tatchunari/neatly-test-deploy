@@ -3,7 +3,7 @@ import {
   PaymentApiResponse,
   PaymentMethod,
   PaymentStatus,
-} from "@/types/ิbooking";
+} from "@/types/booking";
 import {
   BOOKING_ERROR_CODES,
   PAYMENT_METHODS,

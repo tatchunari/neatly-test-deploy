@@ -1,5 +1,5 @@
 // ===== BOOKING CONSTANTS =====
-import { BookingPolicies, SpecialRequest } from "@/types/ิbooking";
+import { BookingPolicies, SpecialRequest } from "@/types/booking";
 
 // ===== ERROR CODES =====
 export const BOOKING_ERROR_CODES = {

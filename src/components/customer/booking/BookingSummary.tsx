@@ -1,6 +1,6 @@
-import React from 'react';
-import { BookingCalculation } from '@/types/ิbooking';
-import { formatCurrency, formatDate } from '@/utils/bookingUtils';
+import React from "react";
+import { BookingCalculation } from "@/types/booking";
+import { formatCurrency, formatDate } from "@/utils/bookingUtils";
 
 interface BookingSummaryProps {
   roomInfo: {
@@ -34,7 +34,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   calculation,
   specialRequests = [],
   promotionCode,
-  timeLeft
+  timeLeft,
 }) => {
   return (
     <div className="bg-green-900 rounded-lg p-6 text-white">
@@ -42,15 +42,19 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 114 0 2 2 0 01-4 0zm8 0a2 2 0 114 0 2 2 0 01-4 0z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 114 0 2 2 0 01-4 0zm8 0a2 2 0 114 0 2 2 0 01-4 0z"
+              clipRule="evenodd"
+            />
           </svg>
           <h3 className="text-lg font-semibold font-inter">Booking Detail</h3>
         </div>
-        
+
         {timeLeft && (
           <div className="bg-red text-white px-3 py-1 rounded-full text-sm font-mono font-inter">
-            {timeLeft.minutes.toString().padStart(2, '0')}:
-            {timeLeft.seconds.toString().padStart(2, '0')}
+            {timeLeft.minutes.toString().padStart(2, "0")}:
+            {timeLeft.seconds.toString().padStart(2, "0")}
           </div>
         )}
       </div>
