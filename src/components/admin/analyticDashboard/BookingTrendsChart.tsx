@@ -19,7 +19,7 @@ const data = [
   { day: "Sun", bookings: 70 },
 ];
 
-const period = ["This month", "This week", "Today"];
+const period = ["This month", "Last month", "Last 2 months"];
 
 const BookingTrendsChart = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("This month");

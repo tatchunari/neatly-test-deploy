@@ -36,6 +36,7 @@ const RevenueTrendSection = () => {
       {/* Line Chart */}
       <LineChartComponent
         data={revenueData}
+        datakey="month"
         lineColor="#E87B5A"
         height="h-80"
         yAxisTicks={[0, 10000, 20000, 30000, 40000, 50000, 60000, 70000]}
