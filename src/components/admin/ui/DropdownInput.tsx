@@ -52,16 +52,20 @@ export const DropDownInput = <T extends FieldValues, K extends Path<T>>({
 
   return (
     <div className="flex flex-col w-full text-sm relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-gray-900 mb-2">
         {label}
       </label>
 
-      <Select onValueChange={handleChange} value={selected as string}>
-        <SelectTrigger className="w-full border-gray-300 bg-white">
+      <Select onValueChange={handleChange} value={selected as string} disabled={disabled}>
+        <SelectTrigger className={`w-full border border-gray-300 !bg-white rounded-md text-sm px-3 py-2 ${
+          disabled 
+            ? "text-gray-600 cursor-pointer !bg-white !border-gray-300 !opacity-50" 
+            : "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 cursor-pointer"
+        }`}>
           <SelectValue placeholder={`Select ${label}`} />
         </SelectTrigger>
-        <SelectContent className="bg-white border-gray-300">
-          <SelectGroup className="border-gray-300">
+        <SelectContent className="bg-white border border-gray-300 rounded-md shadow-lg">
+          <SelectGroup>
             {options.map((opt) => (
               <SelectItem key={opt as string} value={opt as string}>
                 {opt}
