@@ -36,7 +36,10 @@ function SearchResultPage() {
       const data = await response.json();
       // สมมติว่า API ส่ง { data: [...] }
       const list = Array.isArray(data?.data) ? data.data : [];
-      setRooms(list);
+
+      // Filter only rooms with status "Vacant"
+      const vacantRooms = list.filter((room: Room) => room.status === "Vacant");
+      setRooms(vacantRooms);
     } catch (err) {
       if (err instanceof Error) {
         setError(err?.message || "Error fetching rooms");
@@ -91,7 +94,7 @@ function SearchResultPage() {
           <div className="flex flex-col gap-6 mt-4">
             {rooms.length === 0 ? (
               <div className="text-center text-gray-500 py-10">
-                No rooms found.
+                No vacant rooms found.
               </div>
             ) : (
               rooms.map((room: RoomType, index: number) => (
