@@ -2,18 +2,35 @@ import { useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { SelectInput } from "./SelectInput";
 
-const RoomAvailabilityChart = () => {
-  const data = [
-    { name: "Occupied", value: 21, color: "#E76B39" },
-    { name: "Booked", value: 16, color: "#3D4F44" },
-    { name: "Available", value: 8, color: "#C5CFDA" },
+import { Room } from "@/types/rooms";
+
+interface RoomAvailabilityChartProps {
+  roomsData: Room[] | null | undefined;
+}
+
+const RoomAvailabilityChart: React.FC<RoomAvailabilityChartProps> = ({
+  roomsData,
+}) => {
+  const occupiedCount =
+    roomsData?.filter(
+      (room) => room.status && room.status.startsWith("Occupied")
+    ).length ?? 0;
+
+  const bookedCount =
+    roomsData?.filter((room) => room.status?.startsWith("Assign")).length ?? 0;
+
+  const availableCount =
+    roomsData?.filter((room) => room.status && room.status.startsWith("Vacant"))
+      .length ?? 0;
+
+  const roomAvailabilityData = [
+    { name: "Occupied", value: occupiedCount, color: "#E76B39" },
+    { name: "Booked", value: bookedCount, color: "#3D4F44" },
+    { name: "Available", value: availableCount, color: "#C5CFDA" },
   ];
 
   const period = ["This month", "This week", "Today"];
-
   const [selectedPeriod, setSelectedPeriod] = useState("This month");
-
-  const total = data.reduce((sum, entry) => sum + entry.value, 0);
 
   return (
     <div className="flex flex-col items-center bg-gray-50 mt-8 w-full sm:w-full mx-auto">
@@ -27,7 +44,6 @@ const RoomAvailabilityChart = () => {
             value={selectedPeriod}
             onChange={(value) => {
               setSelectedPeriod(value);
-              console.log("Selected period:", value);
             }}
             width="w-35"
             className="mr-5 md:mr-0 mt-5 md:mt-0"
@@ -40,7 +56,7 @@ const RoomAvailabilityChart = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data}
+                  data={roomAvailabilityData}
                   cx="50%"
                   cy="50%"
                   innerRadius={75}
@@ -50,7 +66,7 @@ const RoomAvailabilityChart = () => {
                   startAngle={90}
                   endAngle={450}
                 >
-                  {data.map((entry, index) => (
+                  {roomAvailabilityData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -59,7 +75,7 @@ const RoomAvailabilityChart = () => {
           </div>
 
           <div className="flex flex-col gap-4 ml-8 mt-10">
-            {data.map((entry, index) => (
+            {roomAvailabilityData.map((entry, index) => (
               <div key={index} className="flex items-center gap-3">
                 <div
                   className="w-3 h-3 rounded-full"
@@ -80,5 +96,4 @@ const RoomAvailabilityChart = () => {
     </div>
   );
 };
-
 export default RoomAvailabilityChart;

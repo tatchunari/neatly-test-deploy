@@ -1,3 +1,5 @@
+import { useState, useMemo } from "react";
+import { Bookings } from "@/pages/admin/analytics";
 import { SelectInput } from "./SelectInput";
 import {
   BarChart,
@@ -7,43 +9,83 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
-import { useState } from "react";
 
-const data = [
-  { day: "Mon", bookings: 40 },
-  { day: "Tue", bookings: 55 },
-  { day: "Wed", bookings: 30 },
-  { day: "Thu", bookings: 70 },
-  { day: "Fri", bookings: 70 },
-  { day: "Sat", bookings: 70 },
-  { day: "Sun", bookings: 70 },
-];
+interface BookingTrendsChartProps {
+  bookingsData: Bookings[] | null | undefined;
+}
 
-const period = ["This month", "Last month", "Last 2 months"];
+const periodOptions = ["This month", "Last month", "Last 2 months"];
 
-const BookingTrendsChart = () => {
+const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function getBookingTrends(bookings: Bookings[], period: string) {
+  const now = new Date();
+  let startDate: Date;
+  let endDate: Date;
+
+  if (period === "This month") {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  } else if (period === "Last month") {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+  } else {
+    // Last 2 months
+    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  }
+
+  const trends: Record<string, number> = {
+    Mon: 0,
+    Tue: 0,
+    Wed: 0,
+    Thu: 0,
+    Fri: 0,
+    Sat: 0,
+    Sun: 0,
+  };
+
+  bookings.forEach((booking) => {
+    const date = new Date(booking.check_in_date);
+    if (
+      date >= startDate &&
+      date <= endDate &&
+      booking.status?.toLowerCase() === "confirmed"
+    ) {
+      const jsDay = date.getDay();
+      const weekday = weekDays[jsDay === 0 ? 6 : jsDay - 1];
+      trends[weekday] += 1;
+    }
+  });
+
+  return weekDays.map((day) => ({ day, bookings: trends[day] }));
+}
+
+const BookingTrendsChart: React.FC<BookingTrendsChartProps> = ({
+  bookingsData,
+}) => {
   const [selectedPeriod, setSelectedPeriod] = useState("This month");
 
-  // Chart settings
-  const xAxisKey = "day";
-  const yAxisKey = "bookings";
-  const yAxisTicks = [0, 20, 40, 60, 80, 100];
+  const chartData = useMemo(() => {
+    if (!bookingsData) return [];
+    return getBookingTrends(bookingsData, selectedPeriod);
+  }, [bookingsData, selectedPeriod]);
+
+  const yAxisTicks = [0, 5, 10, 15, 20]; // adjust dynamically if needed
   const barColor = "#E87B5A";
   const maxBarSize = 10;
 
+  console.log("Chart Data", chartData);
   return (
     <div className="bg-white rounded-lg shadow-md p-8 w-full h-90 mt-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-medium text-gray-700">
-          Booking Trends by Month
+          Booking Trends by Day
         </h2>
         <SelectInput
-          options={period}
+          options={periodOptions}
           value={selectedPeriod}
-          onChange={(value) => {
-            setSelectedPeriod(value);
-            console.log("Selected period:", value);
-          }}
+          onChange={(value) => setSelectedPeriod(value)}
           width="w-40"
         />
       </div>
@@ -51,7 +93,7 @@ const BookingTrendsChart = () => {
       <div className="w-full h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
             barCategoryGap="20%"
             barGap={2}
@@ -62,7 +104,7 @@ const BookingTrendsChart = () => {
               vertical={false}
             />
             <XAxis
-              dataKey={xAxisKey}
+              dataKey="day"
               axisLine={false}
               tickLine={false}
               tick={{ fill: "#9CA3AF", fontSize: 12 }}
@@ -74,7 +116,7 @@ const BookingTrendsChart = () => {
               ticks={yAxisTicks}
             />
             <Bar
-              dataKey={yAxisKey}
+              dataKey="bookings"
               fill={barColor}
               radius={[4, 4, 0, 0]}
               maxBarSize={maxBarSize}
