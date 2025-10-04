@@ -8,6 +8,68 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import type { ChatMessage, ChatSession } from "@/types/chat";
 
+// Bot Message Renderer Component
+function BotMessageRenderer({ message, onOptionClick }: { message: ChatMessage; onOptionClick: (option: string) => void }) {
+  try {
+    // Try to parse the message as JSON (for encoded responseData)
+    const parsed = JSON.parse(message.message);
+    if (parsed.responseData) {
+      const { text, responseData } = parsed;
+      
+      // Render based on format
+      if (responseData.format === 'option_details') {
+        return (
+          <div className="text-sm">
+            <p className="whitespace-pre-wrap mb-3">{text}</p>
+            <div className="space-y-2">
+              {responseData.options?.map((option: { option: string; detail: string }, index: number) => (
+                <div 
+                  key={index} 
+                  className="bg-green-100 rounded-md p-3 cursor-pointer hover:bg-green-200"
+                  onClick={() => onOptionClick(option.option)}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-green-700">{option.option}</span>
+                    <svg className="w-4 h-4 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      } else if (responseData.format === 'room_type') {
+        return (
+          <div className="text-sm">
+            <p className="whitespace-pre-wrap mb-3">{text}</p>
+            <div className="grid grid-cols-1 gap-3">
+              {responseData.rooms?.map((room: string, index: number) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-gray-800">{room}</span>
+                    <Button
+                      size="sm"
+                      className="bg-orange-500 text-white hover:bg-orange-600 text-xs px-3 py-1"
+                    >
+                      {responseData.buttonName || 'View Details'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+    }
+  } catch (error) {
+    // Not JSON, treat as regular message
+  }
+  
+  // Default: render as regular message
+  return <p className="text-sm whitespace-pre-wrap">{message.message.replace(/\*\*(.*?)\*\*/g, '$1')}</p>;
+}
+
 type SuggestionFAQ = {
   id?: string;
   topic?: string;
@@ -1113,7 +1175,14 @@ export default function Chatbot() {
                             : "bg-orange-600 text-white"
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{message.message.replace(/\*\*(.*?)\*\*/g, '$1')}</p>
+                        {message.is_bot ? (
+                          <BotMessageRenderer 
+                            message={message} 
+                            onOptionClick={(option) => sendMessage(option)}
+                          />
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap">{message.message.replace(/\*\*(.*?)\*\*/g, '$1')}</p>
+                        )}
                       </div>
 
                       {/* Fallback message with Ticket button - outside message box */}

@@ -497,7 +497,7 @@ export default function ChatbotAdmin() {
                       disabled={loading}
                       className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
                     >
-                      {loading ? "Saving..." : "Save"}
+                      {loading ? "Adding..." : "Add"}
                     </Button>
                     <Button
                       onClick={() => setNewContext({ content: "" })}

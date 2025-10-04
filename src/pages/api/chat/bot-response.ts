@@ -42,23 +42,83 @@ export default async function handler(
 
     // 1. Strict match: JOIN chatbot_faqs + chatbot_faq_aliases
     let botResponse = '';
+    interface BotResponseData {
+      format: 'message' | 'option_details' | 'room_type';
+      message: string;
+      options?: Array<{ option: string; detail: string }>;
+      rooms?: string[];
+      buttonName?: string;
+    }
+    
+    let botResponseData: BotResponseData | null = null;
     try {
-      const normalize = (s: string) => s.trim().toLowerCase().replace(/[^\w\s]/g, '');
+      const normalize = (s: string) => s.trim().toLowerCase();
       const userQuery = normalize(userMessage);
       console.log('🔍 STRICT MATCH DEBUG:', { userQuery, originalMessage: userMessage });
 
       // Check FAQ questions first
       const { data: faqMatches, error: faqError } = await supabase
         .from('chatbot_faqs')
-        .select('topic, reply_message')
+        .select('topic, reply_message, reply_format, reply_payload')
         .neq('topic', '::greeting::')
         .neq('topic', '::fallback::');
 
       if (!faqError && faqMatches) {
         for (const faq of faqMatches) {
           if (userQuery === normalize(faq.topic)) {
-            botResponse = faq.reply_message;
+            console.log('🎯 STRICT MATCH by topic:', { 
+              userQuery, 
+              matchedTopic: faq.topic, 
+              replyFormat: faq.reply_format 
+            });
+            // Set response based on format
+            if (faq.reply_format === 'message') {
+              botResponse = faq.reply_message;
+              botResponseData = {
+                format: 'message',
+                message: faq.reply_message
+              };
+            } else if (faq.reply_format === 'option_details') {
+              botResponse = faq.reply_message;
+              botResponseData = {
+                format: 'option_details',
+                message: faq.reply_message,
+                options: faq.reply_payload
+              };
+            } else if (faq.reply_format === 'room_type') {
+              botResponse = faq.reply_message;
+              botResponseData = {
+                format: 'room_type',
+                message: faq.reply_message,
+                rooms: faq.reply_payload?.rooms || [],
+                buttonName: faq.reply_payload?.buttonName || 'View Details'
+              };
+            }
             break;
+          }
+          
+          // Check option_details format for option matching
+          if (faq.reply_format === 'option_details' && faq.reply_payload) {
+            try {
+              const options = Array.isArray(faq.reply_payload) ? faq.reply_payload : JSON.parse(faq.reply_payload);
+              if (Array.isArray(options)) {
+                for (const option of options) {
+                  if (option.option && userQuery === normalize(option.option)) {
+                    botResponse = option.detail || option.option;
+                    botResponseData = {
+                      format: 'message',
+                      message: option.detail || option.option
+                    };
+                    console.log('✅ STRICT MATCH found in option_details:', { option: option.option, detail: option.detail });
+                    break;
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error parsing reply_payload for option_details:', error);
+            }
+            
+            if (botResponse) break;
           }
         }
       }
@@ -72,15 +132,43 @@ export default async function handler(
         if (!aliasError && aliasMatches) {
           for (const aliasMatch of aliasMatches) {
             if (userQuery === normalize(aliasMatch.alias)) {
-              // Get FAQ answer by faq_id
+              // Get FAQ answer by faq_id with full data
               const { data: faqData } = await supabase
                 .from('chatbot_faqs')
-                .select('reply_message')
+                .select('topic, reply_message, reply_format, reply_payload')
                 .eq('id', aliasMatch.faq_id)
                 .single();
 
               if (faqData?.reply_message) {
-                botResponse = faqData.reply_message;
+                console.log('🎯 STRICT MATCH by alias:', { 
+                  userQuery, 
+                  matchedAlias: aliasMatch.alias,
+                  matchedTopic: faqData.topic || 'Unknown',
+                  replyFormat: faqData.reply_format 
+                });
+                // Set response based on format
+                if (faqData.reply_format === 'message') {
+                  botResponse = faqData.reply_message;
+                  botResponseData = {
+                    format: 'message',
+                    message: faqData.reply_message
+                  };
+                } else if (faqData.reply_format === 'option_details') {
+                  botResponse = faqData.reply_message;
+                  botResponseData = {
+                    format: 'option_details',
+                    message: faqData.reply_message,
+                    options: faqData.reply_payload
+                  };
+                } else if (faqData.reply_format === 'room_type') {
+                  botResponse = faqData.reply_message;
+                  botResponseData = {
+                    format: 'room_type',
+                    message: faqData.reply_message,
+                    rooms: faqData.reply_payload?.rooms || [],
+                    buttonName: faqData.reply_payload?.buttonName || 'View Details'
+                  };
+                }
                 break;
               }
             }
@@ -107,10 +195,33 @@ export default async function handler(
           } else if (matches && matches.length > 0) {
             const bestMatch = matches[0];
             botResponse = bestMatch.reply_message;
+            
+            // Set response data based on format from vector match
+            if (bestMatch.reply_format === 'message') {
+              botResponseData = {
+                format: 'message',
+                message: bestMatch.reply_message
+              };
+            } else if (bestMatch.reply_format === 'option_details') {
+              botResponseData = {
+                format: 'option_details',
+                message: bestMatch.reply_message,
+                options: bestMatch.reply_payload
+              };
+            } else if (bestMatch.reply_format === 'room_type') {
+              botResponseData = {
+                format: 'room_type',
+                message: bestMatch.reply_message,
+                rooms: bestMatch.reply_payload?.rooms || [],
+                buttonName: bestMatch.reply_payload?.buttonName || 'View Details'
+              };
+            }
+            
             console.log('🔍 VECTOR MATCH found:', {
               source: bestMatch.source,
               similarity: bestMatch.similarity,
-              reply_message: bestMatch.reply_message
+              reply_message: bestMatch.reply_message,
+              format: bestMatch.reply_format
             });
           }
         } catch (err) {
@@ -121,6 +232,10 @@ export default async function handler(
             .eq('topic', '::fallback::');
           if (fallbackFaqs && fallbackFaqs[0]?.reply_message) {
             botResponse = fallbackFaqs[0].reply_message;
+            botResponseData = {
+              format: 'message',
+              message: fallbackFaqs[0].reply_message
+            };
           } else {
             throw new Error('No fallback message found in database');
           }
@@ -180,13 +295,23 @@ export default async function handler(
     let retryCount = 0;
     const maxRetries = 3;
     
+    // Prepare message content - if we have responseData, encode it in the message
+    let messageContent = botResponse;
+    if (botResponseData && botResponseData.format !== 'message') {
+      // For non-message formats, encode the responseData as JSON in the message
+      messageContent = JSON.stringify({
+        text: botResponse,
+        responseData: botResponseData
+      });
+    }
+    
     while (retryCount < maxRetries) {
       try {
         const { data, error } = await supabase
           .from('chatbot_messages')
           .insert({
             session_id: sessionId,
-            message: botResponse,
+            message: messageContent,
             is_bot: true
           })
           .select()
@@ -224,6 +349,7 @@ export default async function handler(
 
     res.status(201).json({ 
       message: botMessage,
+      responseData: botResponseData,
       success: true 
     });
 
