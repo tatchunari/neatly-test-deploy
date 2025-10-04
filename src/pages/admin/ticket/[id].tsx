@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Layout from "@/components/admin/Layout";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
@@ -46,12 +46,30 @@ export default function TicketDetail() {
   const [isTyping, setIsTyping] = useState(false);
   const [userTyping, setUserTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  
+  // Ref for auto-scroll
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) {
       fetchTicketData();
     }
   }, [id]);
+
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Auto scroll to bottom when page loads
+  useEffect(() => {
+    if (messages.length > 0 && messagesEndRef.current) {
+      // Use setTimeout to ensure DOM is rendered
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      }, 100);
+    }
+  }, [loading]); // Trigger when loading is complete
 
   // Realtime subscription for new messages
   useEffect(() => {
@@ -421,6 +439,9 @@ export default function TicketDetail() {
                        </div>
                      </div>
                    )}
+                   
+                   {/* Invisible div for auto-scroll */}
+                   <div ref={messagesEndRef} />
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
