@@ -1,4 +1,4 @@
-import DateRangePicker from "../../ui/DateRangePicker";
+import { DateRangePicker } from "../../ui/DateRangePicker";
 import { LineChartComponent } from "../LineChartComponent";
 import { DropDownInput } from "../../ui/DropdownInput";
 import { Button } from "../../ui/Button";
