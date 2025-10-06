@@ -1,4 +1,4 @@
-import { DateRangePicker } from "../../ui/DateRangePicker";
+import DatePicker from "../../ui/DatePicker";
 import { LineChartComponent } from "../LineChartComponent";
 import { DropDownInput } from "../../ui/DropdownInput";
 import { Button } from "../../ui/Button";
@@ -46,7 +46,9 @@ const OccupancyAndGuestSection = () => {
             setValue={setValue}
             onChange={(value) => setSelectedView(value)}
           />
-          <DateRangePicker />
+          <DatePicker />
+          <p>to</p>
+          <DatePicker />
           <Button
             text="Export"
             loading={false}

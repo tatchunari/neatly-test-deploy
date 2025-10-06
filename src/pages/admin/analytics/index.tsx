@@ -32,6 +32,7 @@ export interface Bookings {
   user_id: string;
   room_id: string;
   status: "pending" | "confirmed" | "cancelled" | "refunded";
+  booking_date: string;
   check_in_date: string;
   check_out_date: string;
   total_amount: number;
@@ -92,7 +93,7 @@ function AnalyticDashboard() {
 
           {/* Revenue Trend */}
           <div className="flex">
-            <RevenueTrendSection />
+            <RevenueTrendSection bookingsData={bookingsData} />
           </div>
 
           {/* Occupancy & Guest Section */}
