@@ -5,7 +5,7 @@ import Image from "next/image";
 type Room = {
   id: string | number;
   name: string;
-  main_image_url?: string;
+  main_image?: string;
   room_type?: string;
   // add more fields as needed
 };
@@ -21,7 +21,7 @@ export default function Otherroompage() {
       setError(null);
       try {
         // fetch from the same API as /customer/search-result
-        const response = await fetch("/api/rooms");
+        const response = await fetch("/api/room_types");
         if (!response.ok) {
           throw new Error("Failed to fetch rooms");
         }
@@ -82,9 +82,9 @@ export default function Otherroompage() {
                       height: "100%",
                     }}
                   >
-                    {room.main_image_url ? (
+                    {room.main_image ? (
                       <Image
-                        src={room.main_image_url[0]}
+                        src={room.main_image}
                         alt={room.name}
                         width={800}
                         height={600}
