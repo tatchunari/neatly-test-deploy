@@ -3,7 +3,6 @@ import Layout from "@/components/admin/Layout";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
 import { FileQuestionMark } from "lucide-react";
-import { DropDownInput } from "@/components/admin/ui/DropdownInput";
 import SuggestionMenu from "@/components/admin/SuggestionMenu";
 
 type RoomTypePayload = {

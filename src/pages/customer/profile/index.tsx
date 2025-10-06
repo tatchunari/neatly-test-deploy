@@ -5,6 +5,7 @@ import { ProfileForm } from "@/components/customer/forms/ProfileForm";
 import { UserProfile } from "@/types/user.type";
 import Layout from "@/components/Layout";
 import { User } from "@supabase/supabase-js";
+import Chatbot from "@/components/Chatbot";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -90,6 +91,9 @@ export default function ProfilePage() {
           />
         </div>
       </div>
+      
+      {/* Chatbot */}
+      <Chatbot />
     </Layout>
   );
 }

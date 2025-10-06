@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
 import { FileQuestionMark } from "lucide-react";
-import { DropDownInput } from "@/components/admin/ui/DropdownInput";
+import { ChatbotDropdown } from "@/components/admin/ui/ChatbotDropdown";
 
 // Types for reply payloads
 type RoomTypePayload = {
@@ -70,55 +70,20 @@ export default function SuggestionMenu({
   const [newFAQ, setNewFAQ] = useState({ 
     question: faq?.topic || "", 
     answer: faq?.reply_message || "", 
-    format: faq ? getFormatDisplayString(faq.reply_format) : "Message",
+    format: faq ? getFormatDisplayString(faq.reply_format) : "",
     replyTitle: "",
     roomType: "",
     buttonName: "",
     options: [{ option: "", detail: "" }]
   });
 
-  // Stable setValue function to prevent infinite loop
-  const setFormatValue = useCallback((name: string, value: string) => {
-    setNewFAQ(prev => ({ ...prev, format: value }));
-  }, []);
 
-  // Room type multiselect handlers
-  const handleRoomTypeSelect = (roomType: string) => {
-    if (roomType === "All") {
-      // Check if all room types are currently selected (equivalent to "All" selected)
-      const allSelected = roomTypes.every(type => selectedRoomTypes.includes(type));
-      if (allSelected) {
-        // If all are selected, deselect all
-        setSelectedRoomTypes([]);
-        setNewFAQ(prev => ({ ...prev, roomType: "" }));
-      } else {
-        // If not all are selected, select all
-        setSelectedRoomTypes([...roomTypes]);
-        setNewFAQ(prev => ({ ...prev, roomType: roomTypes.join(",") }));
-      }
-    } else {
-      let newSelection;
-      if (selectedRoomTypes.includes(roomType)) {
-        newSelection = selectedRoomTypes.filter(type => type !== roomType);
-      } else {
-        newSelection = [...selectedRoomTypes, roomType];
-      }
-      setSelectedRoomTypes(newSelection);
-      setNewFAQ(prev => ({ ...prev, roomType: newSelection.join(",") }));
-    }
-  };
-
-  const handleRoomTypeRemove = (roomType: string) => {
-    const newSelection = selectedRoomTypes.filter(type => type !== roomType);
-    setSelectedRoomTypes(newSelection);
-    setNewFAQ(prev => ({ ...prev, roomType: newSelection.join(",") }));
-  };
 
   // Room types state
   const [roomTypes, setRoomTypes] = useState<string[]>([]);
   const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>([]);
-  const [roomTypeSearch, setRoomTypeSearch] = useState<string>('');
-  const [showRoomTypeDropdown, setShowRoomTypeDropdown] = useState<boolean>(false);
+
+  const formatOptions = ["Message", "Room type", "Option with details"];
 
   // Load FAQ data when component mounts or faq changes
   useEffect(() => {
@@ -176,7 +141,7 @@ export default function SuggestionMenu({
       setNewFAQ({
         question: "",
         answer: "",
-        format: "Message",
+        format: "",
         replyTitle: "",
         roomType: "",
         buttonName: "",
@@ -191,15 +156,10 @@ export default function SuggestionMenu({
   useEffect(() => {
     const fetchRoomTypes = async () => {
       try {
-        const response = await fetch('/api/rooms');
+        const response = await fetch('/api/room_types');
         const data = await response.json();
-        const types = [...new Set(data.data?.map((room: { room_type: string }) => room.room_type) || [])] as string[];
+        const types = data.data?.map((roomType: { name: string }) => roomType.name) || [];
         setRoomTypes(types);
-        // Only set default room types if no FAQ is being edited
-        if (types.length > 0 && !faq) {
-          setSelectedRoomTypes(types);
-          setNewFAQ(prev => ({ ...prev, roomType: types.join(",") }));
-        }
       } catch (error) {
         console.error('Error fetching room types:', error);
       }
@@ -207,16 +167,6 @@ export default function SuggestionMenu({
     fetchRoomTypes();
   }, [faq]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showRoomTypeDropdown && !(event.target as Element).closest('.room-type-dropdown')) {
-        setShowRoomTypeDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showRoomTypeDropdown]);
 
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
 
@@ -230,6 +180,11 @@ export default function SuggestionMenu({
     // Validation based on format
     if (!newFAQ.question.trim()) {
       alert("Please fill in Topic field");
+      return;
+    }
+
+    if (!newFAQ.format.trim()) {
+      alert("Please select a Reply format");
       return;
     }
 
@@ -310,7 +265,7 @@ export default function SuggestionMenu({
         setNewFAQ({ 
           question: "", 
           answer: "", 
-          format: "Message",
+          format: "",
           replyTitle: "",
           roomType: "",
           buttonName: "",
@@ -377,18 +332,16 @@ export default function SuggestionMenu({
                    </div>
                  </div>
                 <div className="flex-1 [&_label]:text-gray-900">
-                  <DropDownInput
+                  <ChatbotDropdown
                     label="Reply format"
-                    options={["Message", "Room type", "Option with details"]}
-                    register={{ 
-                      name: "format",
-                      onChange: async () => {},
-                      onBlur: async () => {},
-                      ref: () => {}
+                    options={formatOptions}
+                    value={newFAQ.format}
+                    onChange={(value) => {
+                      if (typeof value === 'string') {
+                        setNewFAQ(prev => ({ ...prev, format: value }));
+                      }
                     }}
-                    setValue={setFormatValue}
-                    name="format"
-                    defaultValue={newFAQ.format}
+                    placeholder="Select reply format..."
                     disabled={isReadOnly}
                   />
                 </div>
@@ -517,95 +470,23 @@ export default function SuggestionMenu({
                   className={`${inputClassName} !bg-white`}
                 />
               </div>
-              <div className="relative room-type-dropdown [&_label]:text-gray-900">
-                <label className="block text-sm font-medium mb-2">
-                  Room Type
-                </label>
-                
-                {/* Selected items display */}
-                <div 
-                  className={`${inputClassName} min-h-[40px] flex flex-wrap gap-1 !bg-white`}
-                  onClick={() => {
-                    if (!isReadOnly) {
-                      setShowRoomTypeDropdown(!showRoomTypeDropdown);
+              <div className="[&_label]:text-gray-900">
+                <ChatbotDropdown
+                  label="Room Type"
+                  options={roomTypes}
+                  value={selectedRoomTypes}
+                  onChange={(value) => {
+                    if (Array.isArray(value)) {
+                      setSelectedRoomTypes(value);
+                      setNewFAQ(prev => ({ ...prev, roomType: value.join(",") }));
                     }
                   }}
-                >
-                  {selectedRoomTypes.length === 0 ? (
-                    <span className="text-gray-500 text-sm">Select room types...</span>
-                  ) : (
-                    selectedRoomTypes.map((roomType) => (
-                      <span
-                        key={roomType}
-                        className={`inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded-md ${isReadOnly ? '' : 'cursor-pointer'}`}
-                        onClick={(e) => {
-                          if (!isReadOnly) {
-                            e.stopPropagation();
-                            handleRoomTypeRemove(roomType);
-                          }
-                        }}
-                      >
-                        {roomType}
-                        {!isReadOnly && (
-                          <button className="ml-1 text-gray-500 hover:text-gray-700">
-                            ✕
-                          </button>
-                        )}
-                      </span>
-                    ))
-                  )}
-                </div>
-
-                {/* Dropdown */}
-                {showRoomTypeDropdown && !isReadOnly && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50">
-                    {/* Search bar */}
-                    <div className="p-2 border-b border-gray-200">
-                      <input
-                        type="text"
-                        placeholder="Search room type..."
-                        value={roomTypeSearch}
-                        onChange={(e) => setRoomTypeSearch(e.target.value)}
-                        className="w-full p-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    
-                    {/* Options list */}
-                    <div className="max-h-40 overflow-y-auto">
-                      {/* All option */}
-                      <div
-                        className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 flex items-center justify-between ${roomTypes.every(type => selectedRoomTypes.includes(type)) ? 'bg-orange-50' : ''}`}
-                        onClick={() => handleRoomTypeSelect('All')}
-                      >
-                        <span>All</span>
-                        {roomTypes.every(type => selectedRoomTypes.includes(type)) && (
-                          <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                      
-                      {/* Individual room types */}
-                      {roomTypes
-                        .filter(type => type.toLowerCase().includes(roomTypeSearch.toLowerCase()))
-                        .map((roomType) => (
-                          <div
-                            key={roomType}
-                            className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 flex items-center justify-between ${selectedRoomTypes.includes(roomType) ? 'bg-orange-50' : ''}`}
-                            onClick={() => handleRoomTypeSelect(roomType)}
-                          >
-                            <span>{roomType}</span>
-                            {selectedRoomTypes.includes(roomType) && (
-                              <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
+                  placeholder="Select room types..."
+                  disabled={isReadOnly}
+                  multiple={true}
+                  searchable={true}
+                  showAllOption={true}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -763,7 +644,7 @@ export default function SuggestionMenu({
                     setNewFAQ({ 
                       question: "", 
                       answer: "", 
-                      format: "Message",
+                      format: "",
                       replyTitle: "",
                       roomType: "",
                       buttonName: "",

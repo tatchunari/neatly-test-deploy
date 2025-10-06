@@ -48,9 +48,42 @@ export default async function handler(
       options?: Array<{ option: string; detail: string }>;
       rooms?: string[];
       buttonName?: string;
+      roomDetails?: { [roomName: string]: { id: number; main_image: string; base_price: number; promo_price?: number; description: string } };
     }
     
     let botResponseData: BotResponseData | null = null;
+
+    // Helper function to fetch room details
+    const fetchRoomDetails = async (roomNames: string[]) => {
+      if (!roomNames || roomNames.length === 0) return {};
+      
+      // Filter out undefined/null values
+      const validRoomNames = roomNames.filter(name => name && name !== 'undefined');
+      if (validRoomNames.length === 0) return {};
+      
+      const { data: roomTypes, error } = await supabase
+        .from('room_types')
+        .select('id, name, main_image, base_price, promo_price, description')
+        .in('name', validRoomNames);
+      
+      if (error) {
+        console.error('Error fetching room details:', error);
+        return {};
+      }
+      
+      const roomDetails: { [roomName: string]: { id: number; main_image: string; base_price: number; promo_price?: number; description: string } } = {};
+      roomTypes?.forEach(room => {
+        roomDetails[room.name] = {
+          id: room.id,
+          main_image: room.main_image || '',
+          base_price: room.base_price || 0,
+          promo_price: room.promo_price,
+          description: room.description || ''
+        };
+      });
+      
+      return roomDetails;
+    };
     try {
       const normalize = (s: string) => s.trim().toLowerCase();
       const userQuery = normalize(userMessage);
@@ -87,11 +120,14 @@ export default async function handler(
               };
             } else if (faq.reply_format === 'room_type') {
               botResponse = faq.reply_message;
+              const rooms = faq.reply_payload?.rooms || [];
+              const roomDetails = await fetchRoomDetails(rooms);
               botResponseData = {
                 format: 'room_type',
                 message: faq.reply_message,
-                rooms: faq.reply_payload?.rooms || [],
-                buttonName: faq.reply_payload?.buttonName || 'View Details'
+                rooms: rooms,
+                buttonName: faq.reply_payload?.buttonName || 'View Details',
+                roomDetails: roomDetails
               };
             }
             break;
@@ -162,11 +198,14 @@ export default async function handler(
                   };
                 } else if (faqData.reply_format === 'room_type') {
                   botResponse = faqData.reply_message;
+                  const rooms = faqData.reply_payload?.rooms || [];
+                  const roomDetails = await fetchRoomDetails(rooms);
                   botResponseData = {
                     format: 'room_type',
                     message: faqData.reply_message,
-                    rooms: faqData.reply_payload?.rooms || [],
-                    buttonName: faqData.reply_payload?.buttonName || 'View Details'
+                    rooms: rooms,
+                    buttonName: faqData.reply_payload?.buttonName || 'View Details',
+                    roomDetails: roomDetails
                   };
                 }
                 break;
@@ -209,11 +248,14 @@ export default async function handler(
                 options: bestMatch.reply_payload
               };
             } else if (bestMatch.reply_format === 'room_type') {
+              const rooms = bestMatch.reply_payload?.rooms || [];
+              const roomDetails = await fetchRoomDetails(rooms);
               botResponseData = {
                 format: 'room_type',
                 message: bestMatch.reply_message,
-                rooms: bestMatch.reply_payload?.rooms || [],
-                buttonName: bestMatch.reply_payload?.buttonName || 'View Details'
+                rooms: rooms,
+                buttonName: bestMatch.reply_payload?.buttonName || 'View Details',
+                roomDetails: roomDetails
               };
             }
             
