@@ -5,66 +5,147 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useMemo } from "react";
+import { Bookings } from "@/pages/admin/analytics";
+import { Room } from "@/types/rooms";
 
-const OccupancyBarChart = () => {
-  const data = [
-    {
-      month: "January",
-      "Superior Garden View": 75,
-      Deluxe: 45,
-      Superior: 35,
-      Supreme: 55,
-    },
-    {
-      month: "February",
-      "Superior Garden View": 35,
-      Deluxe: 30,
-      Superior: 40,
-      Supreme: 25,
-    },
-    {
-      month: "March",
-      "Superior Garden View": 40,
-      Deluxe: 45,
-      Superior: 50,
-      Supreme: 55,
-    },
-    {
-      month: "April",
-      "Superior Garden View": 95,
-      Deluxe: 75,
-      Superior: 70,
-      Supreme: 60,
-    },
-    {
-      month: "May",
-      "Superior Garden View": 80,
-      Deluxe: 85,
-      Superior: 75,
-      Supreme: 90,
-    },
-    {
-      month: "June",
-      "Superior Garden View": 45,
-      Deluxe: 65,
-      Superior: 35,
-      Supreme: 40,
-    },
-  ];
+interface OccupancyChartProps {
+  bookings: Bookings[] | null | undefined;
+  rooms: Room[] | null | undefined;
+  startDate: string;
+  endDate: string;
+}
 
-  const roomTypes = [
-    {
-      key: "Superior Garden View",
-      color: "#f97316",
-      label: "Superior Garden View",
-    },
-    { key: "Deluxe", color: "#1f2937", label: "Deluxe" },
-    { key: "Superior", color: "#E5A5A5", label: "Superior" },
-    { key: "Supreme", color: "#eab308", label: "Supreme" },
-  ];
+const OccupancyBarChart: React.FC<OccupancyChartProps> = ({
+  bookings,
+  rooms,
+  startDate,
+  endDate,
+}) => {
+  // Get unique room types and assign colors
+  const roomTypes = useMemo(() => {
+    if (!rooms || rooms.length === 0) return [];
+
+    const uniqueTypes = [...new Set(rooms.map((room) => room.room_type))];
+    const colors = [
+      "#f97316",
+      "#1f2937",
+      "#E5A5A5",
+      "#eab308",
+      "#3b82f6",
+      "#10b981",
+    ];
+
+    return uniqueTypes.map((type, index) => ({
+      key: type,
+      color: colors[index % colors.length],
+      label: type,
+    }));
+  }, [rooms]);
+
+  // Calculate occupancy data by room type
+  const data = useMemo(() => {
+    if (!bookings || bookings.length === 0 || !rooms || rooms.length === 0)
+      return [];
+
+    // Filter bookings by date range if dates are selected
+    let filteredBookings = bookings;
+
+    if (startDate && endDate) {
+      filteredBookings = bookings.filter((booking) => {
+        const checkIn = new Date(booking.check_in_date);
+        const checkOut = new Date(booking.check_out_date);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        return checkIn <= end && checkOut >= start;
+      });
+    }
+
+    // Count rooms by type
+    const roomsByType: Record<string, number> = {};
+    rooms.forEach((room) => {
+      const type = room.room_type;
+      roomsByType[type] = (roomsByType[type] || 0) + 1;
+    });
+
+    // Calculate occupancy by month and room type
+    const monthlyData: Record<
+      string,
+      Record<string, { bookedDays: number; totalDays: number }>
+    > = {};
+
+    filteredBookings.forEach((booking) => {
+      if (booking.status === "confirmed" || booking.status === "pending") {
+        // Find the room to get its type
+        const room = rooms.find((r) => r.id === booking.room_id);
+        if (!room) return;
+
+        const roomType = room.room_type;
+        const checkIn = new Date(booking.check_in_date);
+        const checkOut = new Date(booking.check_out_date);
+
+        // Iterate through each day of the booking
+        for (
+          let d = new Date(checkIn);
+          d < checkOut;
+          d.setDate(d.getDate() + 1)
+        ) {
+          const monthYear = `${d.toLocaleString("default", {
+            month: "long",
+          })} ${d.getFullYear()}`;
+
+          if (!monthlyData[monthYear]) {
+            monthlyData[monthYear] = {};
+          }
+
+          if (!monthlyData[monthYear][roomType]) {
+            const daysInMonth = new Date(
+              d.getFullYear(),
+              d.getMonth() + 1,
+              0
+            ).getDate();
+            monthlyData[monthYear][roomType] = {
+              bookedDays: 0,
+              totalDays: daysInMonth * (roomsByType[roomType] || 1),
+            };
+          }
+
+          monthlyData[monthYear][roomType].bookedDays += 1;
+        }
+      }
+    });
+
+    // Convert to array format with occupancy percentages
+    const result = Object.entries(monthlyData)
+      .map(([month, types]) => {
+        const monthData: Record<string, number | string> = { month };
+
+        Object.entries(types).forEach(([roomType, data]) => {
+          monthData[roomType] = Math.round(
+            (data.bookedDays / data.totalDays) * 100
+          );
+        });
+
+        // Fill in 0 for room types with no bookings
+        roomTypes.forEach((rt) => {
+          if (!(rt.key in monthData)) {
+            monthData[rt.key] = 0;
+          }
+        });
+
+        return monthData;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.month as string);
+        const dateB = new Date(b.month as string);
+        return dateA.getTime() - dateB.getTime();
+      });
+
+    return result;
+  }, [bookings, rooms, startDate, endDate, roomTypes]);
 
   const CustomTooltip = ({
     active,
@@ -90,6 +171,18 @@ const OccupancyBarChart = () => {
     return null;
   };
 
+  if (data.length === 0) {
+    return (
+      <div className="w-full bg-white">
+        <div className="flex items-center justify-center h-96 text-gray-400">
+          {startDate && endDate
+            ? "No occupancy data for selected period"
+            : "Select a date range to view occupancy by room type"}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-white">
       <div className="max-w-6xl mx-auto">
@@ -104,7 +197,6 @@ const OccupancyBarChart = () => {
             </div>
           ))}
         </div>
-
         <ResponsiveContainer width="100%" height={400}>
           <BarChart
             data={data}
@@ -129,7 +221,6 @@ const OccupancyBarChart = () => {
               tickFormatter={(value) => `${value}%`}
             />
             <Tooltip content={<CustomTooltip />} />
-
             {roomTypes.map((room) => (
               <Bar
                 key={room.key}
