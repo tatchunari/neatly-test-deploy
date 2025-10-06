@@ -31,8 +31,10 @@ export interface Bookings {
   id: string;
   user_id: string;
   room_id: string;
+  customer_id: string;
   status: "pending" | "confirmed" | "cancelled" | "refunded";
   booking_date: string;
+  payment_method: string;
   check_in_date: string;
   check_out_date: string;
   total_amount: number;
@@ -98,16 +100,19 @@ function AnalyticDashboard() {
 
           {/* Occupancy & Guest Section */}
           <div className="flex">
-            <OccupancyAndGuestSection />
+            <OccupancyAndGuestSection
+              roomsData={roomsData}
+              bookingsData={bookingsData}
+            />
           </div>
 
           {/* Average Check-in & Check-out Time */}
           <div className="flex">
-            <TimeAveragesSection />
+            <TimeAveragesSection bookingsData={bookingsData} />
           </div>
 
           {/* Web Traffic */}
-          <WebTrafficSection />
+          <WebTrafficSection statsData={statisticsData} />
         </div>
       </div>
     </Layout>
