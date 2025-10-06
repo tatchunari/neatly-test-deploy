@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -42,22 +42,7 @@ function BotMessageRenderer({ message, onOptionClick }: { message: ChatMessage; 
       } else if (responseData.format === 'room_type') {
         return (
           <div className="text-sm">
-            <p className="whitespace-pre-wrap mb-3">{text}</p>
-            <div className="grid grid-cols-1 gap-3">
-              {responseData.rooms?.map((room: string, index: number) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-800">{room}</span>
-                    <Button
-                      size="sm"
-                      className="bg-orange-500 text-white hover:bg-orange-600 text-xs px-3 py-1"
-                    >
-                      {responseData.buttonName || 'View Details'}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="whitespace-pre-wrap">{text}</p>
           </div>
         );
       }
@@ -132,6 +117,50 @@ export default function Chatbot() {
   const chatRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const cardScrollRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [scrollStates, setScrollStates] = useState<{ [key: string]: { canScrollLeft: boolean; canScrollRight: boolean } }>({});
+
+  // Card navigation functions
+  const updateScrollState = useCallback((messageId: string) => {
+    const scrollContainer = cardScrollRefs.current[messageId];
+    if (scrollContainer) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
+      const canScrollLeft = scrollLeft > 5; // เพิ่ม threshold
+      const canScrollRight = scrollLeft < scrollWidth - clientWidth - 5; // เพิ่ม threshold
+      
+      setScrollStates(prev => {
+        const current = prev[messageId];
+        // Update only if state actually changed
+        if (!current || current.canScrollLeft !== canScrollLeft || current.canScrollRight !== canScrollRight) {
+          return {
+            ...prev,
+            [messageId]: { canScrollLeft, canScrollRight }
+          };
+        }
+        return prev;
+      });
+    }
+  }, []);
+
+  const scrollCardsLeft = useCallback((messageId: string) => {
+    const scrollContainer = cardScrollRefs.current[messageId];
+    if (scrollContainer) {
+      const cardWidth = 255 + 16; // card width + gap
+      scrollContainer.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+      // Update state immediately instead of setTimeout
+      requestAnimationFrame(() => updateScrollState(messageId));
+    }
+  }, [updateScrollState]);
+
+  const scrollCardsRight = useCallback((messageId: string) => {
+    const scrollContainer = cardScrollRefs.current[messageId];
+    if (scrollContainer) {
+      const cardWidth = 255 + 16; // card width + gap
+      scrollContainer.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      // Update state immediately instead of setTimeout
+      requestAnimationFrame(() => updateScrollState(messageId));
+    }
+  }, [updateScrollState]);
 
   const handleClose = (withAnimation = true) => {
     if (withAnimation) {
@@ -1161,10 +1190,28 @@ export default function Chatbot() {
 
                 {/* Messages */}
                 {!isLoadingSession &&
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex flex-col ${
+                   messages.map((message) => {
+                     // Check if this is a room_type message
+                     let isRoomTypeMessage = false;
+                     let roomTypeData = null;
+                     
+                     if (message.is_bot) {
+                       try {
+                         const parsed = JSON.parse(message.message);
+                         if (parsed.responseData && parsed.responseData.format === 'room_type') {
+                           isRoomTypeMessage = true;
+                           roomTypeData = parsed.responseData;
+                         }
+                       } catch (error) {
+                         // Not JSON, treat as regular message
+                       }
+                     }
+
+                     return (
+                       <div key={message.id} className="w-full">
+                         {/* Text Message */}
+                         <div
+                      className={`flex flex-col px-4 ${
                         message.is_bot ? "items-start" : "items-end"
                       }`}
                     >
@@ -1216,7 +1263,127 @@ export default function Chatbot() {
                         )}
                       </p>
                     </div>
-                  ))}
+
+                          {/* Room Type Cards - Navigation buttons layout */}
+                          {isRoomTypeMessage && roomTypeData && (
+                             <div className="mt-2 w-[100vw] md:w-[384px] overflow-hidden relative">
+                               <div 
+                                 ref={(el) => {
+                                   cardScrollRefs.current[message.id] = el;
+                                   if (el) {
+                                     // Initial scroll state check
+                                     requestAnimationFrame(() => updateScrollState(message.id));
+                                     // Add throttled scroll event listener
+                                     let scrollTimeout: NodeJS.Timeout;
+                                     el.addEventListener('scroll', () => {
+                                       if (scrollTimeout) clearTimeout(scrollTimeout);
+                                       scrollTimeout = setTimeout(() => updateScrollState(message.id), 50);
+                                     });
+                                   }
+                                 }}
+                                 className="flex flex-row flex-nowrap gap-4 overflow-x-hidden pb-2 px-4 scroll-smooth"
+                               >
+                               {roomTypeData.rooms?.map((roomName: string, index: number) => {
+                                 const roomData = roomTypeData.roomDetails?.[roomName];
+                                 if (!roomData) return null;
+                                 
+                                  return (
+                                    <div key={index} className="bg-white rounded-lg shadow-sm flex-shrink-0 flex flex-col" style={{ width: '255px', height: '317px' }}>
+                                     {/* Room Image - 50% height */}
+                                     {roomData.main_image && (
+                                       <div className="w-full rounded-t-lg overflow-hidden flex-shrink-0" style={{ height: '50%' }}>
+                                         <img 
+                                           src={roomData.main_image} 
+                                           alt={roomName}
+                                           className="w-full h-full object-cover"
+                                         />
+                                       </div>
+                                     )}
+                                     
+                                     {/* Room Details - 37.5% height */}
+                                     <div className="p-3 flex flex-col justify-between flex-shrink-0" style={{ height: '37.5%' }}>
+                                       <div>
+                                         {/* Room Name */}
+                                         <h3 className="font-bold text-gray-900 mb-0 text-base">{roomName}</h3>
+                                         
+                                         {/* Pricing */}
+                                         <div className="mb-2">
+                                           {roomData.promo_price && roomData.promo_price < roomData.base_price ? (
+                                             <div className="flex items-center gap-2">
+                                               <span className="text-base font-bold text-orange-500">
+                                                 THB {roomData.promo_price.toLocaleString()}.00
+                                               </span>
+                                               <span className="text-sm text-gray-500 line-through">
+                                                 THB {roomData.base_price.toLocaleString()}.00
+                                               </span>
+                                             </div>
+                                           ) : (
+                                             <span className="text-base font-bold text-gray-900">
+                                               THB {roomData.base_price.toLocaleString()}.00
+                                             </span>
+                                           )}
+                                         </div>
+                                         
+                                         {/* Description */}
+                                         {roomData.description && (
+                                           <p className="text-gray-600 text-sm line-clamp-2">
+                                             {roomData.description}
+                                           </p>
+                                         )}
+                                       </div>
+                                     </div>
+                                       
+                                     {/* Call to Action Button - 12.5% height */}
+                                     <Button
+                                       className="w-full bg-orange-100 text-orange-500 hover:bg-orange-200 text-sm font-semibold flex-shrink-0 rounded-none"
+                                       style={{ height: '12.5%' }}
+                                       onClick={() => {
+                                         // Navigate to search result page with room type id
+                                         if (roomData.id) {
+                                           window.location.href = `/customer/search-result/${roomData.id}`;
+                                         } else {
+                                           console.error('Room ID is undefined');
+                                         }
+                                       }}
+                                     >
+                                       <span className="flex items-center justify-between w-full px-3">
+                                         <span>{roomTypeData.buttonName || 'View Details'}</span>
+                                         <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                         </svg>
+                                       </span>
+                                     </Button>
+                                   </div>
+                                 );
+                               })}
+                               </div>
+                               
+                               {/* Navigation Buttons */}
+                               {scrollStates[message.id]?.canScrollLeft && (
+                                 <button
+                                   onClick={() => scrollCardsLeft(message.id)}
+                                   className="absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center z-10 shadow-md transition-opacity"
+                                 >
+                                   <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                   </svg>
+                                 </button>
+                               )}
+                               {scrollStates[message.id]?.canScrollRight && (
+                                 <button
+                                   onClick={() => scrollCardsRight(message.id)}
+                                   className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center z-10 shadow-md transition-opacity"
+                                 >
+                                   <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                   </svg>
+                                 </button>
+                               )}
+                           </div>
+                         )}
+                       </div>
+                     );
+                   })}
 
                 {/* Bot Typing Indicator - Only show when Live Chat is OFF and ticket is not solved */}
                 {!isLoadingSession &&
