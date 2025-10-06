@@ -39,8 +39,9 @@ const OccupancyAndGuestSection: React.FC<OccupancyAndGuestSectionProps> = ({
 
     // Filter bookings by date range if dates are selected
     let filteredBookings = bookingsData;
+
     if (startDate && endDate) {
-      filteredBookings = bookingsData.filter((booking: Bookings) => {
+      filteredBookings = bookingsData.filter((booking) => {
         const checkIn = new Date(booking.check_in_date);
         const checkOut = new Date(booking.check_out_date);
         const start = new Date(startDate);
@@ -60,7 +61,7 @@ const OccupancyAndGuestSection: React.FC<OccupancyAndGuestSectionProps> = ({
       { bookedDays: number; totalDays: number }
     > = {};
 
-    filteredBookings.forEach((booking: Bookings) => {
+    filteredBookings.forEach((booking) => {
       if (booking.status === "confirmed" || booking.status === "pending") {
         const checkIn = new Date(booking.check_in_date);
         const checkOut = new Date(booking.check_out_date);
@@ -124,7 +125,7 @@ const OccupancyAndGuestSection: React.FC<OccupancyAndGuestSectionProps> = ({
     let filteredBookings = bookingsData;
 
     if (startDate && endDate) {
-      filteredBookings = bookingsData.filter((booking: Bookings) => {
+      filteredBookings = bookingsData.filter((booking) => {
         const checkIn = new Date(booking.check_in_date);
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -135,7 +136,7 @@ const OccupancyAndGuestSection: React.FC<OccupancyAndGuestSectionProps> = ({
     // Count unique customers and their booking frequency
     const customerBookings: Record<string, number> = {};
 
-    filteredBookings.forEach((booking: Bookings) => {
+    filteredBookings.forEach((booking) => {
       if (booking.status === "confirmed" || booking.status === "pending") {
         const customerId = booking.customer_id;
         customerBookings[customerId] = (customerBookings[customerId] || 0) + 1;

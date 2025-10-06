@@ -9,6 +9,7 @@ import { Statistics } from "@/pages/admin/analytics";
 interface WebTrafficSectionProps {
   statsData: Statistics[] | null | undefined;
 }
+type Timeframe = "Real-time" | "Yesterday" | "Last 7 Days" | "Last 30 days";
 
 const revenueData = [
   { time: "04:00 AM", value: 0 },
@@ -23,7 +24,8 @@ const options = ["All Pages", "Home", "Superior Garden", "Deluxe", "Superior"];
 
 const WebTrafficSection: React.FC<WebTrafficSectionProps> = ({ statsData }) => {
   const { setValue } = useForm();
-  const [selectedTimeframe, setSelectedTimeframe] = useState("Yesterday");
+  const [selectedTimeframe, setSelectedTimeframe] =
+    useState<Timeframe>("Yesterday");
   const [selectedPage, setSelectedPage] = useState("All Pages");
 
   // Calculate web traffic data based on selected timeframe
@@ -181,11 +183,11 @@ const WebTrafficSection: React.FC<WebTrafficSectionProps> = ({ statsData }) => {
     return Array.from({ length: tickCount + 1 }, (_, i) => i * step);
   }, [trafficData]);
 
-  const handleTimeframeClick = (timeframe) => {
+  const handleTimeframeClick = (timeframe: Timeframe) => {
     setSelectedTimeframe(timeframe);
   };
 
-  const buttonClass = (timeframe) => {
+  const buttonClass = (timeframe: Timeframe) => {
     return selectedTimeframe === timeframe
       ? "whitespace-nowrap border-1 border-orange-500 text-orange-600 bg-orange-100"
       : "whitespace-nowrap border-1 border-gray-400 hover:border-orange-500 hover:text-orange-600 hover:bg-orange-100";
