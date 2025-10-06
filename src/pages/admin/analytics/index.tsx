@@ -118,7 +118,7 @@ function AnalyticDashboard() {
           </div>
 
           {/* Web Traffic */}
-          <WebTrafficSection />
+          <WebTrafficSection statsData={statisticsData} />
         </div>
       </div>
     </Layout>
