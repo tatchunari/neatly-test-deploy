@@ -9,7 +9,7 @@ import {
   AreaChart,
 } from "recharts";
 
-interface LineChartData {
+export interface LineChartData {
   [key: string]: string | number;
   value: number;
 }

@@ -1,6 +1,6 @@
 import { Button } from "../../ui/Button";
 import { DropDownInput } from "../../ui/DropdownInput";
-import { LineChartComponent } from "../LineChartComponent";
+import { LineChartComponent, LineChartData } from "../LineChartComponent";
 
 import { useForm } from "react-hook-form";
 import { useState, useMemo } from "react";
@@ -72,14 +72,14 @@ const WebTrafficSection: React.FC<WebTrafficSectionProps> = ({ statsData }) => {
 
     // For Yesterday/Real-time: Show hourly data (simulate 24 hours)
     interface HourlyDataObject {
-      time: string;
+      time: string | number;
       value: number;
     }
     if (
       selectedTimeframe === "Yesterday" ||
       selectedTimeframe === "Real-time"
     ) {
-      const hourlyData: HourlyDataObject[] = [];
+      const hourlyData: LineChartData[] = [];
       const totalVisitors = filteredStats.reduce(
         (sum, stat) => sum + (stat.total_visitors || 0),
         0
