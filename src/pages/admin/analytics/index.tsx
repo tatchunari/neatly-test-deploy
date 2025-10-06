@@ -89,7 +89,10 @@ function AnalyticDashboard() {
 
           {/* Availability Chart & Booking Trends  */}
           <div className="flex flex-col md:flex-row md:gap-5">
-            <RoomAvailabilityChart roomsData={roomsData} />
+            <RoomAvailabilityChart
+              roomsData={roomsData}
+              bookingsData={bookingsData}
+            />
             <BookingTrendsChart bookingsData={bookingsData} />
           </div>
 
