@@ -7,16 +7,14 @@ import Otherroompage from "@/components/customer/room-section/Otherroom";
 type RoomDetail = {
   id: string | number;
   name?: string;
-  room_type?: string;
-  price?: number;
-  promotion_price?: number;
+  base_price?: number;
+  promo_price?: number;
   guests?: number;
   room_size?: number;
   description?: string;
   amenities?: string[] | string;
   bed_type?: string;
-  main_image_url?: string[];
-  image?: string;
+  main_image?: string;
   gallery_images?: string[];
 };
 
@@ -26,14 +24,22 @@ function Roomdetailpage() {
   const [room, setRoom] = useState<RoomDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  console.log("Room Id", roomId);
 
   useEffect(() => {
-    if (!router.isReady || !roomId) return;
+    if (!router.isReady) return;
+
+    const roomId = Array.isArray(router.query.id)
+      ? router.query.id[0]
+      : router.query.id;
+
+    if (!roomId) return;
+
     const fetchDetail = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`/api/rooms/${roomId}`);
+        const res = await fetch(`/api/room_types/${roomId}`);
         if (!res.ok) throw new Error("Failed to fetch room detail");
         const data = await res.json();
         // API returns { success, data }
@@ -67,7 +73,7 @@ function Roomdetailpage() {
       }
     };
     fetchDetail();
-  }, [router.isReady, roomId]);
+  }, [router.isReady, router.query.id]);
 
   // derive amenities list (string or array → array)
   const amenities: string[] = (() => {
@@ -106,9 +112,9 @@ function Roomdetailpage() {
                 ) : null}
               </div>
               <div className="relative col-span-4 h-[220px] md:h-[380px] rounded-md overflow-hidden bg-gray-100">
-                {room.image ? (
+                {room.main_image ? (
                   <Image
-                    src={room.main_image_url?.[0] || ""}
+                    src={room.main_image || ""}
                     alt={room.name || "Room"}
                     fill
                     sizes="900px"
@@ -159,15 +165,15 @@ function Roomdetailpage() {
                 </div>
                 <div className="md:col-span-1 flex md:justify-end">
                   <div className="flex flex-col items-start md:items-end">
-                    {room.promotion_price ? (
+                    {room.promo_price ? (
                       <>
                         <span className="text-[11px] text-gray-400 line-through mb-1">
-                          THB {room.price?.toLocaleString()}
+                          THB {room.base_price?.toLocaleString()}
                         </span>
                         <span className="text-[#2F3E35] text-sm">
                           THB{" "}
                           <span className="text-base md:text-lg font-semibold">
-                            {room.promotion_price.toLocaleString()}
+                            {room.promo_price.toLocaleString()}
                           </span>
                         </span>
                       </>
@@ -175,7 +181,7 @@ function Roomdetailpage() {
                       <span className="text-[#2F3E35] text-sm">
                         THB{" "}
                         <span className="text-base md:text-lg font-semibold">
-                          {room.price?.toLocaleString()}
+                          {room.promo_price?.toLocaleString()}
                         </span>
                       </span>
                     )}

@@ -6,10 +6,11 @@ import Image from "next/image";
 import Footer from "@/components/Footer";
 import { Room } from "@/types/rooms";
 import { SearchParams } from "@/components/customer/searchbar/Searchbox";
+import { RoomType } from "@/types/roomTypes";
 
 function SearchResultPage() {
   const router = useRouter();
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [rooms, setRooms] = useState<RoomType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +29,7 @@ function SearchResultPage() {
       if (room) searchParams.set("room", room);
       if (guests) searchParams.set("guests", guests);
       const qs = searchParams.toString();
-      const response = await fetch(`/api/rooms${qs ? `?${qs}` : ""}`);
+      const response = await fetch(`/api/room_types${qs ? `?${qs}` : ""}`);
       if (!response.ok) {
         throw new Error("Failed to fetch rooms");
       }
@@ -93,7 +94,7 @@ function SearchResultPage() {
                 No rooms found.
               </div>
             ) : (
-              rooms.map((room: Room, index: number) => (
+              rooms.map((room: RoomType, index: number) => (
                 <div
                   key={room.id ?? index}
                   className="flex flex-col md:flex-row bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 mx-auto"
@@ -140,10 +141,10 @@ function SearchResultPage() {
                           }
                     }
                   >
-                    {room.main_image_url ? (
+                    {room.main_image ? (
                       <Image
-                        src={room.main_image_url[0]}
-                        alt={room.room_type || "Room image"}
+                        src={room.main_image}
+                        alt={room.name || "Room image"}
                         width={800}
                         height={600}
                         style={{
@@ -171,7 +172,7 @@ function SearchResultPage() {
                   >
                     <div className="flex flex-col flex-1 min-w-0">
                       <h2 className="text-xl font-semibold text-[#2F3E35] mb-10">
-                        {room.room_type}
+                        {room.name}
                       </h2>
                       <div className="flex items-center gap-2 text-s text-gray-500 mb-10">
                         <span>
@@ -184,10 +185,10 @@ function SearchResultPage() {
                         <span>
                           {room.room_size ? `${room.room_size} sqm` : "32 sqm"}
                         </span>
-                        {room.room_type && (
+                        {room.name && (
                           <>
                             <span className="mx-2">·</span>
-                            <span>{room.room_type}</span>
+                            <span>{room.name}</span>
                           </>
                         )}
                       </div>
@@ -199,13 +200,13 @@ function SearchResultPage() {
                     <div className="flex flex-col items-end justify-between min-w-[160px]">
                       <div className="flex flex-col items-end">
                         <span className="text-xs text-gray-400 line-through mb-1">
-                          {room.price
-                            ? `THB ${room.price.toLocaleString()}`
+                          {room.base_price
+                            ? `THB ${room.base_price.toLocaleString()}`
                             : ""}
                         </span>
                         <span className="text-xl font-bold text-[#F47A1F] mb-1">
-                          {room.price
-                            ? `THB ${room.price.toLocaleString()}`
+                          {room.promo_price
+                            ? `THB ${room.promo_price.toLocaleString()}`
                             : "THB 0"}
                         </span>
                         <span className="text-xs text-gray-400">Per Night</span>
