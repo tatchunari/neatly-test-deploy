@@ -2,12 +2,17 @@ import React from "react";
 import { SpecialRequest } from "@/types/booking";
 import { SPECIAL_REQUESTS } from "@/constants/booking";
 import { formatCurrency } from "@/utils/bookingUtils";
+import { BookingButtons } from "../BookingButtons";
 
 interface SpecialRequestFormProps {
   specialRequests: SpecialRequest[];
   onSpecialRequestsChange: (requests: SpecialRequest[]) => void;
   additionalRequest: string;
   onAdditionalRequestChange: (request: string) => void;
+  onBack?: () => void;
+  onNext?: () => void;
+  disabled?: boolean;
+  loading?: boolean;
 }
 
 export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
@@ -15,6 +20,10 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
   onSpecialRequestsChange,
   additionalRequest,
   onAdditionalRequestChange,
+  onBack,
+  onNext,
+  disabled = false,
+  loading = false,
 }) => {
   const handleRequestToggle = (requestId: string) => {
     const updatedRequests = specialRequests.map((request) =>
@@ -32,13 +41,13 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
   );
 
   return (
-    <div className="bg-white rounded-lg p-8">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6 font-inter">
+    <div className="p-8 space-y-8 border rounded-lg bg-[var(--color-white)] border-[var(--color-gray-300)]">
+      <h2 className="text-xl font-semibold text-[var(--color-gray-800)] mb-6 font-[var(--font-inter)]">
         Special Request
       </h2>
 
       {/* Special Requests Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-2 lg:grid-cols-3">
         {SPECIAL_REQUESTS.map((request) => {
           const isSelected =
             specialRequests.find((req) => req.id === request.id)?.selected ||
@@ -47,29 +56,29 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
           return (
             <div
               key={request.id}
-              className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+              className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                 isSelected
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-[var(--color-orange-500)] bg-[var(--color-orange-50)]"
+                  : "border-[var(--color-gray-200)] hover:border-[var(--color-gray-300)]"
               }`}
               onClick={() => handleRequestToggle(request.id)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 font-inter">
+                  <h3 className="font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
                     {request.name}
                   </h3>
-                  <p className="text-sm text-gray-600 font-inter">
+                  <p className="text-sm text-[var(--color-gray-600)] font-[var(--font-inter)]">
                     {formatCurrency(request.price || 0)}
                   </p>
                 </div>
 
                 {/* Checkbox */}
                 <div
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                  className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
                     isSelected
-                      ? "border-orange-500 bg-orange-500"
-                      : "border-gray-300"
+                      ? "border-[var(--color-orange-500)] bg-[var(--color-orange-500)]"
+                      : "border-[var(--color-gray-300)]"
                   }`}
                 >
                   {isSelected && (
@@ -94,26 +103,26 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
 
       {/* Selected Requests Summary */}
       {selectedRequests.length > 0 && (
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <h3 className="font-medium text-gray-900 mb-3 font-inter">
+        <div className="p-4 mb-6 border rounded-lg bg-[var(--color-gray-50)]">
+          <h3 className="mb-3 font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
             Selected Requests
           </h3>
           <div className="space-y-2">
             {selectedRequests.map((request) => (
               <div
                 key={request.id}
-                className="flex justify-between items-center text-sm font-inter"
+                className="flex items-center justify-between text-sm font-[var(--font-inter)]"
               >
-                <span className="text-gray-700">{request.name}</span>
-                <span className="text-gray-900 font-medium">
+                <span className="text-[var(--color-gray-700)]">{request.name}</span>
+                <span className="font-medium text-[var(--color-gray-900)]">
                   {formatCurrency(request.price || 0)}
                 </span>
               </div>
             ))}
-            <div className="border-t border-gray-200 pt-2 mt-2">
-              <div className="flex justify-between items-center font-medium font-inter">
-                <span className="text-gray-900">Total</span>
-                <span className="text-gray-900">
+            <div className="pt-2 mt-2 border-t border-[var(--color-gray-200)]">
+              <div className="flex items-center justify-between font-medium font-[var(--font-inter)]">
+                <span className="text-[var(--color-gray-900)]">Total</span>
+                <span className="text-[var(--color-gray-900)]">
                   {formatCurrency(totalSpecialRequestsPrice)}
                 </span>
               </div>
@@ -124,7 +133,7 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
 
       {/* Additional Request */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
+        <label className="block mb-2 text-sm font-medium text-[var(--color-gray-700)] font-[var(--font-inter)]">
           Additional Request
         </label>
         <textarea
@@ -132,9 +141,9 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
           onChange={(e) => onAdditionalRequestChange(e.target.value)}
           placeholder="Please specify any additional requests or special needs..."
           rows={4}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
+          className="w-full px-4 py-3 border border-[var(--color-gray-300)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)] focus:border-[var(--color-orange-500)] resize-none font-[var(--font-inter)]"
         />
-        <p className="text-xs text-gray-500 mt-1 font-inter">
+        <p className="mt-1 text-xs text-[var(--color-gray-500)] font-[var(--font-inter)]">
           Please note: Additional requests are subject to availability and may
           incur extra charges.
         </p>
@@ -152,11 +161,21 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
             onSpecialRequestsChange(clearedRequests);
             onAdditionalRequestChange("");
           }}
-          className="text-orange-500 hover:text-orange-600 transition-colors font-inter text-sm underline"
+          className="text-sm font-medium underline transition-colors text-[var(--color-orange-500)] hover:text-[var(--color-orange-600)] font-[var(--font-inter)]"
         >
           Skip Special Requests
         </button>
       </div>
+
+      {/* BookingButtons */}
+      <BookingButtons
+        onBack={onBack}
+        onNext={onNext}
+        nextLabel="Next"
+        showBack={true}
+        disabled={disabled}
+        loading={loading}
+      />
     </div>
   );
 };

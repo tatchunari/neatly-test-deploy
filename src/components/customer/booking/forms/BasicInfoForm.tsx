@@ -1,153 +1,126 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { GuestInfo } from "@/types/booking";
-import { useProfile } from "@/hooks/useProfile";
-import { supabase } from "@/lib/supabaseClient";
+import { BookingButtons } from "../BookingButtons";
 
 interface BasicInfoFormProps {
   guestInfo: GuestInfo;
-  onGuestInfoChange: (guestInfo: GuestInfo) => void;
+  onBack?: () => void;
+  onNext?: () => void;
+  disabled?: boolean;
+  loading?: boolean;
 }
+
+const COUNTRY_OPTIONS = [
+  { value: "thailand", label: "Thailand" },
+  { value: "singapore", label: "Singapore" },
+  { value: "malaysia", label: "Malaysia" },
+  { value: "indonesia", label: "Indonesia" },
+  { value: "philippines", label: "Philippines" },
+  { value: "vietnam", label: "Vietnam" },
+  { value: "other", label: "Other" },
+];
 
 export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
   guestInfo,
-  onGuestInfoChange,
+  onBack,
+  onNext,
+  disabled = false,
+  loading = false,
 }) => {
-  const { profile, isLoading } = useProfile();
-
-  // Load profile data when available
-  useEffect(() => {
-    if (profile) {
-      const loadProfileData = async () => {
-        // Get email from auth
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        const updatedGuestInfo: GuestInfo = {
-          firstName: profile.first_name || "",
-          lastName: profile.last_name || "",
-          email: user?.email || "",
-          phone: profile.phone || "",
-          dateOfBirth: profile.date_of_birth || "",
-          country: profile.country || "",
-        };
-
-        onGuestInfoChange(updatedGuestInfo);
-      };
-
-      loadProfileData();
-    }
-  }, [profile, onGuestInfoChange]);
-
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString("th-TH", {
+    return date.toLocaleDateString("en-US", {
       weekday: "short",
-      year: "numeric",
-      month: "short",
       day: "numeric",
+      month: "long",
+      year: "numeric",
     });
   };
 
-  const getCountryLabel = (value: string) => {
-    const countries = [
-      { value: "thailand", label: "Thailand" },
-      { value: "singapore", label: "Singapore" },
-      { value: "malaysia", label: "Malaysia" },
-      { value: "indonesia", label: "Indonesia" },
-      { value: "philippines", label: "Philippines" },
-      { value: "vietnam", label: "Vietnam" },
-      { value: "other", label: "Other" },
-    ];
-    return countries.find((c) => c.value === value)?.label || value;
+  const getCountryLabel = (countryCode: string) => {
+    const country = COUNTRY_OPTIONS.find((c) => c.value === countryCode);
+    return country ? country.label : countryCode;
   };
 
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-lg p-8">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600 font-inter">
-              Loading profile data...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white rounded-lg p-8">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6 font-inter">
+    <div className="w-full p-6 space-y-8 border rounded md:w-[740px] md:p-10 bg-[var(--color-white)] border-[var(--color-gray-300)]">
+      <h3 className="text-xl font-semibold leading-normal tracking-tight text-[#424C6B] font-[var(--font-inter)]">
         Basic Information
-      </h2>
+      </h3>
 
       <div className="space-y-6">
-        {/* First Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
+        {/* First Row - First Name & Last Name */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="block text-base font-normal leading-normal tracking-normal text-[var(--color-gray-900)] font-[var(--font-inter)]">
               First name
             </label>
-            <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-inter">
+            <div className="flex items-center w-full h-12 px-3 py-3 border rounded bg-[var(--color-white)] border-[var(--color-gray-400)] text-base font-normal leading-normal tracking-normal text-[var(--color-black)] font-[var(--font-inter)]">
               {guestInfo.firstName}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
+          <div className="space-y-2">
+            <label className="block text-base font-normal leading-normal tracking-normal text-[var(--color-gray-900)] font-[var(--font-inter)]">
               Last name
             </label>
-            <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-inter">
+            <div className="flex items-center w-full h-12 px-3 py-3 border rounded bg-[var(--color-white)] border-[var(--color-gray-400)] text-base font-normal leading-normal tracking-normal text-[var(--color-black)] font-[var(--font-inter)]">
               {guestInfo.lastName}
             </div>
           </div>
         </div>
 
-        {/* Second Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
-              Email
-            </label>
-            <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-inter">
-              {guestInfo.email}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
-              Phone number
-            </label>
-            <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-inter">
-              {guestInfo.phone}
-            </div>
+        {/* Second Row - Email */}
+        <div className="space-y-2">
+          <label className="block text-base font-normal leading-normal tracking-normal text-[var(--color-gray-900)] font-[var(--font-inter)]">
+            Email
+          </label>
+          <div className="flex items-center w-full h-12 px-3 py-3 border rounded bg-[var(--color-white)] border-[var(--color-gray-400)] text-base font-normal leading-normal tracking-normal text-[var(--color-black)] font-[var(--font-inter)]">
+            {guestInfo.email}
           </div>
         </div>
 
-        {/* Third Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
-              Date of Birth
-            </label>
-            <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-inter">
-              {formatDate(guestInfo.dateOfBirth)}
-            </div>
+        {/* Third Row - Phone number */}
+        <div className="space-y-2">
+          <label className="block text-base font-normal leading-normal tracking-normal text-[var(--color-gray-900)] font-[var(--font-inter)]">
+            Phone number
+          </label>
+          <div className="flex items-center w-full h-12 px-3 py-3 border rounded bg-[var(--color-white)] border-[var(--color-gray-400)] text-base font-normal leading-normal tracking-normal text-[var(--color-black)] font-[var(--font-inter)]">
+            {guestInfo.phone}
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
-              Country
-            </label>
-            <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-inter">
-              {getCountryLabel(guestInfo.country)}
-            </div>
+        {/* Fourth Row - Date of Birth */}
+        <div className="space-y-2">
+          <label className="block text-base font-normal leading-normal tracking-normal text-[var(--color-gray-900)] font-[var(--font-inter)]">
+            Date of Birth
+          </label>
+          <div className="flex items-center w-full h-12 px-3 py-3 border rounded bg-[var(--color-white)] border-[var(--color-gray-400)] text-base font-normal leading-normal tracking-normal text-[var(--color-black)] font-[var(--font-inter)]">
+            {formatDate(guestInfo.dateOfBirth)}
+          </div>
+        </div>
+
+        {/* Fifth Row - Country */}
+        <div className="space-y-2">
+          <label className="block text-base font-normal leading-normal tracking-normal text-[var(--color-gray-900)] font-[var(--font-inter)]">
+            Country
+          </label>
+          <div className="flex items-center w-full h-12 px-3 py-3 border rounded bg-[var(--color-white)] border-[var(--color-gray-400)] text-base font-normal leading-normal tracking-normal text-[var(--color-black)] font-[var(--font-inter)]">
+            {getCountryLabel(guestInfo.country)}
           </div>
         </div>
       </div>
+
+      {/* BookingButtons */}
+      <BookingButtons
+        onBack={onBack}
+        onNext={onNext}
+        nextLabel="Next"
+        showBack={true}
+        disabled={disabled}
+        loading={loading}
+      />
     </div>
   );
 };

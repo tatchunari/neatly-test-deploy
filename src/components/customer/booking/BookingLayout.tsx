@@ -3,28 +3,31 @@ import React from "react";
 interface BookingLayoutProps {
   children: React.ReactNode;
   sidebar: React.ReactNode;
+  stepper?: React.ReactNode;
 }
 
 export const BookingLayout: React.FC<BookingLayoutProps> = ({
   children,
   sidebar,
+  stepper,
 }) => {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="w-full pt-[60px] md:pt-[48px] md:px-40 bg-[var(--color-bg)]">
       {/* Header */}
-      <div className="pt-12 md:pt-[100px] px-4 md:px-8">
-        <h1 className="text-3xl md:text-4xl font-noto text-green-900 mb-8">
-          Booking Room
-        </h1>
+      <h1 className="font-medium leading-tight tracking-tight text-[32px] md:text-[44px] lg:text-[68px] text-[var(--color-green-800)] font-[var(--font-noto)]">
+        Booking Room
+      </h1>
 
-        {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Panel - Form */}
-          <div className="flex-1">{children}</div>
+      {/* Stepper Container */}
+      <div className="py-6 md:py-10">{stepper}</div>
 
-          {/* Right Panel - Sidebar */}
-          <div className="lg:w-96">{sidebar}</div>
-        </div>
+      {/* Main Content - Form and Sidebar */}
+      <div className="flex flex-col items-start gap-6 md:gap-8 lg:flex-row">
+        {/* Left Panel - Form (Responsive Width) */}
+        <div className="w-full lg:flex-shrink-0 lg:w-[740px]">{children}</div>
+
+        {/* Right Panel - Sidebar (Responsive Width) */}
+        <div className="w-full lg:w-auto lg:min-w-[358px]">{sidebar}</div>
       </div>
     </div>
   );

@@ -25,7 +25,7 @@ export const BookingButtons: React.FC<BookingButtonsProps> = ({
       {showBack && (
         <button
           onClick={onBack}
-          className="text-orange-500 hover:text-orange-600 transition-colors font-inter"
+          className="text-base font-medium transition-colors text-[var(--color-orange-500)] hover:text-[var(--color-orange-600)] font-[var(--font-inter)]"
         >
           Back
         </button>
@@ -35,10 +35,14 @@ export const BookingButtons: React.FC<BookingButtonsProps> = ({
       <button
         onClick={onNext || onConfirm}
         disabled={disabled || loading}
-        className={`px-8 py-3 rounded-lg font-medium transition-colors font-inter ${
-          disabled || loading
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-orange-500 text-white hover:bg-orange-600"
+        className={`px-8 py-4 h-12 min-w-[101px] rounded text-base font-medium transition-colors font-[var(--font-inter)] ${
+          !onNext && onConfirm // If it's a confirm button, use orange-600
+            ? disabled || loading
+              ? "bg-[var(--color-gray-300)] text-[var(--color-gray-500)] cursor-not-allowed"
+              : "bg-[var(--color-orange-600)] text-white hover:bg-[var(--color-orange-700)]"
+            : disabled || loading
+            ? "bg-[var(--color-gray-300)] text-[var(--color-gray-500)] cursor-not-allowed"
+            : "bg-[var(--color-orange-500)] text-white hover:bg-[var(--color-orange-600)]"
         }`}
       >
         {loading ? "Loading..." : nextLabel}

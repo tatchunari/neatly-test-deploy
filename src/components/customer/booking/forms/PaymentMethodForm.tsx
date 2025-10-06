@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { PaymentMethod, CreditCardDetails } from "@/types/booking";
 import { PAYMENT_METHODS } from "@/constants/booking";
+import { BookingButtons } from "../BookingButtons";
 
 interface PaymentMethodFormProps {
   paymentMethod: PaymentMethod;
@@ -12,6 +13,10 @@ interface PaymentMethodFormProps {
   onPromoCodeApply: () => void;
   promoCodeApplied: boolean;
   promoDiscount: number;
+  onBack?: () => void;
+  onConfirm?: () => void;
+  disabled?: boolean;
+  loading?: boolean;
   errors?: {
     paymentMethod?: string;
     creditCard?: Record<string, string>;
@@ -29,6 +34,10 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   onPromoCodeApply,
   promoCodeApplied,
   promoDiscount,
+  onBack,
+  onConfirm,
+  disabled = false,
+  loading = false,
   errors = {},
 }) => {
   const [showCreditCardForm, setShowCreditCardForm] = useState(false);
@@ -93,35 +102,35 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   ];
 
   return (
-    <div className="bg-white rounded-lg p-8">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6 font-inter">
+    <div className="p-8 space-y-8 border rounded-lg bg-[var(--color-white)] border-[var(--color-gray-300)]">
+      <h2 className="text-xl font-semibold text-[var(--color-gray-800)] mb-6 font-[var(--font-inter)]">
         Payment Method
       </h2>
 
       {/* Payment Method Selection */}
       <div className="space-y-4 mb-8">
-        <label className="block text-sm font-medium text-gray-700 font-inter">
+        <label className="block text-sm font-medium text-[var(--color-gray-700)] font-[var(--font-inter)]">
           Choose Payment Method
         </label>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {paymentMethodOptions.map((option) => (
             <div
               key={option.value}
-              className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+              className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                 paymentMethod === option.value
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-[var(--color-orange-500)] bg-[var(--color-orange-50)]"
+                  : "border-[var(--color-gray-200)] hover:border-[var(--color-gray-300)]"
               }`}
               onClick={() => handlePaymentMethodChange(option.value)}
             >
               <div className="flex items-center">
-                <span className="text-2xl mr-3">{option.icon}</span>
+                <span className="mr-3 text-2xl">{option.icon}</span>
                 <div>
-                  <h3 className="font-medium text-gray-900 font-inter">
+                  <h3 className="font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
                     {option.label}
                   </h3>
-                  <p className="text-sm text-gray-600 font-inter">
+                  <p className="text-sm text-[var(--color-gray-600)] font-[var(--font-inter)]">
                     {option.description}
                   </p>
                 </div>
@@ -131,7 +140,7 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
         </div>
 
         {errors.paymentMethod && (
-          <p className="text-red-500 text-sm font-inter">
+          <p className="text-sm text-[var(--color-red)] font-[var(--font-inter)]">
             {errors.paymentMethod}
           </p>
         )}
@@ -139,15 +148,15 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
 
       {/* Credit Card Form */}
       {paymentMethod === PAYMENT_METHODS.CREDIT_CARD && (
-        <div className="border-t border-gray-200 pt-6 mb-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4 font-inter">
+        <div className="pt-6 mb-6 border-t border-[var(--color-gray-200)]">
+          <h3 className="mb-4 text-lg font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
             Credit Card Information
           </h3>
 
           <div className="space-y-4">
             {/* Card Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
+              <label className="block mb-2 text-sm font-medium text-[var(--color-gray-700)] font-[var(--font-inter)]">
                 Card Number
               </label>
               <input
@@ -159,14 +168,14 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                 }}
                 placeholder="1234 5678 9012 3456"
                 maxLength={19}
-                className={`w-full px-4 py-3 border rounded-lg font-inter focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)] font-[var(--font-inter)] ${
                   errors.creditCard?.cardNumber
-                    ? "border-red-500"
-                    : "border-gray-300 focus:border-orange-500"
+                    ? "border-[var(--color-red)]"
+                    : "border-[var(--color-gray-300)] focus:border-[var(--color-orange-500)]"
                 }`}
               />
               {errors.creditCard?.cardNumber && (
-                <p className="text-red-500 text-sm mt-1 font-inter">
+                <p className="mt-1 text-sm text-[var(--color-red)] font-[var(--font-inter)]">
                   {errors.creditCard.cardNumber}
                 </p>
               )}
@@ -174,7 +183,7 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
 
             {/* Card Holder Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
+              <label className="block mb-2 text-sm font-medium text-[var(--color-gray-700)] font-[var(--font-inter)]">
                 Cardholder Name
               </label>
               <input
@@ -184,23 +193,23 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                   handleCreditCardChange("cardOwner", e.target.value)
                 }
                 placeholder="John Doe"
-                className={`w-full px-4 py-3 border rounded-lg font-inter focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)] font-[var(--font-inter)] ${
                   errors.creditCard?.cardholderName
-                    ? "border-red-500"
-                    : "border-gray-300 focus:border-orange-500"
+                    ? "border-[var(--color-red)]"
+                    : "border-[var(--color-gray-300)] focus:border-[var(--color-orange-500)]"
                 }`}
               />
               {errors.creditCard?.cardholderName && (
-                <p className="text-red-500 text-sm mt-1 font-inter">
+                <p className="mt-1 text-sm text-[var(--color-red)] font-[var(--font-inter)]">
                   {errors.creditCard.cardholderName}
                 </p>
               )}
             </div>
 
             {/* Expiry Date and CVV */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
+                <label className="block mb-2 text-sm font-medium text-[var(--color-gray-700)] font-[var(--font-inter)]">
                   Expiry Date
                 </label>
                 <input
@@ -212,21 +221,21 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                   }}
                   placeholder="MM/YY"
                   maxLength={5}
-                  className={`w-full px-4 py-3 border rounded-lg font-inter focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)] font-[var(--font-inter)] ${
                     errors.creditCard?.expiryDate
-                      ? "border-red-500"
-                      : "border-gray-300 focus:border-orange-500"
+                      ? "border-[var(--color-red)]"
+                      : "border-[var(--color-gray-300)] focus:border-[var(--color-orange-500)]"
                   }`}
                 />
                 {errors.creditCard?.expiryDate && (
-                  <p className="text-red-500 text-sm mt-1 font-inter">
+                  <p className="mt-1 text-sm text-[var(--color-red)] font-[var(--font-inter)]">
                     {errors.creditCard.expiryDate}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 font-inter">
+                <label className="block mb-2 text-sm font-medium text-[var(--color-gray-700)] font-[var(--font-inter)]">
                   CVV
                 </label>
                 <input
@@ -238,14 +247,14 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                   }}
                   placeholder="123"
                   maxLength={4}
-                  className={`w-full px-4 py-3 border rounded-lg font-inter focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)] font-[var(--font-inter)] ${
                     errors.creditCard?.cvc
-                      ? "border-red-500"
-                      : "border-gray-300 focus:border-orange-500"
+                      ? "border-[var(--color-red)]"
+                      : "border-[var(--color-gray-300)] focus:border-[var(--color-orange-500)]"
                   }`}
                 />
                 {errors.creditCard?.cvc && (
-                  <p className="text-red-500 text-sm mt-1 font-inter">
+                  <p className="mt-1 text-sm text-[var(--color-red)] font-[var(--font-inter)]">
                     {errors.creditCard.cvc}
                   </p>
                 )}
@@ -256,8 +265,8 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       )}
 
       {/* Promotion Code */}
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4 font-inter">
+      <div className="pt-6 border-t border-[var(--color-gray-200)]">
+        <h3 className="mb-4 text-lg font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
           Promotion Code
         </h3>
 
@@ -268,14 +277,14 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
               value={promoCode}
               onChange={(e) => onPromoCodeChange(e.target.value)}
               placeholder="Enter promotion code"
-              className={`w-full px-4 py-3 border rounded-lg font-inter focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)] font-[var(--font-inter)] ${
                 errors.promoCode
-                  ? "border-red-500"
-                  : "border-gray-300 focus:border-orange-500"
+                  ? "border-[var(--color-red)]"
+                  : "border-[var(--color-gray-300)] focus:border-[var(--color-orange-500)]"
               }`}
             />
             {errors.promoCode && (
-              <p className="text-red-500 text-sm mt-1 font-inter">
+              <p className="mt-1 text-sm text-[var(--color-red)] font-[var(--font-inter)]">
                 {errors.promoCode}
               </p>
             )}
@@ -284,10 +293,10 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           <button
             onClick={onPromoCodeApply}
             disabled={!promoCode.trim() || promoCodeApplied}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors font-inter ${
+            className={`px-6 py-3 rounded-lg font-medium transition-colors font-[var(--font-inter)] ${
               !promoCode.trim() || promoCodeApplied
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-orange-500 text-white hover:bg-orange-600"
+                ? "bg-[var(--color-gray-300)] text-[var(--color-gray-500)] cursor-not-allowed"
+                : "bg-[var(--color-orange-500)] text-white hover:bg-[var(--color-orange-600)]"
             }`}
           >
             {promoCodeApplied ? "Applied" : "Apply"}
@@ -295,13 +304,23 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
         </div>
 
         {promoCodeApplied && promoDiscount > 0 && (
-          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-700 font-inter">
+          <div className="p-4 mt-4 border border-[var(--color-green-200)] rounded-lg bg-[var(--color-green-50)]">
+            <p className="text-[var(--color-green-700)] font-[var(--font-inter)]">
               🎉 Promotion code applied! You saved {promoDiscount} THB
             </p>
           </div>
         )}
       </div>
+
+      {/* BookingButtons */}
+      <BookingButtons
+        onBack={onBack}
+        onConfirm={onConfirm}
+        nextLabel="Confirm Booking"
+        showBack={true}
+        disabled={disabled}
+        loading={loading}
+      />
     </div>
   );
 };

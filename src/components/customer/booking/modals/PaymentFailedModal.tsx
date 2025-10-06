@@ -58,15 +58,17 @@ export const PaymentFailedModal: React.FC<PaymentFailedModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+      <div className="w-full max-w-md bg-white rounded-lg">
         {/* Header */}
-        <div className="bg-red-500 text-white p-6 rounded-t-lg text-center">
-          <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="p-6 text-center bg-[var(--color-red)] text-white rounded-t-lg">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-white bg-opacity-20 rounded-full">
             <span className="text-3xl">{getErrorIcon(error.code)}</span>
           </div>
-          <h2 className="text-2xl font-semibold font-inter">Payment Failed</h2>
-          <p className="text-red-100 mt-2 font-inter">
+          <h2 className="text-2xl font-semibold font-[var(--font-inter)]">
+            Payment Failed
+          </h2>
+          <p className="mt-2 text-[var(--color-red-100)] font-[var(--font-inter)]">
             We couldn't process your payment
           </p>
         </div>
@@ -75,11 +77,11 @@ export const PaymentFailedModal: React.FC<PaymentFailedModalProps> = ({
         <div className="p-6">
           {/* Error Message */}
           <div className="mb-6">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <h3 className="font-medium text-red-800 mb-2 font-inter">
+            <div className="p-4 border border-[var(--color-red-200)] rounded-lg bg-[var(--color-red-50)]">
+              <h3 className="mb-2 font-medium text-[var(--color-red-800)] font-[var(--font-inter)]">
                 Error Code: {error.code}
               </h3>
-              <p className="text-red-700 text-sm font-inter">
+              <p className="text-sm text-[var(--color-red-700)] font-[var(--font-inter)]">
                 {getErrorMessage(error.code)}
               </p>
             </div>
@@ -87,24 +89,24 @@ export const PaymentFailedModal: React.FC<PaymentFailedModalProps> = ({
 
           {/* Suggestions */}
           <div className="mb-6">
-            <h4 className="font-medium text-gray-900 mb-3 font-inter">
+            <h4 className="mb-3 font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
               What you can do:
             </h4>
-            <ul className="space-y-2 text-sm text-gray-600 font-inter">
+            <ul className="space-y-2 text-sm text-[var(--color-gray-600)] font-[var(--font-inter)]">
               <li className="flex items-start">
-                <span className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                <span className="flex-shrink-0 w-2 h-2 mt-2 mr-3 bg-[var(--color-red)] rounded-full"></span>
                 <span>Check your payment details and try again</span>
               </li>
               <li className="flex items-start">
-                <span className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                <span className="flex-shrink-0 w-2 h-2 mt-2 mr-3 bg-[var(--color-red)] rounded-full"></span>
                 <span>Try a different payment method</span>
               </li>
               <li className="flex items-start">
-                <span className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                <span className="flex-shrink-0 w-2 h-2 mt-2 mr-3 bg-[var(--color-red)] rounded-full"></span>
                 <span>Contact your bank if the problem persists</span>
               </li>
               <li className="flex items-start">
-                <span className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                <span className="flex-shrink-0 w-2 h-2 mt-2 mr-3 bg-[var(--color-red)] rounded-full"></span>
                 <span>Contact our support team for assistance</span>
               </li>
             </ul>
@@ -115,7 +117,7 @@ export const PaymentFailedModal: React.FC<PaymentFailedModalProps> = ({
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="w-full bg-orange-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors font-inter"
+                className="w-full px-4 py-3 font-medium text-white transition-colors rounded-lg bg-[var(--color-orange-500)] hover:bg-[var(--color-orange-600)] font-[var(--font-inter)]"
               >
                 Try Again
               </button>
@@ -124,7 +126,7 @@ export const PaymentFailedModal: React.FC<PaymentFailedModalProps> = ({
             {onTryDifferentMethod && (
               <button
                 onClick={onTryDifferentMethod}
-                className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors font-inter"
+                className="w-full px-4 py-3 font-medium transition-colors rounded-lg bg-[var(--color-gray-100)] text-[var(--color-gray-700)] hover:bg-[var(--color-gray-200)] font-[var(--font-inter)]"
               >
                 Try Different Payment Method
               </button>
@@ -132,7 +134,7 @@ export const PaymentFailedModal: React.FC<PaymentFailedModalProps> = ({
 
             <button
               onClick={onClose}
-              className="w-full text-gray-500 py-2 px-4 rounded-lg font-medium hover:text-gray-700 transition-colors font-inter"
+              className="w-full px-4 py-2 font-medium transition-colors rounded-lg text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)] font-[var(--font-inter)]"
             >
               Close
             </button>

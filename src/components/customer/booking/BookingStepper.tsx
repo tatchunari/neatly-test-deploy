@@ -1,6 +1,5 @@
 import React from "react";
-
-export type BookingStep = "basic_info" | "special_request" | "payment_method";
+import { BookingStep } from "@/types/booking";
 
 interface BookingStepperProps {
   currentStep: BookingStep;
@@ -16,41 +15,55 @@ export const BookingStepper: React.FC<BookingStepperProps> = ({
   steps,
 }) => {
   return (
-    <div className="flex items-center justify-center mb-8">
-      <div className="flex items-center space-x-4">
+    <div className="flex items-center justify-start mb-8">
+      <div className="flex items-center space-x-8">
         {steps.map((step, index) => {
           const isActive = step.id === currentStep;
           const isCompleted =
             steps.findIndex((s) => s.id === currentStep) > index;
+          const isInactive = !isActive && !isCompleted;
 
           return (
             <React.Fragment key={step.id}>
               {/* Step Circle */}
-              <div className="flex flex-col items-center">
+              <div className="flex items-center gap-[10px] py-3">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-inter font-medium ${
+                  className={`w-[66px] h-[66px] rounded-[4px] flex items-center justify-center ${
                     isActive
-                      ? "bg-orange-500 text-white"
+                      ? "bg-[var(--color-orange-500)] text-[var(--color-white)]" // Active: ส้มเข้ม ตัวเลขขาว
                       : isCompleted
-                      ? "bg-orange-100 text-orange-500 border-2 border-orange-500"
-                      : "bg-white text-black border-2 border-gray-300"
+                      ? "bg-[var(--color-orange-100)] text-[var(--color-orange-500)]" // Completed: ส้มอ่อน ตัวเลขส้ม
+                      : "bg-[var(--color-gray-200)] text-[var(--color-gray-600)]" // Inactive: เทา ตัวเลขเทา
                   }`}
+                  style={{
+                    fontSize: "28px",
+                    fontWeight: "600",
+                    lineHeight: "150%",
+                    letterSpacing: "-2%",
+                    fontFamily: "var(--font-inter)",
+                  }}
                 >
                   {step.number}
                 </div>
                 <span
-                  className={`text-sm mt-2 font-inter ${
-                    isActive ? "text-orange-500" : "text-white"
+                  className={`font-inter ${
+                    isActive
+                      ? "text-[var(--color-orange-500)]" // Active: ข้อความส้ม
+                      : isCompleted
+                      ? "text-[var(--color-gray-900)]" // Completed: ข้อความเทาเข้ม
+                      : "text-[var(--color-gray-600)]" // Inactive: ข้อความเทา
                   }`}
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: "600",
+                    lineHeight: "150%",
+                    letterSpacing: "-2%",
+                    fontFamily: "var(--font-inter)",
+                  }}
                 >
                   {step.label}
                 </span>
               </div>
-
-              {/* Connector Line */}
-              {index < steps.length - 1 && (
-                <div className="w-12 h-0.5 bg-gray-300 mx-2" />
-              )}
             </React.Fragment>
           );
         })}
