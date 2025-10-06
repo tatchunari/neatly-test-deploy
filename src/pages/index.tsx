@@ -15,6 +15,7 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     gtag.pageview("/", "Home Page");
   }, []);
+
   return (
     <div className="pt-12 md:pt-[100px] overflow-x-hidden">
       <Navbar />
