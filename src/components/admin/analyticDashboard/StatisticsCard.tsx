@@ -2,7 +2,7 @@ interface StatCardProps {
   title: string;
   value: string | number;
   change: string;
-  changeType?: "up" | "down";
+  changeType?: "up" | "down" | undefined;
   icon: React.ComponentType<{ className?: string }>;
 }
 
