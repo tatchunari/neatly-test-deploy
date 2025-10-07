@@ -1,6 +1,6 @@
-import { getPageViews } from "../lib/ga4";
+import { getVisitorMetrics } from "../lib/ga4";
 
 (async () => {
-  const data = await getPageViews();
+  const data = await getVisitorMetrics();
   console.log(data);
 })();
