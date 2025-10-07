@@ -36,6 +36,7 @@ function SearchResultPage() {
       }
       const data = await response.json();
       // สมมติว่า API ส่ง { data: [...] }
+<<<<<<< HEAD
 
       const list = Array.isArray(data?.data) ? data.data : [];
       setRooms(list);
@@ -43,6 +44,13 @@ function SearchResultPage() {
       // // Filter only rooms with status "Vacant"
       // const vacantRooms = list.filter((room: Room) => room.status === "Vacant");
       // setRooms(vacantRooms);
+=======
+      
+      const list = Array.isArray(data?.data) ? data.data : [];
+      setRooms(list);
+   
+      
+>>>>>>> 1d68c76 (feat: enhance room detail page with custom image slider and improved layout)
     } catch (err) {
       if (err instanceof Error) {
         setError(err?.message || "Error fetching rooms");
