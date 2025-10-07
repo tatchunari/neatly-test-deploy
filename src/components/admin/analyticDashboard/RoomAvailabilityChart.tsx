@@ -129,7 +129,7 @@ const RoomAvailabilityChart: React.FC<RoomAvailabilityChartProps> = ({
   }, [roomsData, bookingsData, selectedPeriod]);
 
   return (
-    <div className="flex flex-col items-center bg-gray-50 mt-8 w-full sm:w-full mx-auto">
+    <div className="flex flex-col items-center bg-gray-50 mt-8 w-full h-70 sm:h-60 mx-auto">
       <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-90 sm:max-w-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
@@ -147,28 +147,54 @@ const RoomAvailabilityChart: React.FC<RoomAvailabilityChartProps> = ({
         </div>
         <div className="flex items-center justify-between">
           <div className="relative w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] md:w-[300px] md:h-[300px] md:bottom-10">
-            <div className="bg-white/30 w-50 h-50 absolute rounded-full z-30 top-12 left-12"></div>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={roomAvailabilityData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={75}
-                  outerRadius={125}
-                  paddingAngle={0}
-                  dataKey="value"
-                  startAngle={90}
-                  endAngle={450}
-                >
-                  {roomAvailabilityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+            {/* Desktop Pie chart */}
+            <div className="md:w-full md:h-full w-40 h-40 hidden md:block">
+              <div className="bg-white/30 w-50 h-50 absolute rounded-full z-30 top-12 left-12"></div>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={roomAvailabilityData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={75}
+                    outerRadius={125}
+                    paddingAngle={0}
+                    dataKey="value"
+                    startAngle={90}
+                    endAngle={450}
+                  >
+                    {roomAvailabilityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Mobile Pie chart */}
+            <div className="block md:hidden w-[180px] h-[180px]">
+              <div className="bg-white/30 w-32 h-32 absolute rounded-full z-30 top-6.5 left-6.5"></div>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={roomAvailabilityData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    dataKey="value"
+                    startAngle={90}
+                    endAngle={450}
+                  >
+                    {roomAvailabilityData.map((entry, index) => (
+                      <Cell key={`mobile-cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className="flex flex-col gap-4 ml-8 mt-10">
+          <div className="flex flex-col gap-4 md:ml-8 md:mt-10 mr-5 mt-10">
             {roomAvailabilityData.map((entry, index) => (
               <div key={index} className="flex items-center gap-3">
                 <div

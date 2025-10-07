@@ -105,34 +105,47 @@ const RevenueTrendSection: React.FC<BookingTrendsChartProps> = ({
   };
 
   return (
-    <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-90 mt-10">
-      <div className="flex w-full justify-between">
-        <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
-          Revenue Trend
-        </h2>
-        {/* Date Picker */}
-        <div className="flex flex-row gap-4 items-center">
-          <p>From</p>
-          <DatePicker
-            label="Start date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            min="2020-01-01"
-            max="2030-12-31"
-          />
-          <p>to</p>
-          <DatePicker
-            label="End date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            min={startDate || "2020-01-01"}
-            max="2030-12-31"
-          />
+    <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-100 sm:h-full mt-10 md:pb-5 pb-5">
+      <div className="flex md:flex-row flex-col w-full justify-between">
+        <div className="flex flex-row justify-between">
+          <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
+            Revenue Trend
+          </h2>
           <Button
             text="Export"
             loading={false}
             onClick={handleExport}
-            className="bg-orange-600 text-white hover:bg-orange-700 h-10"
+            className="bg-orange-600 text-white hover:bg-orange-700 h-10 md:hidden mt-4 mr-4"
+          />
+        </div>
+        {/* Date Picker */}
+        <div className="flex flex-row gap-4 md:p-0 p-5 items-center">
+          <div className="flex md:flex-row flex-col gap-2">
+            <p>From</p>
+            <DatePicker
+              label="Start date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              min="2020-01-01"
+              max="2030-12-31"
+            />
+          </div>
+
+          <div className="flex md:flex-row flex-col gap-2">
+            <p>to</p>
+            <DatePicker
+              label="End date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate || "2020-01-01"}
+              max="2030-12-31"
+            />
+          </div>
+          <Button
+            text="Export"
+            loading={false}
+            onClick={handleExport}
+            className="bg-orange-600 text-white hover:bg-orange-700 h-10 md:block hidden"
           />
         </div>
       </div>
