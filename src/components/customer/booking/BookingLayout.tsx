@@ -14,7 +14,7 @@ export const BookingLayout: React.FC<BookingLayoutProps> = ({
   return (
     <div className="w-full pt-[60px] md:pt-[48px] md:px-40 bg-[var(--color-bg)]">
       {/* Header */}
-      <h1 className="font-medium leading-tight tracking-tight text-[32px] md:text-[44px] lg:text-[68px] text-[var(--color-green-800)] font-[var(--font-noto)]">
+      <h1 className="font-medium leading-tight tracking-tight text-[32px] md:text-[44px] lg:text-[68px] text-green-800 font-noto">
         Booking Room
       </h1>
 

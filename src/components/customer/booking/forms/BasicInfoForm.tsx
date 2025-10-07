@@ -45,7 +45,7 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
 
   return (
     <div className="w-full p-6 space-y-8 border rounded md:w-[740px] md:p-10 bg-[var(--color-white)] border-[var(--color-gray-300)]">
-      <h3 className="text-xl font-semibold leading-normal tracking-tight text-[#424C6B] font-[var(--font-inter)]">
+      <h3 className="text-xl font-semibold leading-normal tracking-tight text-[var(--color-gray-800)] font-[var(--font-inter)]">
         Basic Information
       </h3>
 

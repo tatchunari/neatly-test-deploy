@@ -42,7 +42,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
       {/* ส่วนบน - Header (เขียวเข้ม green-800) */}
       <div className="flex items-center justify-between w-full h-fit px-6 py-4 bg-[var(--color-green-800)] text-[var(--color-white)]">
         <div className="flex items-center">
-          <BagIcon className="w-[18px] h-[18px] mr-2 text-[var(--color-green-500)]" />
+          <BagIcon className="w-[18px] h-[18px] mr-2 ," />
           <h3 className="text-lg font-semibold font-[var(--font-inter)]">
             Booking Detail
           </h3>

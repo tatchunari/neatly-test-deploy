@@ -41,116 +41,169 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
   );
 
   return (
-    <div className="p-8 space-y-8 border rounded-lg bg-[var(--color-white)] border-[var(--color-gray-300)]">
-      <h2 className="text-xl font-semibold text-[var(--color-gray-800)] mb-6 font-[var(--font-inter)]">
-        Special Request
-      </h2>
+    <div className="w-full p-6 space-y-8 border rounded md:w-[740px] md:p-10 bg-white border-gray-300">
+      {/* Standard Requests Section */}
+      <div className="mb-8">
+        <h2 className="text-xl text-gray-800 font-semibold font-inter leading-normal tracking-tight">
+          Standard Request
+        </h2>
+        <p className="mb-6 text-sm text-gray-600 font-medium font-inter leading-normal tracking-tight">
+          These requests are not confirmed (Depend on the available room)
+        </p>
 
-      {/* Special Requests Grid */}
-      <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-2 lg:grid-cols-3">
-        {SPECIAL_REQUESTS.map((request) => {
-          const isSelected =
-            specialRequests.find((req) => req.id === request.id)?.selected ||
-            false;
+        <div className="space-y-6">
+          {SPECIAL_REQUESTS.filter((req) => req.type === "standard").map(
+            (request) => {
+              const isSelected =
+                specialRequests.find((req) => req.id === request.id)
+                  ?.selected || false;
 
-          return (
-            <div
-              key={request.id}
-              className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                isSelected
-                  ? "border-[var(--color-orange-500)] bg-[var(--color-orange-50)]"
-                  : "border-[var(--color-gray-200)] hover:border-[var(--color-gray-300)]"
-              }`}
-              onClick={() => handleRequestToggle(request.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
-                    {request.name}
-                  </h3>
-                  <p className="text-sm text-[var(--color-gray-600)] font-[var(--font-inter)]">
-                    {formatCurrency(request.price || 0)}
-                  </p>
-                </div>
-
-                {/* Checkbox */}
+              return (
                 <div
-                  className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
-                    isSelected
-                      ? "border-[var(--color-orange-500)] bg-[var(--color-orange-500)]"
-                      : "border-[var(--color-gray-300)]"
-                  }`}
+                  key={request.id}
+                  className="flex items-center space-x-3 cursor-pointer"
+                  onClick={() => handleRequestToggle(request.id)}
                 >
-                  {isSelected && (
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
+                  {/* Checkbox */}
+                  <div
+                    className={`flex items-center justify-center w-6 h-6 border-2 rounded transition-all ${
+                      isSelected
+                        ? "border-orange-500 bg-orange-500"
+                        : "border-gray-300 hover:border-orange-500"
+                    }`}
+                  >
+                    {isSelected && (
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Label */}
+                  <span className="text-base text-gray-700 font-normal font-inter leading-normal tracking-normal">
+                    {request.name}
+                  </span>
                 </div>
-              </div>
-            </div>
-          );
-        })}
+              );
+            }
+          )}
+        </div>
+      </div>
+
+      {/* Special Requests Section */}
+      <div className="mb-8">
+        <h2 className="text-xl text-gray-800 font-semibold font-inter leading-normal tracking-tight">
+          Special Request
+        </h2>
+        <p className="mb-6 text-sm text-gray-600 font-medium font-inter leading-normal tracking-tight">
+          Additional charge may apply
+        </p>
+
+        <div className="space-y-6">
+          {SPECIAL_REQUESTS.filter((req) => req.type === "special").map(
+            (request) => {
+              const isSelected =
+                specialRequests.find((req) => req.id === request.id)
+                  ?.selected || false;
+
+              return (
+                <div
+                  key={request.id}
+                  className="flex items-center space-x-3 cursor-pointer"
+                  onClick={() => handleRequestToggle(request.id)}
+                >
+                  {/* Checkbox */}
+                  <div
+                    className={`flex items-center justify-center w-6 h-6 border-2 rounded transition-all ${
+                      isSelected
+                        ? "border-orange-500 bg-orange-500"
+                        : "border-gray-300 hover:border-orange-500"
+                    }`}
+                  >
+                    {isSelected && (
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Label with Price */}
+                  <div className="flex-1">
+                    <span className="text-base text-gray-700 font-normal font-inter leading-normal tracking-normal">
+                      {request.name}
+                    </span>
+                    <span className="ml-1 text-base text-gray-700 font-normal font-inter leading-normal tracking-normal">
+                      (+{formatCurrency(request.price || 0)})
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+          )}
+        </div>
       </div>
 
       {/* Selected Requests Summary */}
-      {selectedRequests.length > 0 && (
-        <div className="p-4 mb-6 border rounded-lg bg-[var(--color-gray-50)]">
-          <h3 className="mb-3 font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
+      {/* {selectedRequests.length > 0 && (
+        <div className="p-4 mb-6 border rounded-lg bg-gray-50">
+          <h3 className="mb-3 text-gray-900 font-medium font-inter">
             Selected Requests
           </h3>
           <div className="space-y-2">
             {selectedRequests.map((request) => (
               <div
                 key={request.id}
-                className="flex items-center justify-between text-sm font-[var(--font-inter)]"
+                className="flex items-center justify-between text-sm font-inter"
               >
-                <span className="text-[var(--color-gray-700)]">{request.name}</span>
-                <span className="font-medium text-[var(--color-gray-900)]">
+                <span className="text-gray-700">{request.name}</span>
+                <span className="text-gray-900 font-medium">
                   {formatCurrency(request.price || 0)}
                 </span>
               </div>
             ))}
-            <div className="pt-2 mt-2 border-t border-[var(--color-gray-200)]">
-              <div className="flex items-center justify-between font-medium font-[var(--font-inter)]">
-                <span className="text-[var(--color-gray-900)]">Total</span>
-                <span className="text-[var(--color-gray-900)]">
+            <div className="pt-2 mt-2 border-t border-gray-200">
+              <div className="flex items-center justify-between text-gray-900 font-medium font-inter">
+                <span className="text-gray-900">Total</span>
+                <span className="text-gray-900">
                   {formatCurrency(totalSpecialRequestsPrice)}
                 </span>
               </div>
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Additional Request */}
       <div>
-        <label className="block mb-2 text-sm font-medium text-[var(--color-gray-700)] font-[var(--font-inter)]">
+        <label className="block mb-2 text-sm text-gray-700 font-medium font-inter">
           Additional Request
         </label>
         <textarea
           value={additionalRequest}
           onChange={(e) => onAdditionalRequestChange(e.target.value)}
-          placeholder="Please specify any additional requests or special needs..."
           rows={4}
-          className="w-full px-4 py-3 border border-[var(--color-gray-300)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)] focus:border-[var(--color-orange-500)] resize-none font-[var(--font-inter)]"
+          className="w-full pr-4 pl-3 py-3 border border-gray-300 rounded font-inter focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
         />
-        <p className="mt-1 text-xs text-[var(--color-gray-500)] font-[var(--font-inter)]">
-          Please note: Additional requests are subject to availability and may
-          incur extra charges.
-        </p>
       </div>
 
       {/* Skip Button */}
-      <div className="mt-6 text-center">
+      {/* <div className="mt-6 text-center">
         <button
           onClick={() => {
             // Clear all selections and additional request
@@ -161,11 +214,11 @@ export const SpecialRequestForm: React.FC<SpecialRequestFormProps> = ({
             onSpecialRequestsChange(clearedRequests);
             onAdditionalRequestChange("");
           }}
-          className="text-sm font-medium underline transition-colors text-[var(--color-orange-500)] hover:text-[var(--color-orange-600)] font-[var(--font-inter)]"
+          className="text-sm text-orange-500 font-medium font-inter underline transition-colors hover:text-orange-600"
         >
           Skip Special Requests
         </button>
-      </div>
+      </div> */}
 
       {/* BookingButtons */}
       <BookingButtons
