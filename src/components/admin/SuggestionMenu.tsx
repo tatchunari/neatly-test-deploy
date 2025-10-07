@@ -208,6 +208,7 @@ export default function SuggestionMenu({
 
   // Aliases states
   const [newAliasesUI, setNewAliasesUI] = useState<string[]>([]);
+  const [deletedAliasesUI, setDeletedAliasesUI] = useState<string[]>([]);
   const [editAliasesUI, setEditAliasesUI] = useState<string[]>([]);
   const [newAliasInput, setNewAliasInput] = useState<string>("");
   const [showAliases, setShowAliases] = useState(false);
@@ -321,6 +322,7 @@ export default function SuggestionMenu({
             reply_format,
             reply_payload,
             aliases: newAliasesUI.filter(alias => alias.trim()),
+            deleted_aliases: deletedAliasesUI, // Send aliases to delete
           }
         : {
             topic: newFAQ.question,
@@ -353,6 +355,7 @@ export default function SuggestionMenu({
           options: [{ option: "", detail: "" }]
         });
         setNewAliasesUI([]);
+        setDeletedAliasesUI([]); // Reset deleted aliases
         setNewAliasInput("");
         setShowAliases(false);
         setSelectedRoomTypes([]);
@@ -463,7 +466,7 @@ export default function SuggestionMenu({
                           setValidationErrors(prev => ({ ...prev, aliases: undefined }));
                         }
                       }}
-                      placeholder="Enter alias phrase..."
+                       placeholder="Enter alias phrase (separate multiple aliases with commas)..."
                       className={`${getInputClassName(!!validationErrors.aliases)} !bg-white ${validationErrors.aliases ? 'pr-10' : ''}`}
                     />
                     {validationErrors.aliases && (
@@ -479,14 +482,56 @@ export default function SuggestionMenu({
                      size="sm"
                      onClick={() => {
                        if (newAliasInput.trim()) {
-                         setNewAliasesUI([
-                           ...newAliasesUI,
-                           newAliasInput.trim(),
-                         ]);
-                         setNewAliasInput("");
-                         // Clear error when successfully adding alias
-                         if (validationErrors.aliases) {
-                           setValidationErrors(prev => ({ ...prev, aliases: undefined }));
+                         // Split by comma and add multiple aliases
+                         const aliases = newAliasInput.split(',').map(alias => alias.trim()).filter(alias => alias.length > 0);
+                         
+                         if (aliases.length > 0) {
+                           // Check for duplicates with existing aliases in UI
+                           const existingAliases = newAliasesUI.map(alias => alias.toLowerCase());
+                           const duplicateAliases = aliases.filter(alias => existingAliases.includes(alias.toLowerCase()));
+                           
+                           if (duplicateAliases.length > 0) {
+                             setValidationErrors(prev => ({ 
+                               ...prev, 
+                               aliases: `Duplicate aliases found: ${duplicateAliases.join(', ')}` 
+                             }));
+                             return;
+                           }
+
+                           // Check for duplicates within the input itself
+                           const uniqueAliases = [...new Set(aliases.map(alias => alias.toLowerCase()))];
+                           if (uniqueAliases.length !== aliases.length) {
+                             setValidationErrors(prev => ({ 
+                               ...prev, 
+                               aliases: "Duplicate aliases found in your input" 
+                             }));
+                             return;
+                           }
+
+                           // Check for duplicates with existing aliases from database
+                           const existingDbAliases = faq?.aliases?.map(a => a.alias.toLowerCase()) || [];
+                           const duplicateDbAliases = aliases.filter(alias => existingDbAliases.includes(alias.toLowerCase()));
+                           
+                           if (duplicateDbAliases.length > 0) {
+                             setValidationErrors(prev => ({ 
+                               ...prev, 
+                               aliases: `These aliases already exist: ${duplicateDbAliases.join(', ')}` 
+                             }));
+                             return;
+                           }
+
+                           setNewAliasesUI([
+                             ...newAliasesUI,
+                             ...aliases,
+                           ]);
+                           setNewAliasInput("");
+                           // Clear error when successfully adding aliases
+                           if (validationErrors.aliases) {
+                             setValidationErrors(prev => ({ ...prev, aliases: undefined }));
+                           }
+                         } else {
+                           // Show error if no valid aliases after splitting
+                           setValidationErrors(prev => ({ ...prev, aliases: "Please enter at least one valid alias" }));
                          }
                        } else {
                          // Show error if trying to add empty alias
@@ -500,38 +545,40 @@ export default function SuggestionMenu({
                 </div>
               )}
               {validationErrors.aliases && <ErrorMessage message={validationErrors.aliases} />}
-              {/* Existing aliases */}
-              {faq?.aliases && faq.aliases.length > 0 && (
+              {/* All aliases (existing + new) */}
+              {(faq?.aliases && faq.aliases.length > 0) || newAliasesUI.length > 0 ? (
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {faq.aliases.map((alias) => (
-                    <div
-                      key={alias.id}
-                      className={`flex items-center rounded-md px-3 py-1 text-sm ${
-                        isReadOnly ? "bg-gray-200 text-gray-600" : "bg-gray-300 text-gray-700"
-                      }`}
-                    >
-                      <span>{alias.alias}</span>
-                      {!isReadOnly && (
-                        <button
-                          onClick={() => {
-                            onDeleteAlias(alias.id);
-                          }}
-                          className="ml-2 text-gray-500 hover:text-gray-700 cursor-pointer"
+                  {/* Existing aliases */}
+                  {faq?.aliases && faq.aliases.length > 0 && 
+                    faq.aliases
+                      .filter(alias => !deletedAliasesUI.includes(alias.id)) // Hide deleted aliases
+                      .map((alias) => (
+                        <div
+                          key={alias.id}
+                          className={`flex items-center rounded-md px-3 py-1 text-sm ${
+                            isReadOnly ? "bg-gray-200 text-gray-600" : "bg-gray-300 text-gray-700"
+                          }`}
                         >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* New aliases being added */}
-              {newAliasesUI.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                          <span>{alias.alias}</span>
+                          {!isReadOnly && (
+                            <button
+                              onClick={() => {
+                                // Add to deleted aliases list instead of calling API
+                                setDeletedAliasesUI([...deletedAliasesUI, alias.id]);
+                              }}
+                              className="ml-2 text-gray-500 hover:text-gray-700 cursor-pointer"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))
+                  }
+                  
+                  {/* New aliases being added */}
                   {newAliasesUI.map((alias, index) => (
                     <div
-                      key={index}
+                      key={`new-${index}`}
                       className={`flex items-center rounded-md px-3 py-1 text-sm ${
                         isReadOnly ? "bg-gray-200 text-gray-600" : "bg-gray-300 text-gray-700"
                       }`}
@@ -552,7 +599,7 @@ export default function SuggestionMenu({
                     </div>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
           )}
           
@@ -870,6 +917,7 @@ export default function SuggestionMenu({
                     setSelectedRoomTypes([]);
                   }
                   setNewAliasesUI([]);
+                  setDeletedAliasesUI([]); // Reset deleted aliases
                   setNewAliasInput("");
                   setShowAliases(false);
                   if (onClose) {
