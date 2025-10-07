@@ -3,6 +3,7 @@ import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
 import { FileQuestionMark } from "lucide-react";
 import { ChatbotDropdown } from "@/components/admin/ui/ChatbotDropdown";
+import { Reorder, useDragControls } from "motion/react";
 
 // Types for reply payloads
 type RoomTypePayload = {
@@ -36,6 +37,7 @@ interface SuggestionMenuProps {
   onFetchFAQs: () => void;
   onDeleteFAQ: (id: string) => void;
   onDeleteAlias: (aliasId: string) => void;
+  onReorderFAQs?: (faqs: FAQ[]) => void;
   isReadOnly?: boolean;
   faq?: FAQ;
   onClose?: () => void;
@@ -48,6 +50,7 @@ export default function SuggestionMenu({
   onFetchFAQs, 
   onDeleteFAQ, 
   onDeleteAlias,
+  onReorderFAQs,
   isReadOnly = false,
   faq,
   onClose,
@@ -224,6 +227,9 @@ export default function SuggestionMenu({
     options?: string;
     aliases?: string;
   }>({});
+
+  // Drag controls for reordering
+  const dragControls = useDragControls();
 
   const handleCreateFAQ = async () => {
     // Clear previous validation errors
@@ -936,7 +942,14 @@ export default function SuggestionMenu({
 
           {/* Right side - Icons (5%) */}
           <div className="w-[5%] flex flex-col items-center justify-start">
-            <button className="p-2 text-gray-700 hover:text-gray-900 cursor-pointer" title="Drag">
+            <button 
+              className="p-2 text-gray-700 hover:text-gray-900 cursor-grab active:cursor-grabbing" 
+              title="Drag"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                dragControls.start(e);
+              }}
+            >
               <img src="/drag.svg" alt="Drag" className="w-5 h-5" />
             </button>
             {faq && (

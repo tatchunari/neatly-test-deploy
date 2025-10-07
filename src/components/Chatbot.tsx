@@ -1151,7 +1151,7 @@ export default function Chatbot() {
               className="bg-gray-50 shadow-[inset_0_-16px_16px_-8px_rgba(0,0,0,0.1)] h-[calc(100%-120px)] overflow-y-auto"
               onScrollCapture={handleScroll}
             >
-              <div className="p-4 space-y-2">
+               <div className="p-4 space-y-2">
                 {/* Loading Session */}
                 {isLoadingSession && (
                   <div className="flex flex-col items-center justify-center py-8">
@@ -1162,31 +1162,31 @@ export default function Chatbot() {
                   </div>
                 )}
 
-                {/* Greeting message */}
+                 {/* Greeting message */}
                 {!isLoadingSession && greetingMessage && (
-                  <div className="flex flex-col items-start">
-                    <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800">
-                      <p className="text-sm">{greetingMessage}</p>
-                    </div>
-                  </div>
-                )}
+                  <div className={`flex flex-col items-start ${messages.length > 0 ? 'px-4' : ''}`}>
+                     <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800">
+                       <p className="text-sm">{greetingMessage}</p>
+                     </div>
+                   </div>
+                 )}
 
-                {/* Suggestion buttons */}
+                 {/* Suggestion buttons */}
                 {!isLoadingSession && suggestionFAQs.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {suggestionFAQs.map((faq) => (
-                      <Button
-                        key={faq.id}
-                        onClick={() => sendMessage(faq.topic)}
-                        variant="outline"
-                        size="sm"
-                        className="px-3 py-1.5 rounded-full border-2 border-green-300 bg-green-100 text-green-700 text-sm hover:bg-green-200 cursor-pointer"
-                      >
-                        {faq.topic}
-                      </Button>
-                    ))}
-                  </div>
-                )}
+                  <div className={`flex flex-wrap gap-2 mt-4 ${messages.length > 0 ? 'px-4' : ''}`}>
+                     {suggestionFAQs.map((faq) => (
+                       <Button
+                         key={faq.id}
+                         onClick={() => sendMessage(faq.topic)}
+                         variant="outline"
+                         size="sm"
+                         className="px-3 py-1.5 rounded-full border-2 border-green-300 bg-green-100 text-green-700 text-sm hover:bg-green-200 cursor-pointer"
+                       >
+                         {faq.topic}
+                       </Button>
+                     ))}
+                   </div>
+                 )}
 
                 {/* Messages */}
                 {!isLoadingSession &&
@@ -1211,10 +1211,10 @@ export default function Chatbot() {
                        <div key={message.id} className="w-full">
                          {/* Text Message */}
                          <div
-                      className={`flex flex-col px-4 ${
-                        message.is_bot ? "items-start" : "items-end"
-                      }`}
-                    >
+                     className={`flex flex-col px-4 ${
+                       message.is_bot ? "items-start" : "items-end"
+                     }`}
+                   >
                       <div
                         className={`max-w-[80%] p-3 rounded-lg ${
                           message.is_bot
@@ -1390,10 +1390,10 @@ export default function Chatbot() {
                   isBotTyping &&
                   !(currentTicket && currentTicket.live_chat_enabled) &&
                   !isTicketSolved && (
-                    <div
-                      key="bot-typing-indicator"
-                      className="flex flex-col items-start px-4"
-                    >
+                   <div
+                     key="bot-typing-indicator"
+                     className="flex flex-col items-start px-4"
+                   >
                       <div className="w-12 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
                         <div className="flex gap-1">
                           <div
@@ -1414,7 +1414,7 @@ export default function Chatbot() {
                   )}
 
                 {/* Admin Typing Indicator - Same as Bot Typing */}
-                {adminTyping && (
+                 {adminTyping && (
                   <div
                     key="admin-typing-indicator"
                     className="flex flex-col items-start px-4"
