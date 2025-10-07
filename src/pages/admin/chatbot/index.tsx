@@ -4,6 +4,7 @@ import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
 import { FileQuestionMark } from "lucide-react";
 import SuggestionMenu from "@/components/admin/SuggestionMenu";
+import { Reorder } from "motion/react";
 
 type RoomTypePayload = {
   rooms: string[];
@@ -179,6 +180,36 @@ export default function ChatbotAdmin() {
       fetchFAQs();
     } catch (error) {
       console.error("Error deleting alias:", error);
+    }
+  };
+
+  const handleReorderFAQs = async (reorderedFAQs: FAQ[]) => {
+    // 1) Update UI order immediately (AmenityItems-style)
+    const specials = faqs.filter(
+      (f) => f.topic === "::greeting::" || f.topic === "::fallback::"
+    );
+    setFaqs([...reorderedFAQs, ...specials]);
+
+    // 2) Persist display_order to server in background
+    try {
+      // Send updates sequentially to avoid unique constraint conflicts
+      for (let i = 0; i < reorderedFAQs.length; i++) {
+        const faq = reorderedFAQs[i];
+        await fetch(`/api/chat/faqs?id=${faq.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topic: faq.topic,
+            reply_message: faq.reply_message,
+            reply_format: faq.reply_format || 'message',
+            reply_payload: faq.reply_payload || null,
+            display_order: i,
+          }),
+        });
+      }
+      console.log("✅ Display order updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating display order:", error);
     }
   };
 
@@ -767,29 +798,41 @@ export default function ChatbotAdmin() {
               
               {/* Existing FAQs List (Read-only) */}
               <div className="space-y-10 mb-6">
-                {faqs
-                  .filter(
+                <Reorder.Group
+                  axis="y"
+                  values={faqs.filter(
                     (faq) =>
                       faq.topic !== "::greeting::" &&
                       faq.topic !== "::fallback::"
-                  )
-                  .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                  .map((faq) => (
-                    <SuggestionMenu 
-                      key={faq.id}
-                      faqs={[faq]}
-                      loading={loading}
-                      onFetchFAQs={fetchFAQs}
-                      onDeleteFAQ={handleDeleteFAQ}
-                      onDeleteAlias={handleDeleteAlias}
-                      isReadOnly={editingFAQ?.id !== faq.id}
-                      faq={faq}
-                      onEdit={() => {
-                        setEditingFAQ(faq);
-                      }}
-                      onClose={() => setEditingFAQ(null)}
-                    />
-                  ))}
+                  )}
+                  onReorder={handleReorderFAQs}
+                  className="space-y-10"
+                >
+                   {faqs
+                     .filter(
+                       (faq) =>
+                         faq.topic !== "::greeting::" &&
+                         faq.topic !== "::fallback::"
+                     )
+                     .map((faq) => (
+                      <Reorder.Item key={faq.id} value={faq}>
+                        <SuggestionMenu 
+                          faqs={[faq]}
+                          loading={loading}
+                          onFetchFAQs={fetchFAQs}
+                          onDeleteFAQ={handleDeleteFAQ}
+                          onDeleteAlias={handleDeleteAlias}
+                          onReorderFAQs={handleReorderFAQs}
+                          isReadOnly={editingFAQ?.id !== faq.id}
+                          faq={faq}
+                          onEdit={() => {
+                            setEditingFAQ(faq);
+                          }}
+                          onClose={() => setEditingFAQ(null)}
+                        />
+                      </Reorder.Item>
+                    ))}
+                </Reorder.Group>
                 {faqs.filter(
                   (faq) =>
                     faq.topic !== "::greeting::" &&

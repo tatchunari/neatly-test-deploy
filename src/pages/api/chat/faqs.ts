@@ -24,6 +24,7 @@ interface FAQPayload {
   created_by?: string; // UUID as string
   aliases?: string[];
   deleted_aliases?: string[];
+  display_order?: number; // Added for drag & drop ordering
 }
 
 // Validation functions for different reply formats
@@ -92,13 +93,14 @@ export default async function handler(
         return res.status(200).json({ faq: transformedFaq });
       }
 
-      // Get all FAQs
+      // Get all FAQs ordered by display_order, then by created_at
       const { data: faqs, error } = await supabase
         .from('chatbot_faqs')
         .select(`
           *,
           chatbot_faq_aliases(alias)
         `)
+        .order('display_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -260,7 +262,8 @@ export default async function handler(
         reply_payload = null,
         created_by,
         aliases = [],
-        deleted_aliases = []
+        deleted_aliases = [],
+        display_order
       }: FAQPayload = req.body;
 
       if (!topic || !reply_message) {
@@ -278,15 +281,22 @@ export default async function handler(
 
       if (isSpecialMessage) {
         // Update without embedding for special messages
+        const updateData: any = { 
+          topic, 
+          reply_message,
+          reply_format,
+          reply_payload,
+          updated_at: new Date().toISOString()
+        };
+        
+        // Only update display_order if provided and not a special message
+        if (display_order !== undefined && !isSpecialMessage) {
+          updateData.display_order = display_order;
+        }
+        
         const { data: updatedFaq, error } = await supabase
           .from('chatbot_faqs')
-          .update({ 
-            topic, 
-            reply_message,
-            reply_format,
-            reply_payload,
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', id as string)
           .select()
           .single();
@@ -314,7 +324,8 @@ export default async function handler(
           p_reply_message: reply_message,
           p_topic_embedding: topic_embedding,
           p_reply_format: reply_format,
-          p_reply_payload: reply_payload
+          p_reply_payload: reply_payload,
+          p_display_order: display_order
         });
 
         if (error) {
