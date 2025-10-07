@@ -1392,7 +1392,7 @@ export default function Chatbot() {
                   !isTicketSolved && (
                     <div
                       key="bot-typing-indicator"
-                      className="flex flex-col items-start"
+                      className="flex flex-col items-start px-4"
                     >
                       <div className="w-12 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
                         <div className="flex gap-1">
@@ -1417,7 +1417,7 @@ export default function Chatbot() {
                 {adminTyping && (
                   <div
                     key="admin-typing-indicator"
-                    className="flex flex-col items-start"
+                    className="flex flex-col items-start px-4"
                   >
                     <div className="w-12 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
                       <div className="flex gap-1">

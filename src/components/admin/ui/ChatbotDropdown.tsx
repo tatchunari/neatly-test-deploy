@@ -11,6 +11,7 @@ interface ChatbotDropdownProps {
   searchable?: boolean;
   showAllOption?: boolean; // Only for multiple selection
   className?: string;
+  hasError?: boolean;
 }
 
 export const ChatbotDropdown = ({
@@ -23,7 +24,8 @@ export const ChatbotDropdown = ({
   multiple = false,
   searchable = false,
   showAllOption = false,
-  className = ""
+  className = "",
+  hasError = false
 }: ChatbotDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -118,12 +120,14 @@ export const ChatbotDropdown = ({
 
       {/* Dropdown Trigger */}
       <div 
-        className={`w-full border border-gray-300 rounded-md text-sm px-3 py-2 bg-white ${
+        className={`w-full border rounded-md text-sm px-3 py-2 bg-white ${
           multiple ? 'min-h-[36px]' : 'h-[36px]'
-        } flex items-center cursor-pointer ${
-          disabled 
-            ? "text-gray-600 opacity-50 cursor-not-allowed" 
-            : "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+        } flex items-center cursor-pointer relative ${
+          hasError 
+            ? "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)] pr-10"
+            : disabled 
+              ? "border-gray-300 text-gray-600 opacity-50 cursor-not-allowed" 
+              : "border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         }`}
         onClick={() => {
           if (!disabled) {
@@ -175,6 +179,15 @@ export const ChatbotDropdown = ({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
+
+        {/* Error Icon */}
+        {hasError && (
+          <img 
+            src="/icons/exclamation-icon.svg" 
+            alt="Error" 
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+          />
+        )}
       </div>
 
       {/* Dropdown Menu */}
