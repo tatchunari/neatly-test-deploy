@@ -281,12 +281,20 @@ export default async function handler(
 
       if (isSpecialMessage) {
         // Update without embedding for special messages
-        const updateData: any = { 
-          topic, 
+        type UpdateData = {
+          topic: string;
+          reply_message: string;
+          reply_format: 'message' | 'room_type' | 'option_details';
+          reply_payload: ReplyPayload;
+          updated_at: string;
+          display_order?: number;
+        };
+        const updateData: UpdateData = {
+          topic,
           reply_message,
           reply_format,
           reply_payload,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         };
         
         // Only update display_order if provided and not a special message
