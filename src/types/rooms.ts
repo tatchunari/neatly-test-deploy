@@ -54,6 +54,7 @@ export interface Room {
   main_image_url: string[];
   gallery_images: string[];
   amenities: string[];
+  status?: string;
 }
 
 export interface RoomCreatePayload {

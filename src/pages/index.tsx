@@ -8,7 +8,14 @@ import Roomwrapper from "@/components/Roomwrapper";
 import Testimonial from "@/components/Testimonial";
 import Chatbot from "@/components/Chatbot";
 
+import * as gtag from "../lib/gtag";
+import { useEffect } from "react";
+
 export default function App({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    gtag.pageview("/", "Home Page");
+  }, []);
+
   return (
     <div className="pt-12 md:pt-[100px] overflow-x-hidden">
       <Navbar />
@@ -18,7 +25,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Roomwrapper />
       <Testimonial />
       <Footer />
-      
+
       {/* Chatbot Button */}
       <Chatbot />
     </div>

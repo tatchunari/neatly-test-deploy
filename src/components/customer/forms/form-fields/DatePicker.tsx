@@ -164,7 +164,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
           onFocus={handleFocus}
           onBlur={handleBlur}
           onChange={handleChange}
-          placeholder="Select your date of birth"
+          placeholder="Select your date"
           className={cn(
             "w-full h-12 pt-3 pr-10 pb-3 pl-3 border rounded",
             "bg-[var(--color-white)] border-[var(--color-gray-400)]",
