@@ -30,9 +30,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "transition-colors duration-200",
         "disabled:opacity-50 disabled:cursor-not-allowed",
 
-        // Typography 
+        // Typography
         "font-open-sans text-base font-semibold leading-4 tracking-normal text-center",
-        "text-white", 
+        "text-white",
 
         // Variants
         variant === "primary" && "bg-[#C14817] text-white hover:bg-[#A03D12]",
