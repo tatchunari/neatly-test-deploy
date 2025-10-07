@@ -179,30 +179,36 @@ const WebTrafficSection = () => {
   }
 
   return (
-    <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-90 mt-10">
-      <div className="flex w-full justify-between">
-        <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
-          Website Traffic
-        </h2>
-        {/* Filters */}
-        <div className="flex flex-row gap-4">
-          <DropDownInput
-            options={Object.keys(pageMapping)}
-            name="pageFilter"
-            setValue={setValue}
-            onChange={(value) => setSelectedPage(value)}
-          />
-          {(
-            ["Real-time", "Yesterday", "Last 7 Days", "Last 30 days"] as const
-          ).map((tf) => (
-            <Button
-              key={tf}
-              loading={false}
-              text={tf}
-              onClick={() => setSelectedTimeframe(tf)}
-              className={buttonClass(tf)}
-            />
-          ))}
+    <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-110 sm:h-full mt-10 p-5">
+      <div className="flex flex-col w-full justify-between">
+        <div className="flex flex-col md:flex-row justify-between">
+          <div className="flex flex-row items-center pr-5 mb-5 gap-4">
+            <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
+              Website Traffic
+            </h2>
+            {/* Filters */}
+            <div className="flex md:flex-row flex-col md:justify-between gap-4 ">
+              <DropDownInput
+                options={Object.keys(pageMapping)}
+                name="pageFilter"
+                setValue={setValue}
+                onChange={(value) => setSelectedPage(value)}
+              />
+            </div>
+          </div>
+          <div className="flex flex-row border border-white/20 rounded-lg overflow-x-auto whitespace-nowrap gap-2 py-2 px-4 ">
+            {(
+              ["Real-time", "Yesterday", "Last 7 Days", "Last 30 days"] as const
+            ).map((tf) => (
+              <Button
+                key={tf}
+                loading={false}
+                text={tf}
+                onClick={() => setSelectedTimeframe(tf)}
+                className={buttonClass(tf)}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
