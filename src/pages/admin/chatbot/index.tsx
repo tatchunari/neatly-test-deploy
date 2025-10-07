@@ -1,13 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/admin/Layout";
 import { ButtonShadcn as Button } from "@/components/ui/button-shadcn";
 import { Input } from "@/components/ui/input";
-import { Pencil } from "lucide-react";
+import { FileQuestionMark } from "lucide-react";
+import SuggestionMenu from "@/components/admin/SuggestionMenu";
+import { Reorder } from "motion/react";
+
+type RoomTypePayload = {
+  rooms: string[];
+  buttonName: string;
+};
+
+type OptionDetail = {
+  option: string;
+  detail: string;
+};
+
+type OptionDetailsPayload = OptionDetail[];
+
+type ReplyPayload = null | RoomTypePayload | OptionDetailsPayload;
 
 interface FAQ {
   id: string;
-  question: string;
-  answer: string;
+  topic: string;
+  reply_message: string;
+  reply_format?: 'message' | 'room_type' | 'option_details';
+  reply_payload?: ReplyPayload;
   created_at: string;
   updated_at: string;
   aliases?: Array<{ id: string; alias: string }>;
@@ -23,8 +41,9 @@ interface Context {
 export default function ChatbotAdmin() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(false);
-  const [newFAQ, setNewFAQ] = useState({ question: "", answer: "" });
+
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
+  const [showCreateFAQ, setShowCreateFAQ] = useState<boolean>(false);
 
   // Greeting and Fallback states
   const [greetingMessage, setGreetingMessage] = useState("");
@@ -32,16 +51,20 @@ export default function ChatbotAdmin() {
   const [isEditingGreeting, setIsEditingGreeting] = useState(false);
   const [isEditingFallback, setIsEditingFallback] = useState(false);
 
-  // Aliases states
-  const [newAliasesUI, setNewAliasesUI] = useState<string[]>([]);
-  const [editAliasesUI, setEditAliasesUI] = useState<string[]>([]);
-  const [newAliasInput, setNewAliasInput] = useState<string>("");
-  const [showAliases, setShowAliases] = useState(false);
-
   // Context states
   const [contexts, setContexts] = useState<Context[]>([]);
   const [newContext, setNewContext] = useState({ content: "" });
   const [editingContext, setEditingContext] = useState<Context | null>(null);
+
+  // Validation error states
+  const [validationErrors, setValidationErrors] = useState<{
+    greeting?: string;
+    fallback?: string;
+    context?: string;
+  }>({});
+
+  // Separate validation for editing contexts
+  const [editingContextErrors, setEditingContextErrors] = useState<{ [id: string]: string | undefined }>({});
 
   // Load FAQs and Contexts on component mount
   useEffect(() => {
@@ -57,17 +80,17 @@ export default function ChatbotAdmin() {
 
       // หา greeting และ fallback messages
       const greetingFaq = faqsData.find(
-        (faq: FAQ) => faq.question === "::greeting::"
+        (faq: FAQ) => faq.topic === "::greeting::"
       );
       const fallbackFaq = faqsData.find(
-        (faq: FAQ) => faq.question === "::fallback::"
+        (faq: FAQ) => faq.topic === "::fallback::"
       );
 
       if (greetingFaq) {
-        setGreetingMessage(greetingFaq.answer);
+        setGreetingMessage(greetingFaq.reply_message);
       }
       if (fallbackFaq) {
-        setFallbackMessage(fallbackFaq.answer);
+        setFallbackMessage(fallbackFaq.reply_message);
       }
 
       // ดึง aliases สำหรับแต่ละ FAQ
@@ -92,83 +115,11 @@ export default function ChatbotAdmin() {
     }
   };
 
-  const handleCreateFAQ = async () => {
-    if (!newFAQ.question.trim() || !newFAQ.answer.trim()) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch("/api/chat/faqs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: newFAQ.question,
-          answer: newFAQ.answer,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("FAQ creation response:", data);
-        const newFaqId = data.faq?.id;
-
-        console.log("FAQ created with ID:", newFaqId);
-
-        if (!newFaqId) {
-          console.error("No FAQ ID returned from API");
-          return;
-        }
-
-        // ส่ง aliases ถ้ามี (await ให้แน่ใจว่า FAQ สร้างเสร็จแล้ว)
-        if (newAliasesUI.length > 0 && newAliasesUI[0].trim()) {
-          const cleanedAliases = newAliasesUI.filter((alias) => alias.trim());
-          if (cleanedAliases.length > 0) {
-            console.log(
-              "Creating aliases for FAQ ID:",
-              newFaqId,
-              "with aliases:",
-              cleanedAliases
-            );
-            const aliasResponse = await fetch("/api/chat/aliases", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                faq_id: newFaqId,
-                aliases: cleanedAliases,
-              }),
-            });
-
-            if (!aliasResponse.ok) {
-              console.error(
-                "Failed to create aliases:",
-                await aliasResponse.text()
-              );
-            } else {
-              console.log("Aliases created successfully");
-            }
-          }
-        }
-
-        setNewFAQ({ question: "", answer: "" });
-        setNewAliasesUI([]);
-        setNewAliasInput("");
-        setShowAliases(false);
-        fetchFAQs();
-      } else {
-      }
-    } catch (error) {
-      console.error("Error creating FAQ:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleUpdateFAQ = async () => {
     if (
       !editingFAQ ||
-      !editingFAQ.question.trim() ||
-      !editingFAQ.answer.trim()
+      !editingFAQ.topic.trim() ||
+      !editingFAQ.reply_message.trim()
     ) {
       return;
     }
@@ -179,46 +130,16 @@ export default function ChatbotAdmin() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: editingFAQ.question,
-          answer: editingFAQ.answer,
+          topic: editingFAQ.topic,
+          reply_message: editingFAQ.reply_message,
+          reply_format: editingFAQ.reply_format || 'message',
+          reply_payload: editingFAQ.reply_payload || null,
         }),
       });
 
       if (response.ok) {
         console.log("FAQ updated with ID:", editingFAQ.id);
-
-        // อัปเดต aliases ถ้ามี (await ให้แน่ใจว่า FAQ อัปเดตเสร็จแล้ว)
-        if (editAliasesUI.length > 0 && editAliasesUI[0].trim()) {
-          const cleanedAliases = editAliasesUI.filter((alias) => alias.trim());
-          if (cleanedAliases.length > 0) {
-            console.log(
-              "Updating aliases for FAQ ID:",
-              editingFAQ.id,
-              "with aliases:",
-              cleanedAliases
-            );
-            const aliasResponse = await fetch("/api/chat/aliases", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                faq_id: editingFAQ.id,
-                aliases: cleanedAliases,
-              }),
-            });
-
-            if (!aliasResponse.ok) {
-              console.error(
-                "Failed to update aliases:",
-                await aliasResponse.text()
-              );
-            } else {
-              console.log("Aliases updated successfully");
-            }
-          }
-        }
-
         setEditingFAQ(null);
-        setEditAliasesUI([]);
         fetchFAQs();
       } else {
       }
@@ -262,12 +183,51 @@ export default function ChatbotAdmin() {
     }
   };
 
+  const handleReorderFAQs = async (reorderedFAQs: FAQ[]) => {
+    // 1) Update UI order immediately (AmenityItems-style)
+    const specials = faqs.filter(
+      (f) => f.topic === "::greeting::" || f.topic === "::fallback::"
+    );
+    setFaqs([...reorderedFAQs, ...specials]);
+
+    // 2) Persist display_order to server in background
+    try {
+      // Send updates sequentially to avoid unique constraint conflicts
+      for (let i = 0; i < reorderedFAQs.length; i++) {
+        const faq = reorderedFAQs[i];
+        await fetch(`/api/chat/faqs?id=${faq.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topic: faq.topic,
+            reply_message: faq.reply_message,
+            reply_format: faq.reply_format || 'message',
+            reply_payload: faq.reply_payload || null,
+            display_order: i,
+          }),
+        });
+      }
+      console.log("✅ Display order updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating display order:", error);
+    }
+  };
+
   const handleSaveGreeting = async () => {
+    // Clear previous validation errors
+    setValidationErrors(prev => ({ ...prev, greeting: undefined }));
+
+    // Validation
+    if (!greetingMessage.trim()) {
+      setValidationErrors(prev => ({ ...prev, greeting: "Please enter a greeting message" }));
+      return;
+    }
+
     setLoading(true);
     try {
       // หา greeting message ที่มีอยู่
       const existingGreeting = faqs.find(
-        (faq) => faq.question === "::greeting::"
+        (faq) => faq.topic === "::greeting::"
       );
 
       const response = await fetch(
@@ -276,8 +236,10 @@ export default function ChatbotAdmin() {
           method: existingGreeting ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            question: "::greeting::",
-            answer: greetingMessage,
+            topic: "::greeting::",
+            reply_message: greetingMessage,
+            reply_format: 'message',
+            reply_payload: null,
           }),
         }
       );
@@ -295,11 +257,20 @@ export default function ChatbotAdmin() {
   };
 
   const handleSaveFallback = async () => {
+    // Clear previous validation errors
+    setValidationErrors(prev => ({ ...prev, fallback: undefined }));
+
+    // Validation
+    if (!fallbackMessage.trim()) {
+      setValidationErrors(prev => ({ ...prev, fallback: "Please enter a fallback message" }));
+      return;
+    }
+
     setLoading(true);
     try {
       // หา fallback message ที่มีอยู่
       const existingFallback = faqs.find(
-        (faq) => faq.question === "::fallback::"
+        (faq) => faq.topic === "::fallback::"
       );
 
       const response = await fetch(
@@ -308,8 +279,10 @@ export default function ChatbotAdmin() {
           method: existingFallback ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            question: "::fallback::",
-            answer: fallbackMessage,
+            topic: "::fallback::",
+            reply_message: fallbackMessage,
+            reply_format: 'message',
+            reply_payload: null,
           }),
         }
       );
@@ -340,51 +313,74 @@ export default function ChatbotAdmin() {
   const handleCreateContext = async () => {
     console.log("🟡 Admin: handleCreateContext called");
 
+    // Clear previous validation errors
+    setValidationErrors(prev => ({ ...prev, context: undefined }));
+
+    // Validation
     if (!newContext.content.trim()) {
-      console.log("❌ Admin: Content is empty, returning");
+      setValidationErrors(prev => ({ ...prev, context: "Please enter a detail" }));
+      return;
+    }
+
+    // Split by comma and create multiple contexts
+    const details = newContext.content.split(',').map(detail => detail.trim()).filter(detail => detail.length > 0);
+    
+    if (details.length === 0) {
+      setValidationErrors(prev => ({ ...prev, context: "Please enter at least one detail" }));
+      return;
+    }
+
+    // Check for duplicates with existing contexts
+    const existingContexts = contexts.map(ctx => ctx.content.toLowerCase());
+    const duplicateDetails = details.filter(detail => existingContexts.includes(detail.toLowerCase()));
+    
+    if (duplicateDetails.length > 0) {
+      setValidationErrors(prev => ({ 
+        ...prev, 
+        context: `Duplicate details found: ${duplicateDetails.join(', ')}` 
+      }));
+      return;
+    }
+
+    // Check for duplicates within the input itself
+    const uniqueDetails = [...new Set(details.map(detail => detail.toLowerCase()))];
+    if (uniqueDetails.length !== details.length) {
+      setValidationErrors(prev => ({ 
+        ...prev, 
+        context: "Duplicate details found in your input" 
+      }));
       return;
     }
 
     console.log(
-      "🟡 Admin: Starting context creation with content:",
-      newContext.content
+      "🟡 Admin: Starting context creation with details:",
+      details
     );
     setLoading(true);
     try {
-      // Admin operation - no auth needed
-      console.log("🟡 Admin: Creating context (admin operation)");
+      // Create multiple contexts
+      const promises = details.map(detail => 
+        fetch("/api/chat/contexts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: detail }),
+        })
+      );
 
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
+      const responses = await Promise.all(promises);
+      const allSuccessful = responses.every(response => response.ok);
 
-      console.log("🟡 Admin: Making API request to /api/chat/contexts");
-      const response = await fetch("/api/chat/contexts", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          content: newContext.content,
-        }),
-      });
-
-      console.log("🟡 Admin: API response status:", response.status);
-
-      if (response.ok) {
-        console.log("✅ Admin: Context created successfully");
-        const responseData = await response.json();
-        console.log("✅ Admin: Response data:", responseData);
+      if (allSuccessful) {
+        console.log("✅ Admin: All contexts created successfully");
         setNewContext({ content: "" });
         fetchContexts();
       } else {
-        console.error(
-          "❌ Admin: Context creation failed with status:",
-          response.status
-        );
-        const errorText = await response.text();
-        console.error("❌ Admin: Error response:", errorText);
+        console.error("❌ Admin: Some contexts failed to create");
+        setValidationErrors(prev => ({ ...prev, context: "Some details failed to save" }));
       }
     } catch (error) {
-      console.error("❌ Admin: Error creating context:", error);
+      console.error("❌ Admin: Error creating contexts:", error);
+      setValidationErrors(prev => ({ ...prev, context: "Error creating details" }));
     } finally {
       console.log("🟡 Admin: Setting loading to false");
       setLoading(false);
@@ -392,7 +388,27 @@ export default function ChatbotAdmin() {
   };
 
   const handleUpdateContext = async () => {
-    if (!editingContext || !editingContext.content.trim()) {
+    if (!editingContext) return;
+
+    // Clear previous validation errors for this specific context
+    setEditingContextErrors(prev => ({ ...prev, [editingContext.id]: undefined }));
+
+    // Validation
+    if (!editingContext.content.trim()) {
+      setEditingContextErrors(prev => ({ ...prev, [editingContext.id]: "Please enter a detail" }));
+      return;
+    }
+
+    // Check for duplicates with existing contexts (excluding current one)
+    const existingContexts = contexts
+      .filter(ctx => ctx.id !== editingContext.id)
+      .map(ctx => ctx.content.toLowerCase());
+    
+    if (existingContexts.includes(editingContext.content.toLowerCase())) {
+      setEditingContextErrors(prev => ({ 
+        ...prev, 
+        [editingContext.id]: "This detail already exists" 
+      }));
       return;
     }
 
@@ -461,21 +477,43 @@ export default function ChatbotAdmin() {
 
               {/* Greeting Message */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
                   Greeting Message
                 </label>
                 <div className="space-y-2">
-                  <textarea
-                    value={greetingMessage}
-                    onChange={(e) => setGreetingMessage(e.target.value)}
-                    placeholder="Enter greeting message..."
-                    className={`w-full p-3 border border-gray-300 rounded-md h-24 resize-none outline-none ${
-                      isEditingGreeting
-                        ? "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
-                        : "text-gray-500"
-                    }`}
-                    disabled={!isEditingGreeting}
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={greetingMessage}
+                      onChange={(e) => {
+                        setGreetingMessage(e.target.value);
+                        // Clear error when user starts typing
+                        if (validationErrors.greeting) {
+                          setValidationErrors(prev => ({ ...prev, greeting: undefined }));
+                        }
+                      }}
+                      placeholder="Enter greeting message..."
+                      className={`w-full p-3 border rounded-md h-24 resize-none outline-none ${
+                        isEditingGreeting
+                          ? validationErrors.greeting
+                            ? "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)] text-black"
+                            : "border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          : "text-gray-500 border-gray-300"
+                      }`}
+                      disabled={!isEditingGreeting}
+                    />
+                    {isEditingGreeting && validationErrors.greeting && (
+                      <img 
+                        src="/icons/exclamation-icon.svg" 
+                        alt="Error" 
+                        className="absolute right-3 top-3 w-4 h-4" 
+                      />
+                    )}
+                  </div>
+                  {isEditingGreeting && validationErrors.greeting && (
+                    <div className="mt-1 text-[var(--color-red)] text-xs">
+                      {validationErrors.greeting}
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button
                       onClick={handleSaveGreeting}
@@ -491,7 +529,14 @@ export default function ChatbotAdmin() {
                     <Button
                       onClick={
                         isEditingGreeting
-                          ? () => setIsEditingGreeting(false)
+                          ? () => {
+                              // Reset to original value
+                              const originalGreeting = faqs.find(faq => faq.topic === "::greeting::");
+                              setGreetingMessage(originalGreeting?.reply_message || "");
+                              setIsEditingGreeting(false);
+                              // Clear validation errors
+                              setValidationErrors(prev => ({ ...prev, greeting: undefined }));
+                            }
                           : () => setIsEditingGreeting(true)
                       }
                       variant="outline"
@@ -505,21 +550,43 @@ export default function ChatbotAdmin() {
 
               {/* Fallback Message */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
                   Fallback Message
                 </label>
                 <div className="space-y-2">
-                  <textarea
-                    value={fallbackMessage}
-                    onChange={(e) => setFallbackMessage(e.target.value)}
-                    placeholder="Enter fallback message..."
-                    className={`w-full p-3 border border-gray-300 rounded-md h-24 resize-none outline-none ${
-                      isEditingFallback
-                        ? "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
-                        : "text-gray-500"
-                    }`}
-                    disabled={!isEditingFallback}
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={fallbackMessage}
+                      onChange={(e) => {
+                        setFallbackMessage(e.target.value);
+                        // Clear error when user starts typing
+                        if (validationErrors.fallback) {
+                          setValidationErrors(prev => ({ ...prev, fallback: undefined }));
+                        }
+                      }}
+                      placeholder="Enter fallback message..."
+                      className={`w-full p-3 border rounded-md h-24 resize-none outline-none ${
+                        isEditingFallback
+                          ? validationErrors.fallback
+                            ? "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)] text-black"
+                            : "border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          : "text-gray-500 border-gray-300"
+                      }`}
+                      disabled={!isEditingFallback}
+                    />
+                    {isEditingFallback && validationErrors.fallback && (
+                      <img 
+                        src="/icons/exclamation-icon.svg" 
+                        alt="Error" 
+                        className="absolute right-3 top-3 w-4 h-4" 
+                      />
+                    )}
+                  </div>
+                  {isEditingFallback && validationErrors.fallback && (
+                    <div className="mt-1 text-[var(--color-red)] text-xs">
+                      {validationErrors.fallback}
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button
                       onClick={handleSaveFallback}
@@ -535,7 +602,14 @@ export default function ChatbotAdmin() {
                     <Button
                       onClick={
                         isEditingFallback
-                          ? () => setIsEditingFallback(false)
+                          ? () => {
+                              // Reset to original value
+                              const originalFallback = faqs.find(faq => faq.topic === "::fallback::");
+                              setFallbackMessage(originalFallback?.reply_message || "");
+                              setIsEditingFallback(false);
+                              // Clear validation errors
+                              setValidationErrors(prev => ({ ...prev, fallback: undefined }));
+                            }
                           : () => setIsEditingFallback(true)
                       }
                       variant="outline"
@@ -551,403 +625,258 @@ export default function ChatbotAdmin() {
             {/* Thick Gray Divider */}
             <div className="border-t-4 border-gray-300 mt-10 mb-15"></div>
 
-            {/* Suggestion Menu & Responses */}
-            <div>
+            {/* Context Management Section */}
+            <div className="mt-8">
               <h2 className="text-lg font-semibold text-gray-600 mb-4">
-                Suggestion Menu & Responses
+                Helpful Details
               </h2>
 
-              {/* Create New FAQ */}
+              {/* Create New Context */}
               <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-100">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Topic
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                      Detail
                     </label>
-                    <div className="flex gap-2">
-                      <Input
-                        value={newFAQ.question}
-                        onChange={(e) =>
-                          setNewFAQ({ ...newFAQ, question: e.target.value })
-                        }
-                        placeholder="Enter topic..."
-                        className="flex-1 border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setShowAliases(!showAliases);
-                          if (!showAliases) {
-                            setNewAliasesUI([]);
-                            setNewAliasInput("");
-                          }
-                        }}
-                        className="cursor-pointer whitespace-nowrap border-orange-500 text-orange-500 hover:bg-orange-50"
-                      >
-                        {showAliases ? "Hide Aliases" : "Add Aliases"}
-                      </Button>
-                    </div>
-                  </div>
-                  {showAliases && (
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium mb-2">
-                        Aliases
-                      </label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={newAliasInput}
-                          onChange={(e) => setNewAliasInput(e.target.value)}
-                          placeholder="Enter alias phrase..."
-                          className="flex-1 border bg-white border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (newAliasInput.trim()) {
-                              setNewAliasesUI([
-                                ...newAliasesUI,
-                                newAliasInput.trim(),
-                              ]);
-                              setNewAliasInput("");
-                            }
-                          }}
-                          className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
-                        >
-                          + Add
-                        </Button>
-                      </div>
-                      {newAliasesUI.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {newAliasesUI.map((alias, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center bg-gray-300 rounded-md px-3 py-1 text-sm"
-                            >
-                              <span>{alias}</span>
-                              <button
-                                onClick={() =>
-                                  setNewAliasesUI(
-                                    newAliasesUI.filter((_, i) => i !== index)
-                                  )
-                                }
-                                className="ml-2 text-orange-500 hover:text-orange-700 cursor-pointer"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Reply message
-                    </label>
-                    <textarea
-                      value={newFAQ.answer}
-                      onChange={(e) =>
-                        setNewFAQ({ ...newFAQ, answer: e.target.value })
-                      }
-                      placeholder="Enter reply message..."
-                      className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-24 resize-none outline-none"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleCreateFAQ}
-                    disabled={loading}
-                    className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
-                  >
-                    {loading ? "Creating..." : "Create FAQ"}
-                  </Button>
-                </div>
-              </div>
-
-              {/* FAQ List */}
-              <div className="space-y-4">
-                <h3 className="text-md font-medium text-gray-900">
-                  Existing FAQs (
-                  {
-                    faqs.filter(
-                      (faq) =>
-                        faq.question !== "::greeting::" &&
-                        faq.question !== "::fallback::"
-                    ).length
-                  }
-                  )
-                </h3>
-                {faqs
-                  .filter(
-                    (faq) =>
-                      faq.question !== "::greeting::" &&
-                      faq.question !== "::fallback::"
-                  )
-                  .map((faq) => (
-                    <div
-                      key={faq.id}
-                      className="p-4 border border-gray-200 rounded-lg"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-2">
-                            {faq.question}
-                          </h4>
-                          <p className="text-gray-600 text-sm mb-2">
-                            {faq.answer}
-                          </p>
-
-                          {/* Display aliases */}
-                          {faq.aliases && faq.aliases.length > 0 && (
-                            <div className="mb-2">
-                              <p className="text-xs text-gray-500 mb-1">
-                                Aliases:
-                              </p>
-                              <div className="flex flex-wrap gap-1">
-                                {faq.aliases.map((alias) => (
-                                  <span
-                                    key={alias.id}
-                                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
-                                  >
-                                    {alias.alias}
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteAlias(alias.id)
-                                      }
-                                      className="text-orange-500 hover:text-orange-700 cursor-pointer"
-                                    >
-                                      ×
-                                    </button>
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          <p className="text-xs text-gray-400">
-                            Created:{" "}
-                            {new Date(faq.created_at).toLocaleString("en-US")}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 ml-4">
-                          <Button
-                            onClick={() => {
-                              setEditingFAQ(faq);
-                              setEditAliasesUI(
-                                faq.aliases?.map((a) => a.alias) || [""]
-                              );
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={() => handleDeleteFAQ(faq.id)}
-                            size="sm"
-                            className="bg-orange-700 text-white hover:bg-orange-800 cursor-pointer"
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                {faqs.filter(
-                  (faq) =>
-                    faq.question !== "::greeting::" &&
-                    faq.question !== "::fallback::"
-                ).length === 0 && (
-                  <div className="p-6 text-center text-gray-500">
-                    No FAQs yet
-                  </div>
-                )}
-              </div>
-
-              {/* Thick Gray Divider */}
-              <div className="border-t-4 border-gray-300 mt-10 mb-15"></div>
-              {/* Context Management Section */}
-              <div className="mt-8">
-                <h2 className="text-lg font-semibold text-gray-600 mb-4">
-                  Helpful Details Management
-                </h2>
-
-                {/* Create New Context */}
-                <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-100">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Detail
-                      </label>
+                    <div className="relative">
                       <textarea
                         value={newContext.content}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setNewContext({
                             ...newContext,
                             content: e.target.value,
-                          })
-                        }
-                        placeholder="Enter additional context information for chatbot responses..."
-                        className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none outline-none"
+                          });
+                          // Clear error when user starts typing
+                          if (validationErrors.context) {
+                            setValidationErrors(prev => ({ ...prev, context: undefined }));
+                          }
+                        }}
+                        placeholder="Enter detail (separate multiple details with commas)..."
+                        className={`w-full bg-white p-3 border rounded-md resize-none outline-none ${
+                          validationErrors.context
+                            ? "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)]"
+                            : "border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        }`}
                       />
+                      {validationErrors.context && (
+                        <img 
+                          src="/icons/exclamation-icon.svg" 
+                          alt="Error" 
+                          className="absolute right-3 top-3 w-4 h-4" 
+                        />
+                      )}
                     </div>
+                    {validationErrors.context && (
+                      <div className="mt-1 text-[var(--color-red)] text-xs">
+                        {validationErrors.context}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
                     <Button
                       onClick={handleCreateContext}
                       disabled={loading}
                       className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
                     >
-                      {loading ? "Creating..." : "Create Detail"}
+                      {loading ? "Adding..." : "Add"}
+                    </Button>
+                    <Button
+                      onClick={() => setNewContext({ content: "" })}
+                      disabled={loading}
+                      variant="ghost"
+                      className="cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    >
+                      Cancel
                     </Button>
                   </div>
                 </div>
+              </div>
 
-                {/* Context List */}
-                <div className="space-y-4">
-                  <h3 className="text-md font-medium text-gray-900">
-                    Existing Details ({contexts.length})
-                  </h3>
-                  {contexts.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {contexts.map((context) => (
-                        <span
-                          key={context.id}
-                          className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg border border-gray-200"
-                        >
-                          <span
-                            className="max-w-xs truncate"
-                            title={context.content}
-                          >
-                            {context.content}
-                          </span>
-                          <button
-                            onClick={() => setEditingContext(context)}
-                            className="text-orange-500 hover:text-orange-700 cursor-pointer"
-                            title="Edit"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteContext(context.id)}
-                            className="text-orange-500 hover:text-orange-700 cursor-pointer text-xs"
-                            title="Delete"
-                          >
-                            ✕
-                          </button>
+              {/* Context List */}
+              <div className="space-y-2">
+                {/* <h3 className="text-md font-medium text-gray-900">
+                  Existing Details ({contexts.length})
+                </h3> */}
+                {contexts.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {contexts.map((context) => (
+                      <div key={context.id} className="flex flex-col">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded border border-gray-200">
+                          {editingContext?.id === context.id ? (
+                            // Edit Mode
+                            <div className="flex items-center gap-2">
+                              <textarea
+                                value={editingContext.content}
+                                onChange={(e) => {
+                                  setEditingContext({
+                                    ...editingContext,
+                                    content: e.target.value,
+                                  });
+                                  // Clear error when user starts typing
+                                  if (editingContextErrors[editingContext.id]) {
+                                    setEditingContextErrors(prev => ({ ...prev, [editingContext.id]: undefined }));
+                                  }
+                                }}
+                                placeholder="Enter detail (separate multiple details with commas)..."
+                                className={`min-w-[200px] bg-white p-1 border rounded text-sm resize-none outline-none ${
+                                  editingContextErrors[editingContext.id]
+                                    ? "border-[var(--color-red)]"
+                                    : "border-gray-300"
+                                }`}
+                                rows={1}
+                              />
+                              <button
+                                onClick={handleUpdateContext}
+                                className="px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 cursor-pointer"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingContext(null);
+                                  // Clear error when canceling
+                                  if (editingContext) {
+                                    setEditingContextErrors(prev => ({ ...prev, [editingContext.id]: undefined }));
+                                  }
+                                }}
+                                className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded hover:bg-gray-200 cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            // View Mode
+                            <>
+                              <span
+                                className="max-w-xs truncate"
+                                title={context.content}
+                              >
+                                {context.content}
+                              </span>
+                              <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                              <button
+                                onClick={() => setEditingContext(context)}
+                                className="text-orange-500 hover:text-orange-700 cursor-pointer -mx-0.5"
+                                title="Edit"
+                              >
+                                <img src="/pencil.svg" alt="Edit" className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteContext(context.id)}
+                                className="text-orange-500 hover:text-orange-700 cursor-pointer -mx-0.25"
+                                title="Delete"
+                              >
+                                <img src="/delete.svg" alt="Delete" className="w-5 h-5" />
+                              </button>
+                            </>
+                          )}
                         </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No contexts found. Create your first context above.</p>
-                    </div>
-                  )}
-                </div>
+                        {editingContext && editingContext.id === context.id && editingContextErrors[editingContext.id] && (
+                          <div className="mt-1 text-[var(--color-red)] text-xs">
+                            {editingContextErrors[editingContext.id]}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <p>No contexts found. Create your first context above.</p>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Thick Gray Divider */}
+            <div className="border-t-4 border-gray-300 mt-10 mb-15"></div>
+
+            {/* Suggestion Menu & Responses */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-600 mb-4">
+                Suggestion Menu & Responses
+              </h2>
+              
+              {/* Existing FAQs List (Read-only) */}
+              <div className="space-y-10 mb-6">
+                <Reorder.Group
+                  axis="y"
+                  values={faqs.filter(
+                    (faq) =>
+                      faq.topic !== "::greeting::" &&
+                      faq.topic !== "::fallback::"
+                  )}
+                  onReorder={handleReorderFAQs}
+                  className="space-y-10"
+                >
+                   {faqs
+                     .filter(
+                       (faq) =>
+                         faq.topic !== "::greeting::" &&
+                         faq.topic !== "::fallback::"
+                     )
+                     .map((faq) => (
+                      <Reorder.Item key={faq.id} value={faq}>
+                        <SuggestionMenu 
+                          faqs={[faq]}
+                          loading={loading}
+                          onFetchFAQs={fetchFAQs}
+                          onDeleteFAQ={handleDeleteFAQ}
+                          onDeleteAlias={handleDeleteAlias}
+                          onReorderFAQs={handleReorderFAQs}
+                          isReadOnly={editingFAQ?.id !== faq.id}
+                          faq={faq}
+                          onEdit={() => {
+                            setEditingFAQ(faq);
+                          }}
+                          onClose={() => setEditingFAQ(null)}
+                        />
+                      </Reorder.Item>
+                    ))}
+                </Reorder.Group>
+                {faqs.filter(
+                  (faq) =>
+                    faq.topic !== "::greeting::" &&
+                    faq.topic !== "::fallback::"
+                ).length === 0 && (
+                  <div className="p-6 text-center text-gray-500">
+                    No suggestion menu yet
+                  </div>
+                )}
+              </div>
+
+              {/* Create FAQ Form (Only show when + Add Suggestion menu is clicked) */}
+              {showCreateFAQ && (
+                <SuggestionMenu 
+                  faqs={faqs}
+                  loading={loading}
+                  onFetchFAQs={fetchFAQs}
+                  onDeleteFAQ={handleDeleteFAQ}
+                  onDeleteAlias={handleDeleteAlias}
+                  onClose={() => setShowCreateFAQ(false)}
+                />
+              )}
+
+              
+              {!showCreateFAQ && (
+                <div className="mt-4">
+                  <Button
+                    onClick={() => setShowCreateFAQ(true)}
+                    variant="outline"
+                    className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
+                  >
+                    + Add Suggestion menu
+                  </Button>
+                </div>
+              )}
+            </div>
+
           </div>
 
           {/* Bottom spacing */}
           <div className="h-8"></div>
         </div>
 
-        {/* Edit FAQ Modal */}
-        {editingFAQ && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-96 max-w-full mx-4">
-              <h2 className="text-xl font-semibold mb-4">Edit FAQ</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Topic
-                  </label>
-                  <Input
-                    value={editingFAQ.question}
-                    onChange={(e) =>
-                      setEditingFAQ({ ...editingFAQ, question: e.target.value })
-                    }
-                    className="w-full hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Reply message
-                  </label>
-                  <textarea
-                    value={editingFAQ.answer}
-                    onChange={(e) =>
-                      setEditingFAQ({ ...editingFAQ, answer: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-24 resize-none outline-none"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleUpdateFAQ}
-                    disabled={loading}
-                    className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
-                  >
-                    {loading ? "Saving..." : "Save"}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setEditingFAQ(null);
-                      setEditAliasesUI([""]);
-                    }}
-                    variant="outline"
-                    className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Edit Context Modal */}
-        {editingContext && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
-              <h3 className="text-lg font-semibold mb-4">Edit Context</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Context Content
-                  </label>
-                  <textarea
-                    value={editingContext.content}
-                    onChange={(e) =>
-                      setEditingContext({
-                        ...editingContext,
-                        content: e.target.value,
-                      })
-                    }
-                    placeholder="Enter context information..."
-                    className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-32 resize-none outline-none"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleUpdateContext}
-                    disabled={loading}
-                    className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
-                  >
-                    {loading ? "Saving..." : "Save"}
-                  </Button>
-                  <Button
-                    onClick={() => setEditingContext(null)}
-                    variant="outline"
-                    className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </Layout>
   );
