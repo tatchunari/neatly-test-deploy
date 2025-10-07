@@ -50,15 +50,23 @@ export const formatCurrency = (
     style: "currency",
     currency: currency,
     minimumFractionDigits: 2,
+    currencyDisplay: "code",
   }).format(amount);
 };
 
 export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("th-TH", {
+  return date.toLocaleDateString("en-US", {
     weekday: "short",
     year: "numeric",
     month: "short",
     day: "numeric",
   });
+};
+
+// เพิ่ม function ใหม่สำหรับแสดงราคาแบบไม่มีหน่วยเงิน
+export const formatPrice = (amount: number): string => {
+  return new Intl.NumberFormat("th-TH", {
+    minimumFractionDigits: 2,
+  }).format(amount);
 };

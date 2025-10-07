@@ -18,14 +18,15 @@ export interface Booking {
   id: string;
   room_id: string;
   customer_id: string;
-  check_in: string;
-  check_out: string;
-  total: number;
+  check_in_date: string; // แก้ไขจาก check_in
+  check_out_date: string; // แก้ไขจาก check_out
+  total_amount: number; // แก้ไขจาก total
   status: BookingStatus;
   promo_code?: string;
   special_requests?: SpecialRequest[];
-  additional_requests?: string;
+  additional_request?: string; // แก้ไขจาก additional_requests
   payment_method: PaymentMethod;
+  booking_date?: string;
   created_at: string;
   updated_at: string;
 }
@@ -36,10 +37,9 @@ export interface Payment {
   stripe_payment_id?: string;
   amount: number;
   status: PaymentStatus;
-  payment_method: PaymentMethod;
-  card_last_four?: string;
   meta?: Record<string, any>;
   created_at: string;
+  paid_at: string; // แก้ไขจาก created_at
 }
 
 // ===== ROOM INFORMATION =====

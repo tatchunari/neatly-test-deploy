@@ -31,19 +31,34 @@ import {
 import { BookingService } from "@/services/bookingService";
 import { PaymentService } from "@/services/paymentService";
 import { PromotionService } from "@/services/promotionService";
-import { useProfile } from "@/hooks/useProfile"; // เพิ่ม useProfile
+import { useProfile } from "@/hooks/useProfile";
 import Layout from "@/components/Layout";
+
+interface RoomDetails {
+  id: string;
+  room_type: string;
+  price: number;
+  guests: number;
+  amenities: string[];
+  main_image_url: string[];
+}
 
 export default function BookingPage() {
   const router = useRouter();
-  const { roomId, checkIn, checkOut, guests } = router.query;
-  const { profile, isLoading: profileLoading } = useProfile(); // ดึงข้อมูล profile
+  const { room_type_id, checkIn, checkOut, guests } = router.query;
+  const { profile, isLoading: profileLoading } = useProfile();
 
   // Step management
   const [currentStep, setCurrentStep] = useState<BookingStep>("basic_info");
   const [loading, setLoading] = useState(false);
+  const [roomLoading, setRoomLoading] = useState(true);
+  const [roomError, setRoomError] = useState<string | null>(null);
 
-  // Form data - เริ่มต้นเป็นค่าว่าง
+  // Room data
+  const [availableRooms, setAvailableRooms] = useState<RoomDetails[]>([]);
+  const [selectedRoom, setSelectedRoom] = useState<RoomDetails | null>(null);
+
+  // Form data
   const [guestInfo, setGuestInfo] = useState<GuestInfo>({
     firstName: "",
     lastName: "",
@@ -79,31 +94,66 @@ export default function BookingPage() {
   const [bookingConfirmation, setBookingConfirmation] =
     useState<BookingConfirmation | null>(null);
 
-  // Room info (mock data - should come from API)
-  const roomInfo = {
-    name: "Deluxe Ocean View",
-    price: 2500,
-    image: "/image/deluxe.jpg",
-  };
-
-  // Calculations
-  const nights = calculateNights(checkIn as string, checkOut as string);
-  const selectedSpecialRequests = specialRequests.filter((req) => req.selected);
-  const calculation = calculateBookingTotal(
-    roomInfo.price,
-    nights,
-    selectedSpecialRequests,
-    promoDiscount
-  );
-
   // Timer
   const [timeLeft, setTimeLeft] = useState({ minutes: 60, seconds: 0 });
 
+  // Check room availability when component mounts
+  useEffect(() => {
+    const checkRoomAvailability = async () => {
+      if (!room_type_id || !checkIn || !checkOut || !guests) {
+        setRoomError("Missing required booking parameters");
+        setRoomLoading(false);
+        return;
+      }
+
+      try {
+        setRoomLoading(true);
+        setRoomError(null);
+
+        const response = await fetch("/api/rooms/availability", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            room_type_id: parseInt(room_type_id as string),
+            check_in: checkIn,
+            check_out: checkOut,
+            guests: parseInt(guests as string),
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.data.available) {
+          setAvailableRooms(result.data.roomDetails || []);
+          // เลือกห้องแรกเป็น default
+          if (result.data.roomDetails && result.data.roomDetails.length > 0) {
+            setSelectedRoom(result.data.roomDetails[0]);
+          }
+        } else {
+          setRoomError(
+            result.message || "No rooms available for the selected dates"
+          );
+          // Redirect back to search result
+          router.push("/customer/search-result");
+        }
+      } catch (error) {
+        console.error("Error checking room availability:", error);
+        setRoomError("Failed to check room availability");
+      } finally {
+        setRoomLoading(false);
+      }
+    };
+
+    checkRoomAvailability();
+  }, [room_type_id, checkIn, checkOut, guests, router]);
+
+  // Timer effect
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev.minutes === 0 && prev.seconds === 0) {
-          // Booking expired
           router.push("/customer/search-result");
           return { minutes: 0, seconds: 0 };
         }
@@ -119,11 +169,10 @@ export default function BookingPage() {
     return () => clearInterval(timer);
   }, [router]);
 
-  // อัปเดต guestInfo เมื่อ profile โหลดเสร็จ
+  // Update guest info when profile loads
   useEffect(() => {
     const updateGuestInfo = async () => {
       if (profile) {
-        // ดึง email จาก auth user
         const { supabase } = await import("@/lib/supabaseClient");
         const {
           data: { user },
@@ -140,7 +189,6 @@ export default function BookingPage() {
 
         setGuestInfo(newGuestInfo);
       } else if (!profileLoading) {
-        // ถ้าไม่มี profile ให้ดึงแค่ email จาก auth
         const { supabase } = await import("@/lib/supabaseClient");
         const {
           data: { user },
@@ -186,7 +234,6 @@ export default function BookingPage() {
   const handleBack = () => {
     switch (currentStep) {
       case "basic_info":
-        // กลับไปหน้า search result
         router.push("/customer/search-result");
         break;
       case "special_request":
@@ -205,7 +252,7 @@ export default function BookingPage() {
     try {
       const result = await PromotionService.validatePromotionCode(
         promoCode,
-        roomId as string,
+        selectedRoom?.id || "",
         checkIn as string,
         checkOut as string
       );
@@ -228,12 +275,17 @@ export default function BookingPage() {
 
   // Booking confirmation handler
   const handleConfirmBooking = async () => {
+    if (!selectedRoom) {
+      alert("No room selected");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const bookingData: BookingFormData = {
         guestInfo,
-        roomId: roomId as string,
+        roomId: selectedRoom.id,
         checkIn: checkIn as string,
         checkOut: checkOut as string,
         guests: parseInt(guests as string),
@@ -274,7 +326,6 @@ export default function BookingPage() {
               payment.id
             );
           } else {
-            // For bank transfer and promptpay, mark as pending
             processResponse = { success: true, data: payment };
           }
 
@@ -290,7 +341,7 @@ export default function BookingPage() {
               currency: "THB",
               checkIn: checkIn as string,
               checkOut: checkOut as string,
-              roomType: roomInfo.name,
+              roomType: selectedRoom.room_type,
               guestName: `${guestInfo.firstName} ${guestInfo.lastName}`,
               email: guestInfo.email,
             });
@@ -339,6 +390,16 @@ export default function BookingPage() {
     setCurrentStep("payment_method");
   };
 
+  // Calculations
+  const nights = calculateNights(checkIn as string, checkOut as string);
+  const selectedSpecialRequests = specialRequests.filter((req) => req.selected);
+  const calculation = calculateBookingTotal(
+    selectedRoom?.price || 0,
+    nights,
+    selectedSpecialRequests,
+    promoDiscount
+  );
+
   // Render current step content
   const renderStepContent = () => {
     switch (currentStep) {
@@ -346,7 +407,7 @@ export default function BookingPage() {
         return (
           <BasicInfoForm
             guestInfo={guestInfo}
-            onBack={() => router.push("/customer/search-result")} // กลับไปหน้า search-result
+            onBack={() => router.push("/customer/search-result")}
             onNext={handleNext}
             disabled={loading}
             loading={loading}
@@ -359,8 +420,8 @@ export default function BookingPage() {
             onSpecialRequestsChange={setSpecialRequests}
             additionalRequest={additionalRequest}
             onAdditionalRequestChange={setAdditionalRequest}
-            onBack={handleBack} // กลับไปหน้า basic_info
-            onNext={handleNext} // ไปหน้า payment_method
+            onBack={handleBack}
+            onNext={handleNext}
             disabled={loading}
             loading={loading}
           />
@@ -377,8 +438,8 @@ export default function BookingPage() {
             onPromoCodeApply={handlePromoCodeApply}
             promoCodeApplied={promoCodeApplied}
             promoDiscount={promoDiscount}
-            onBack={handleBack} // กลับไปหน้า special_request
-            onConfirm={handleConfirmBooking} // confirm booking
+            onBack={handleBack}
+            onConfirm={handleConfirmBooking}
             disabled={loading}
             loading={loading}
           />
@@ -388,6 +449,43 @@ export default function BookingPage() {
     }
   };
 
+  // Loading state
+  if (roomLoading || profileLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading booking information...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Error state
+  if (roomError || !selectedRoom) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="text-red-500 text-xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Room Not Available
+            </h2>
+            <p className="text-gray-600 mb-4">{roomError}</p>
+            <button
+              onClick={() => router.push("/customer/search-result")}
+              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              Back to Search
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <BookingLayout
@@ -395,7 +493,11 @@ export default function BookingPage() {
         sidebar={
           <div className="space-y-6">
             <BookingSummary
-              roomInfo={roomInfo}
+              roomInfo={{
+                name: selectedRoom.room_type,
+                price: selectedRoom.price,
+                image: selectedRoom.main_image_url[0] || "/image/deluxe.jpg",
+              }}
               checkIn={checkIn as string}
               checkOut={checkOut as string}
               guests={parseInt(guests as string)}
@@ -415,7 +517,6 @@ export default function BookingPage() {
           </div>
         }
       >
-        {/* Form content เท่านั้น */}
         <div className="space-y-8">{renderStepContent()}</div>
 
         {/* Modals */}

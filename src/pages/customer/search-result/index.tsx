@@ -59,10 +59,56 @@ function SearchResultPage() {
 
   // ฟังก์ชันเมื่อกดปุ่ม Room Detail
   // แก้ไขให้รับ id แทน room object
-  const handleRoomDetailClick = (id: string) => {
+  const handleRoomDetailClick = (id: number | string) => {
+    // รับทั้ง number และ string
     if (!id) return;
     router.push(`/customer/search-result/${id}`);
   };
+
+  // เพิ่มฟังก์ชันนี้ใน SearchResultPage component
+
+  const handleBookNow = async (roomTypeId: number) => {
+    try {
+      setLoading(true);
+
+      // แก้ไข: ใช้ชื่อที่ตรงกับ router.query (checkIn, checkOut)
+      const { checkIn, checkOut, guests } = router.query;
+
+      if (!checkIn || !checkOut || !guests) {
+        alert("Missing search parameters. Please search again.");
+        return;
+      }
+
+      const response = await fetch("/api/rooms/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_type_id: roomTypeId,
+          check_in: checkIn, // ใช้ checkIn (ตัวใหญ่)
+          check_out: checkOut, // ใช้ checkOut (ตัวใหญ่)
+          guests: parseInt(guests as string),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data.available) {
+        router.push(
+          `/customer/booking?room_type_id=${roomTypeId}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`
+        );
+      } else {
+        alert(
+          result.message || "ห้องไม่ว่างในช่วงวันที่เลือก กรุณาเลือกวันที่อื่น"
+        );
+      }
+    } catch (error) {
+      console.error("Error checking availability:", error);
+      alert("เกิดข้อผิดพลาดในการตรวจสอบห้องว่าง");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   console.log("Rooms", rooms);
 
   return (
@@ -79,7 +125,12 @@ function SearchResultPage() {
               guests: (router.query.guests as string) || undefined,
             }}
             onSearch={(params: SearchParams) => {
-              const q = new URLSearchParams(params).toString();
+              const q = new URLSearchParams({
+                checkIn: params.checkIn,
+                checkOut: params.checkOut,
+                room: params.room,
+                guests: params.guests,
+              }).toString();
               router.push(`/customer/search-result?${q}`);
             }}
           />
@@ -227,11 +278,14 @@ function SearchResultPage() {
                             minHeight: "48px",
                             fontSize: "16px",
                           }}
-                          onClick={() => handleRoomDetailClick(room.id)}
+                          onClick={() =>
+                            handleRoomDetailClick(room.id.toString())
+                          } // แปลง number เป็น string
                         >
                           Room Detail
                         </button>
                         <button
+                          onClick={() => handleBookNow(room.id)} // room.id จาก room_types table = room_type_id
                           className="bg-[#F47A1F] text-white rounded-lg font-semibold text-sm hover:bg-[#d96a1a] transition"
                           style={{
                             width: "143px",
@@ -241,7 +295,7 @@ function SearchResultPage() {
                             fontSize: "16px",
                           }}
                         >
-                          Book Now
+                          {loading ? "Checking..." : "Book Now"}
                         </button>
                       </div>
                     </div>

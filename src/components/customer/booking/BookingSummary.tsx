@@ -1,6 +1,6 @@
 import React from "react";
 import { BookingCalculation } from "@/types/booking";
-import { formatCurrency, formatDate } from "@/utils/bookingUtils";
+import { formatCurrency, formatDate, formatPrice } from "@/utils/bookingUtils";
 import { BagIcon } from "@/components/customer/icons/BagIcon";
 
 interface BookingSummaryProps {
@@ -99,7 +99,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
               {roomInfo.name}
             </div>
             <div className="text-base tracking-tight text-[var(--color-white)] font-[var(--font-inter)]">
-              {formatCurrency(calculation.basePrice)}
+              {formatPrice(calculation.basePrice)}
             </div>
           </div>
 
@@ -112,7 +112,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                     {request.name}
                   </div>
                   <div className="text-base tracking-tight text-[var(--color-white)] font-[var(--font-inter)]">
-                    {formatCurrency(request.price || 0)}
+                    {formatPrice(request.price || 0)}
                   </div>
                 </div>
               ))}
@@ -126,7 +126,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                 Promotion ({promotionCode.code})
               </div>
               <div className="text-base text-[var(--color-orange-500)] font-[var(--font-inter)]">
-                -{formatCurrency(promotionCode.discount)}
+                -{formatPrice(promotionCode.discount)}
               </div>
             </div>
           )}

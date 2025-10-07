@@ -67,13 +67,13 @@ export class BookingService {
         .insert({
           room_id: bookingData.roomId,
           customer_id: bookingData.guestInfo.email, // หรือใช้ user ID จาก auth
-          check_in: bookingData.checkIn,
-          check_out: bookingData.checkOut,
-          total: calculation.total,
+          check_in_date: bookingData.checkIn, // แก้ไขเป็น check_in_date
+          check_out_date: bookingData.checkOut, // แก้ไขเป็น check_out_date
+          total_amount: calculation.total, // แก้ไขเป็น total_amount
           status: BOOKING_STATUSES.PENDING,
           promo_code: bookingData.promoCode,
           special_requests: bookingData.specialRequests,
-          additional_requests: bookingData.additionalRequests,
+          additional_request: bookingData.additionalRequests, // แก้ไขเป็น additional_request
           payment_method: bookingData.paymentMethod,
         })
         .select()
@@ -251,7 +251,7 @@ export class BookingService {
 
       // 2. Check if booking can be cancelled (within 24 hours)
       const canCancel = this.canCancelBooking(
-        booking.check_in,
+        booking.check_in_date, // แก้ไขเป็น check_in_date
         booking.created_at
       );
       if (!canCancel) {
@@ -356,7 +356,7 @@ export class BookingService {
         .select("id")
         .eq("room_id", roomId)
         .eq("status", BOOKING_STATUSES.CONFIRMED)
-        .or(`and(check_in.lt.${checkOut},check_out.gt.${checkIn})`);
+        .or(`and(check_in_date.lt.${checkOut},check_out_date.gt.${checkIn})`); // ใช้ check_in_date, check_out_date
 
       if (error) {
         console.error("Room availability check error:", error);
@@ -387,7 +387,10 @@ export class BookingService {
     booking: Booking,
     roomInfo: RoomInfo
   ): BookingSummary {
-    const nights = calculateNights(booking.check_in, booking.check_out);
+    const nights = calculateNights(
+      booking.check_in_date,
+      booking.check_out_date
+    );
     const specialRequestsTotal =
       booking.special_requests
         ?.filter((req) => req.selected && req.price)
@@ -396,14 +399,14 @@ export class BookingService {
     return {
       roomType: roomInfo.room_type,
       roomImage: roomInfo.main_image_url,
-      checkIn: booking.check_in,
-      checkOut: booking.check_out,
-      guests: 2, // ต้องดึงจาก booking data
+      checkIn: booking.check_in_date, // แก้ไขเป็น check_in_date
+      checkOut: booking.check_out_date, // แก้ไขเป็น check_out_date
+      guests: 2,
       nights,
       basePrice: roomInfo.price,
       specialRequestsTotal,
-      promoDiscount: 0, // ต้องคำนวณจาก promo code
-      total: booking.total,
+      promoDiscount: 0,
+      total: booking.total_amount, // แก้ไขเป็น total_amount
       currency: CURRENCY,
     };
   }
