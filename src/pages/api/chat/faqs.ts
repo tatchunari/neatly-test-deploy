@@ -23,6 +23,7 @@ interface FAQPayload {
   reply_payload: ReplyPayload;
   created_by?: string; // UUID as string
   aliases?: string[];
+  deleted_aliases?: string[];
 }
 
 // Validation functions for different reply formats
@@ -258,7 +259,8 @@ export default async function handler(
         reply_format = 'message', 
         reply_payload = null,
         created_by,
-        aliases = []
+        aliases = [],
+        deleted_aliases = []
       }: FAQPayload = req.body;
 
       if (!topic || !reply_message) {
@@ -269,7 +271,7 @@ export default async function handler(
         return res.status(400).json({ error: 'Invalid reply_format or reply_payload' });
       }
 
-      console.log('Updating FAQ entry:', { id, topic, reply_message, reply_format, reply_payload, aliases, created_by });
+      console.log('Updating FAQ entry:', { id, topic, reply_message, reply_format, reply_payload, aliases, deleted_aliases, created_by });
 
       // Check if it's a special message (greeting/fallback) that doesn't need embedding
       const isSpecialMessage = topic === '::greeting::' || topic === '::fallback::';
@@ -328,6 +330,20 @@ export default async function handler(
         if (!createdFAQ || !createdFAQ.id) {
           console.error('RPC function did not return valid FAQ with ID');
           throw new Error('RPC function did not return valid FAQ with ID');
+        }
+
+        // Delete aliases that are marked for deletion
+        if (deleted_aliases.length > 0) {
+          console.log('Deleting aliases:', deleted_aliases);
+          const { error: deleteAliasError } = await supabase
+            .from('chatbot_faq_aliases')
+            .delete()
+            .in('id', deleted_aliases);
+
+          if (deleteAliasError) {
+            console.error('Error deleting aliases:', deleteAliasError);
+            throw deleteAliasError;
+          }
         }
 
         // Upsert only NEW aliases to avoid recomputing embeddings and avoid losing existing

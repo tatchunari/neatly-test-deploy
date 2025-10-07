@@ -55,6 +55,16 @@ export default function ChatbotAdmin() {
   const [newContext, setNewContext] = useState({ content: "" });
   const [editingContext, setEditingContext] = useState<Context | null>(null);
 
+  // Validation error states
+  const [validationErrors, setValidationErrors] = useState<{
+    greeting?: string;
+    fallback?: string;
+    context?: string;
+  }>({});
+
+  // Separate validation for editing contexts
+  const [editingContextErrors, setEditingContextErrors] = useState<{ [id: string]: string | undefined }>({});
+
   // Load FAQs and Contexts on component mount
   useEffect(() => {
     fetchFAQs();
@@ -173,6 +183,15 @@ export default function ChatbotAdmin() {
   };
 
   const handleSaveGreeting = async () => {
+    // Clear previous validation errors
+    setValidationErrors(prev => ({ ...prev, greeting: undefined }));
+
+    // Validation
+    if (!greetingMessage.trim()) {
+      setValidationErrors(prev => ({ ...prev, greeting: "Please enter a greeting message" }));
+      return;
+    }
+
     setLoading(true);
     try {
       // หา greeting message ที่มีอยู่
@@ -207,6 +226,15 @@ export default function ChatbotAdmin() {
   };
 
   const handleSaveFallback = async () => {
+    // Clear previous validation errors
+    setValidationErrors(prev => ({ ...prev, fallback: undefined }));
+
+    // Validation
+    if (!fallbackMessage.trim()) {
+      setValidationErrors(prev => ({ ...prev, fallback: "Please enter a fallback message" }));
+      return;
+    }
+
     setLoading(true);
     try {
       // หา fallback message ที่มีอยู่
@@ -254,51 +282,74 @@ export default function ChatbotAdmin() {
   const handleCreateContext = async () => {
     console.log("🟡 Admin: handleCreateContext called");
 
+    // Clear previous validation errors
+    setValidationErrors(prev => ({ ...prev, context: undefined }));
+
+    // Validation
     if (!newContext.content.trim()) {
-      console.log("❌ Admin: Content is empty, returning");
+      setValidationErrors(prev => ({ ...prev, context: "Please enter a detail" }));
+      return;
+    }
+
+    // Split by comma and create multiple contexts
+    const details = newContext.content.split(',').map(detail => detail.trim()).filter(detail => detail.length > 0);
+    
+    if (details.length === 0) {
+      setValidationErrors(prev => ({ ...prev, context: "Please enter at least one detail" }));
+      return;
+    }
+
+    // Check for duplicates with existing contexts
+    const existingContexts = contexts.map(ctx => ctx.content.toLowerCase());
+    const duplicateDetails = details.filter(detail => existingContexts.includes(detail.toLowerCase()));
+    
+    if (duplicateDetails.length > 0) {
+      setValidationErrors(prev => ({ 
+        ...prev, 
+        context: `Duplicate details found: ${duplicateDetails.join(', ')}` 
+      }));
+      return;
+    }
+
+    // Check for duplicates within the input itself
+    const uniqueDetails = [...new Set(details.map(detail => detail.toLowerCase()))];
+    if (uniqueDetails.length !== details.length) {
+      setValidationErrors(prev => ({ 
+        ...prev, 
+        context: "Duplicate details found in your input" 
+      }));
       return;
     }
 
     console.log(
-      "🟡 Admin: Starting context creation with content:",
-      newContext.content
+      "🟡 Admin: Starting context creation with details:",
+      details
     );
     setLoading(true);
     try {
-      // Admin operation - no auth needed
-      console.log("🟡 Admin: Creating context (admin operation)");
+      // Create multiple contexts
+      const promises = details.map(detail => 
+        fetch("/api/chat/contexts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: detail }),
+        })
+      );
 
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
+      const responses = await Promise.all(promises);
+      const allSuccessful = responses.every(response => response.ok);
 
-      console.log("🟡 Admin: Making API request to /api/chat/contexts");
-      const response = await fetch("/api/chat/contexts", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          content: newContext.content,
-        }),
-      });
-
-      console.log("🟡 Admin: API response status:", response.status);
-
-      if (response.ok) {
-        console.log("✅ Admin: Context created successfully");
-        const responseData = await response.json();
-        console.log("✅ Admin: Response data:", responseData);
+      if (allSuccessful) {
+        console.log("✅ Admin: All contexts created successfully");
         setNewContext({ content: "" });
         fetchContexts();
       } else {
-        console.error(
-          "❌ Admin: Context creation failed with status:",
-          response.status
-        );
-        const errorText = await response.text();
-        console.error("❌ Admin: Error response:", errorText);
+        console.error("❌ Admin: Some contexts failed to create");
+        setValidationErrors(prev => ({ ...prev, context: "Some details failed to save" }));
       }
     } catch (error) {
-      console.error("❌ Admin: Error creating context:", error);
+      console.error("❌ Admin: Error creating contexts:", error);
+      setValidationErrors(prev => ({ ...prev, context: "Error creating details" }));
     } finally {
       console.log("🟡 Admin: Setting loading to false");
       setLoading(false);
@@ -306,7 +357,27 @@ export default function ChatbotAdmin() {
   };
 
   const handleUpdateContext = async () => {
-    if (!editingContext || !editingContext.content.trim()) {
+    if (!editingContext) return;
+
+    // Clear previous validation errors for this specific context
+    setEditingContextErrors(prev => ({ ...prev, [editingContext.id]: undefined }));
+
+    // Validation
+    if (!editingContext.content.trim()) {
+      setEditingContextErrors(prev => ({ ...prev, [editingContext.id]: "Please enter a detail" }));
+      return;
+    }
+
+    // Check for duplicates with existing contexts (excluding current one)
+    const existingContexts = contexts
+      .filter(ctx => ctx.id !== editingContext.id)
+      .map(ctx => ctx.content.toLowerCase());
+    
+    if (existingContexts.includes(editingContext.content.toLowerCase())) {
+      setEditingContextErrors(prev => ({ 
+        ...prev, 
+        [editingContext.id]: "This detail already exists" 
+      }));
       return;
     }
 
@@ -379,17 +450,39 @@ export default function ChatbotAdmin() {
                   Greeting Message
                 </label>
                 <div className="space-y-2">
-                  <textarea
-                    value={greetingMessage}
-                    onChange={(e) => setGreetingMessage(e.target.value)}
-                    placeholder="Enter greeting message..."
-                    className={`w-full p-3 border border-gray-300 rounded-md h-24 resize-none outline-none ${
-                      isEditingGreeting
-                        ? "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
-                        : "text-gray-500"
-                    }`}
-                    disabled={!isEditingGreeting}
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={greetingMessage}
+                      onChange={(e) => {
+                        setGreetingMessage(e.target.value);
+                        // Clear error when user starts typing
+                        if (validationErrors.greeting) {
+                          setValidationErrors(prev => ({ ...prev, greeting: undefined }));
+                        }
+                      }}
+                      placeholder="Enter greeting message..."
+                      className={`w-full p-3 border rounded-md h-24 resize-none outline-none ${
+                        isEditingGreeting
+                          ? validationErrors.greeting
+                            ? "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)] text-black"
+                            : "border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          : "text-gray-500 border-gray-300"
+                      }`}
+                      disabled={!isEditingGreeting}
+                    />
+                    {isEditingGreeting && validationErrors.greeting && (
+                      <img 
+                        src="/icons/exclamation-icon.svg" 
+                        alt="Error" 
+                        className="absolute right-3 top-3 w-4 h-4" 
+                      />
+                    )}
+                  </div>
+                  {isEditingGreeting && validationErrors.greeting && (
+                    <div className="mt-1 text-[var(--color-red)] text-xs">
+                      {validationErrors.greeting}
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button
                       onClick={handleSaveGreeting}
@@ -405,7 +498,14 @@ export default function ChatbotAdmin() {
                     <Button
                       onClick={
                         isEditingGreeting
-                          ? () => setIsEditingGreeting(false)
+                          ? () => {
+                              // Reset to original value
+                              const originalGreeting = faqs.find(faq => faq.topic === "::greeting::");
+                              setGreetingMessage(originalGreeting?.reply_message || "");
+                              setIsEditingGreeting(false);
+                              // Clear validation errors
+                              setValidationErrors(prev => ({ ...prev, greeting: undefined }));
+                            }
                           : () => setIsEditingGreeting(true)
                       }
                       variant="outline"
@@ -423,17 +523,39 @@ export default function ChatbotAdmin() {
                   Fallback Message
                 </label>
                 <div className="space-y-2">
-                  <textarea
-                    value={fallbackMessage}
-                    onChange={(e) => setFallbackMessage(e.target.value)}
-                    placeholder="Enter fallback message..."
-                    className={`w-full p-3 border border-gray-300 rounded-md h-24 resize-none outline-none ${
-                      isEditingFallback
-                        ? "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
-                        : "text-gray-500"
-                    }`}
-                    disabled={!isEditingFallback}
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={fallbackMessage}
+                      onChange={(e) => {
+                        setFallbackMessage(e.target.value);
+                        // Clear error when user starts typing
+                        if (validationErrors.fallback) {
+                          setValidationErrors(prev => ({ ...prev, fallback: undefined }));
+                        }
+                      }}
+                      placeholder="Enter fallback message..."
+                      className={`w-full p-3 border rounded-md h-24 resize-none outline-none ${
+                        isEditingFallback
+                          ? validationErrors.fallback
+                            ? "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)] text-black"
+                            : "border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black"
+                          : "text-gray-500 border-gray-300"
+                      }`}
+                      disabled={!isEditingFallback}
+                    />
+                    {isEditingFallback && validationErrors.fallback && (
+                      <img 
+                        src="/icons/exclamation-icon.svg" 
+                        alt="Error" 
+                        className="absolute right-3 top-3 w-4 h-4" 
+                      />
+                    )}
+                  </div>
+                  {isEditingFallback && validationErrors.fallback && (
+                    <div className="mt-1 text-[var(--color-red)] text-xs">
+                      {validationErrors.fallback}
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button
                       onClick={handleSaveFallback}
@@ -449,7 +571,14 @@ export default function ChatbotAdmin() {
                     <Button
                       onClick={
                         isEditingFallback
-                          ? () => setIsEditingFallback(false)
+                          ? () => {
+                              // Reset to original value
+                              const originalFallback = faqs.find(faq => faq.topic === "::fallback::");
+                              setFallbackMessage(originalFallback?.reply_message || "");
+                              setIsEditingFallback(false);
+                              // Clear validation errors
+                              setValidationErrors(prev => ({ ...prev, fallback: undefined }));
+                            }
                           : () => setIsEditingFallback(true)
                       }
                       variant="outline"
@@ -468,7 +597,7 @@ export default function ChatbotAdmin() {
             {/* Context Management Section */}
             <div className="mt-8">
               <h2 className="text-lg font-semibold text-gray-600 mb-4">
-                Helpful Details Management
+                Helpful Details
               </h2>
 
               {/* Create New Context */}
@@ -478,17 +607,39 @@ export default function ChatbotAdmin() {
                     <label className="block text-sm font-medium text-gray-900 mb-2">
                       Detail
                     </label>
-                    <textarea
-                      value={newContext.content}
-                      onChange={(e) =>
-                        setNewContext({
-                          ...newContext,
-                          content: e.target.value,
-                        })
-                      }
-                      placeholder="Enter detail..."
-                      className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md resize-none outline-none"
-                    />
+                    <div className="relative">
+                      <textarea
+                        value={newContext.content}
+                        onChange={(e) => {
+                          setNewContext({
+                            ...newContext,
+                            content: e.target.value,
+                          });
+                          // Clear error when user starts typing
+                          if (validationErrors.context) {
+                            setValidationErrors(prev => ({ ...prev, context: undefined }));
+                          }
+                        }}
+                        placeholder="Enter detail (separate multiple details with commas)..."
+                        className={`w-full bg-white p-3 border rounded-md resize-none outline-none ${
+                          validationErrors.context
+                            ? "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)]"
+                            : "border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        }`}
+                      />
+                      {validationErrors.context && (
+                        <img 
+                          src="/icons/exclamation-icon.svg" 
+                          alt="Error" 
+                          className="absolute right-3 top-3 w-4 h-4" 
+                        />
+                      )}
+                    </div>
+                    {validationErrors.context && (
+                      <div className="mt-1 text-[var(--color-red)] text-xs">
+                        {validationErrors.context}
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -518,32 +669,83 @@ export default function ChatbotAdmin() {
                 {contexts.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {contexts.map((context) => (
-                      <span
-                        key={context.id}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded border border-gray-200"
-                      >
-                        <span
-                          className="max-w-xs truncate"
-                          title={context.content}
-                        >
-                          {context.content}
+                      <div key={context.id} className="flex flex-col">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded border border-gray-200">
+                          {editingContext?.id === context.id ? (
+                            // Edit Mode
+                            <div className="flex items-center gap-2">
+                              <textarea
+                                value={editingContext.content}
+                                onChange={(e) => {
+                                  setEditingContext({
+                                    ...editingContext,
+                                    content: e.target.value,
+                                  });
+                                  // Clear error when user starts typing
+                                  if (editingContextErrors[editingContext.id]) {
+                                    setEditingContextErrors(prev => ({ ...prev, [editingContext.id]: undefined }));
+                                  }
+                                }}
+                                placeholder="Enter detail (separate multiple details with commas)..."
+                                className={`min-w-[200px] bg-white p-1 border rounded text-sm resize-none outline-none ${
+                                  editingContextErrors[editingContext.id]
+                                    ? "border-[var(--color-red)]"
+                                    : "border-gray-300"
+                                }`}
+                                rows={1}
+                              />
+                              <button
+                                onClick={handleUpdateContext}
+                                className="px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 cursor-pointer"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingContext(null);
+                                  // Clear error when canceling
+                                  if (editingContext) {
+                                    setEditingContextErrors(prev => ({ ...prev, [editingContext.id]: undefined }));
+                                  }
+                                }}
+                                className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded hover:bg-gray-200 cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            // View Mode
+                            <>
+                              <span
+                                className="max-w-xs truncate"
+                                title={context.content}
+                              >
+                                {context.content}
+                              </span>
+                              <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                              <button
+                                onClick={() => setEditingContext(context)}
+                                className="text-orange-500 hover:text-orange-700 cursor-pointer -mx-0.5"
+                                title="Edit"
+                              >
+                                <img src="/pencil.svg" alt="Edit" className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteContext(context.id)}
+                                className="text-orange-500 hover:text-orange-700 cursor-pointer -mx-0.25"
+                                title="Delete"
+                              >
+                                <img src="/delete.svg" alt="Delete" className="w-5 h-5" />
+                              </button>
+                            </>
+                          )}
                         </span>
-                        <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                        <button
-                          onClick={() => setEditingContext(context)}
-                          className="text-orange-500 hover:text-orange-700 cursor-pointer -m-1"
-                          title="Edit"
-                        >
-                          <img src="/pencil.svg" alt="Edit" className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteContext(context.id)}
-                          className="text-orange-500 hover:text-orange-700 cursor-pointer -m-1"
-                          title="Delete"
-                        >
-                          <img src="/delete.svg" alt="Delete" className="w-5 h-5" />
-                        </button>
-                      </span>
+                        {editingContext && editingContext.id === context.id && editingContextErrors[editingContext.id] && (
+                          <div className="mt-1 text-[var(--color-red)] text-xs">
+                            {editingContextErrors[editingContext.id]}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -632,48 +834,6 @@ export default function ChatbotAdmin() {
         </div>
 
 
-        {/* Edit Context Modal */}
-        {editingContext && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
-              <h3 className="text-lg font-semibold mb-4">Edit Context</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Context Content
-                  </label>
-                  <textarea
-                    value={editingContext.content}
-                    onChange={(e) =>
-                      setEditingContext({
-                        ...editingContext,
-                        content: e.target.value,
-                      })
-                    }
-                    placeholder="Enter context information..."
-                    className="w-full bg-white p-3 border border-gray-300 hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-md h-32 resize-none outline-none"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleUpdateContext}
-                    disabled={loading}
-                    className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
-                  >
-                    {loading ? "Saving..." : "Save"}
-                  </Button>
-                  <Button
-                    onClick={() => setEditingContext(null)}
-                    variant="outline"
-                    className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </Layout>
   );
