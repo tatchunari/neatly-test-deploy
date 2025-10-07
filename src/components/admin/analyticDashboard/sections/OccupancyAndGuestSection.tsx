@@ -237,40 +237,58 @@ const OccupancyAndGuestSection: React.FC<OccupancyAndGuestSectionProps> = ({
   return (
     <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full mt-10">
       <div className="flex md:flex-row flex-col w-full justify-between">
-        <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
-          Occupancy & Guest
-        </h2>
-        {/* Right Side */}
-        <div className="flex md:flex-row flex-col gap-4 items-center">
-          <p className="text-gray-700 w-full text-right">View by</p>
-          <DropDownInput
-            options={options}
-            name="options"
-            setValue={setValue}
-            onChange={(value) => setSelectedView(value)}
-          />
-          <DatePicker
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            min="2020-01-01"
-            max="2030-12-31"
-          />
-          <p>to</p>
-          <DatePicker
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            min={startDate || "2020-01-01"}
-            max="2030-12-31"
-          />
+        <div className="flex flex-row">
+          <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
+            Occupancy & Guest
+          </h2>
           <Button
             text="Export"
             loading={false}
             onClick={handleExport}
-            className="bg-orange-600 text-white hover:bg-orange-700 h-10 w-40"
+            className="bg-orange-600 text-white hover:bg-orange-700 h-10 w-30 md:hidden mt-5 ml-15"
+          />
+        </div>
+        {/* Right Side */}
+        <div className="flex md:flex-row flex-col gap-4 md:items-center items-start p-4">
+          <div className="flex gap-2 items-center">
+            <p className="text-gray-700 w-full text-right">View by</p>
+            <DropDownInput
+              options={options}
+              name="options"
+              setValue={setValue}
+              onChange={(value) => setSelectedView(value)}
+            />
+          </div>
+          <div className="flex gap-2 items-center">
+            <div className="flex md:flex-row flex-col gap-2 md:items-center">
+              <p>From</p>
+              <DatePicker
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                min="2020-01-01"
+                max="2030-12-31"
+              />
+            </div>
+
+            <div className="flex md:flex-row flex-col gap-2 md:items-center">
+              <p>to</p>
+              <DatePicker
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || "2020-01-01"}
+                max="2030-12-31"
+              />
+            </div>
+          </div>
+          <Button
+            text="Export"
+            loading={false}
+            onClick={handleExport}
+            className="bg-orange-600 text-white hover:bg-orange-700 h-10 w-40 md:block hidden"
           />
         </div>
       </div>
-      <h2 className="my-10">Occupancy Rate</h2>
+      <h2 className="md:my-10 m-5">Occupancy Rate</h2>
       <div className="flex flex-col w-full">
         {/* Conditional Chart Rendering */}
         {selectedView === "Overall" ? (
@@ -300,7 +318,7 @@ const OccupancyAndGuestSection: React.FC<OccupancyAndGuestSectionProps> = ({
         )}
 
         {/* Progress Bar Section */}
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 grid-rows-3 gap-8 md:p-0 p-5 h-110 md:h-50">
           <div className="flex flex-col gap-y-4">
             <h3 className="my-3 font-semibold text-gray-800">Guest Visit</h3>
             <ProgressBarSection
@@ -314,7 +332,7 @@ const OccupancyAndGuestSection: React.FC<OccupancyAndGuestSectionProps> = ({
               value={guestStats.returningGuestPercentage}
             />
           </div>
-          <div className="flex flex-col gap-y-4">
+          <div className="flex flex-col gap-y-4 md:mt-0 mt-15">
             <h3 className="my-3 font-semibold text-gray-800">Payment Method</h3>
             <div className="flex flex-row gap-4 items-center">
               <div className="flex bg-gray-400 w-10 h-10 items-center justify-center rounded-full">
