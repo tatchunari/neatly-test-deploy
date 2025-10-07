@@ -62,7 +62,6 @@ export const DropDownInput = <T extends FieldValues, K extends Path<T>>({
         </SelectTrigger>
         <SelectContent className="bg-white border-gray-300">
           <SelectGroup className="border-gray-300">
-            <SelectLabel>{label}</SelectLabel>
             {options.map((opt) => (
               <SelectItem key={opt as string} value={opt as string}>
                 {opt}

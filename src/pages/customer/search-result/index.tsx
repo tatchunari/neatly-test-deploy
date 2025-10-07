@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Room } from "@/types/rooms";
 import { SearchParams } from "@/components/customer/searchbar/Searchbox";
 import { RoomType } from "@/types/roomTypes";
+import Chatbot from "@/components/Chatbot";
 
 function SearchResultPage() {
   const router = useRouter();
@@ -253,6 +254,9 @@ function SearchResultPage() {
         )}
       </div>
       <Footer />
+      
+      {/* Chatbot */}
+      <Chatbot />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Otherroompage from "@/components/customer/room-section/Otherroom";
+import Chatbot from "@/components/Chatbot";
 type RoomDetail = {
   id: string | number;
   name?: string;
@@ -222,6 +223,9 @@ function Roomdetailpage() {
       </div>
       <Otherroompage />
       <Footer />
+      
+      {/* Chatbot */}
+      <Chatbot />
     </div>
   );
 }

@@ -15,6 +15,13 @@ export interface ChatMessage {
   message: string;
   is_bot: boolean;
   created_at: string;
+  responseData?: {
+    format: 'message' | 'option_details' | 'room_type';
+    message: string;
+    options?: Array<{ option: string; detail: string }>;
+    rooms?: string[];
+    buttonName?: string;
+  };
 }
 
 export interface ChatMessageWithSender extends ChatMessage {
