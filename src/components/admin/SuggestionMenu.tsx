@@ -55,8 +55,30 @@ export default function SuggestionMenu({
 }: SuggestionMenuProps) {
   // Base input styles
   const baseInputStyles = "w-full border !bg-white border-gray-300 rounded-md text-sm px-3 py-2";
-   const readOnlyStyles = isReadOnly ? "text-gray-600 !bg-white !border-gray-300 !opacity-50" : "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 cursor-pointer";
-  const inputClassName = `${baseInputStyles} ${readOnlyStyles}`;
+  const readOnlyStyles = isReadOnly ? "text-gray-600 !bg-white !border-gray-300 !opacity-50" : "hover:border-orange-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 cursor-pointer";
+  const errorStyles = "border-[var(--color-red)] focus:ring-[var(--color-red)] focus:border-[var(--color-red)]";
+  
+  const getInputClassName = (hasError: boolean) => {
+    if (hasError) {
+      return `${baseInputStyles} ${errorStyles}`;
+    }
+    return `${baseInputStyles} ${readOnlyStyles}`;
+  };
+
+  const getTextareaClassName = (hasError: boolean) => {
+    const baseTextareaStyles = "w-full border !bg-white border-gray-300 rounded-md text-sm px-3 py-2 h-9 resize-none outline-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
+    if (hasError) {
+      return `${baseTextareaStyles} ${errorStyles}`;
+    }
+    return `${baseTextareaStyles} ${readOnlyStyles}`;
+  };
+
+  // Helper component for error message
+  const ErrorMessage = ({ message }: { message: string }) => (
+    <div className="mt-1 text-[var(--color-red)] text-xs">
+      <span>{message}</span>
+    </div>
+  );
   // Helper function to get format display string
   const getFormatDisplayString = (format?: string): string => {
     switch (format) {
@@ -84,6 +106,20 @@ export default function SuggestionMenu({
   const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>([]);
 
   const formatOptions = ["Message", "Room type", "Option with details"];
+
+  // Auto-resize textarea when value changes
+  useEffect(() => {
+    const textarea = document.querySelector('textarea[placeholder="Enter reply message..."]') as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.classList.remove('h-auto');
+      textarea.classList.add('h-9');
+      if (textarea.scrollHeight > 36) {
+        textarea.classList.remove('h-9');
+        textarea.classList.add('h-auto');
+        textarea.style.height = textarea.scrollHeight + 'px';
+      }
+    }
+  }, [newFAQ.answer]);
 
   // Load FAQ data when component mounts or faq changes
   useEffect(() => {
@@ -176,25 +212,70 @@ export default function SuggestionMenu({
   const [newAliasInput, setNewAliasInput] = useState<string>("");
   const [showAliases, setShowAliases] = useState(false);
 
+  // Validation error states
+  const [validationErrors, setValidationErrors] = useState<{
+    question?: string;
+    format?: string;
+    answer?: string;
+    replyTitle?: string;
+    roomType?: string;
+    buttonName?: string;
+    options?: string;
+    aliases?: string;
+  }>({});
+
   const handleCreateFAQ = async () => {
+    // Clear previous validation errors
+    setValidationErrors({});
+
     // Validation based on format
+    const errors: typeof validationErrors = {};
+
     if (!newFAQ.question.trim()) {
-      alert("Please fill in Topic field");
-      return;
+      errors.question = "Please fill in Topic field";
     }
 
     if (!newFAQ.format.trim()) {
-      alert("Please select a Reply format");
-      return;
+      errors.format = "Please select a Reply format";
     }
 
     if (newFAQ.format === "Message" && !newFAQ.answer.trim()) {
-      alert("Please fill in Reply message field");
-      return;
+      errors.answer = "Please fill in Reply message field";
     }
 
     if ((newFAQ.format === "Room type" || newFAQ.format === "Option with details") && !newFAQ.replyTitle.trim()) {
-      alert("Please fill in Reply title field");
+      errors.replyTitle = "Please fill in Reply title field";
+    }
+
+    // Room type validation
+    if (newFAQ.format === "Room type") {
+      if (selectedRoomTypes.length === 0) {
+        errors.roomType = "Please select at least one room type";
+      }
+      if (!newFAQ.buttonName.trim()) {
+        errors.buttonName = "Please fill in Button name field";
+      }
+    }
+
+    // Option details validation
+    if (newFAQ.format === "Option with details") {
+      const hasEmptyOptions = newFAQ.options.some(opt => !opt.option.trim() || !opt.detail.trim());
+      if (hasEmptyOptions) {
+        errors.options = "Please fill in all option and detail fields";
+      }
+    }
+
+    // Aliases validation - only validate if there are aliases in the list
+    if (showAliases && newAliasesUI.length > 0) {
+      const hasEmptyAliases = newAliasesUI.some(alias => !alias.trim());
+      if (hasEmptyAliases) {
+        errors.aliases = "Please fill in all alias fields";
+      }
+    }
+
+    // If there are validation errors, set them and return
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
       return;
     }
 
@@ -300,51 +381,67 @@ export default function SuggestionMenu({
         <div className="flex gap-0">
           {/* Left side - Form fields (95%) */}
           <div className="flex-1 w-[95%] space-y-4">
-             <div>
-               <div className="flex gap-2 items-end">
-                 <div className="flex-1 [&_label]:text-gray-900">
-                   <label className="block text-sm font-medium mb-2">
-                     Topic *
-                   </label>
-                   <div className="relative">
-                     <Input
-                       value={newFAQ.question}
-                       onChange={(e) =>
-                         setNewFAQ({ ...newFAQ, question: e.target.value })
+             <div className="grid grid-cols-2 gap-4">
+               <div className="[&_label]:text-gray-900">
+                 <label className="block text-sm font-medium mb-2">
+                   Topic *
+                 </label>
+                 <div className="relative">
+                   <Input
+                     value={newFAQ.question}
+                     onChange={(e) => {
+                       setNewFAQ({ ...newFAQ, question: e.target.value });
+                       // Clear error when user starts typing
+                       if (validationErrors.question) {
+                         setValidationErrors(prev => ({ ...prev, question: undefined }));
                        }
-                       placeholder="Enter topic..."
-                       disabled={isReadOnly}
-                       className={`${inputClassName} pr-10 !bg-white`}
+                     }}
+                     placeholder="Enter topic..."
+                     disabled={isReadOnly}
+                     className={`${getInputClassName(!!validationErrors.question)} ${validationErrors.question ? 'pr-16' : 'pr-10'} !bg-white`}
+                   />
+                   {validationErrors.question && (
+                     <img 
+                       src="/icons/exclamation-icon.svg" 
+                       alt="Error" 
+                       className="absolute right-10 top-1/2 transform -translate-y-1/2 w-4 h-4" 
                      />
-                     <button
-                       onClick={() => {
-                         setShowAliases(!showAliases);
-                         if (!showAliases) {
-                           setNewAliasesUI([]);
-                           setNewAliasInput("");
-                         }
-                       }}
-                       className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-orange-500 hover:text-orange-700 cursor-pointer"
-                       title={showAliases ? "Hide Aliases" : "Add Aliases"}
-                     >
-                       <FileQuestionMark className="w-4 h-4" />
-                     </button>
-                   </div>
+                   )}
+                   <button
+                     onClick={() => {
+                       setShowAliases(!showAliases);
+                       if (!showAliases) {
+                         setNewAliasesUI([]);
+                         setNewAliasInput("");
+                       }
+                     }}
+                     className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-orange-500 hover:text-orange-700 cursor-pointer"
+                     title={showAliases ? "Hide Aliases" : "Add Aliases"}
+                   >
+                     <FileQuestionMark className="w-4 h-4" />
+                   </button>
                  </div>
-                <div className="flex-1 [&_label]:text-gray-900">
-                  <ChatbotDropdown
-                    label="Reply format"
-                    options={formatOptions}
-                    value={newFAQ.format}
-                    onChange={(value) => {
-                      if (typeof value === 'string') {
-                        setNewFAQ(prev => ({ ...prev, format: value }));
-                      }
-                    }}
-                    placeholder="Select reply format..."
-                    disabled={isReadOnly}
-                  />
-                </div>
+                 {validationErrors.question && <ErrorMessage message={validationErrors.question} />}
+               </div>
+               <div className="[&_label]:text-gray-900">
+                 <ChatbotDropdown
+                   label="Reply format"
+                   options={formatOptions}
+                   value={newFAQ.format}
+                   onChange={(value) => {
+                     if (typeof value === 'string') {
+                       setNewFAQ(prev => ({ ...prev, format: value }));
+                       // Clear error when user selects format
+                       if (validationErrors.format) {
+                         setValidationErrors(prev => ({ ...prev, format: undefined }));
+                       }
+                     }
+                   }}
+                   placeholder="Select reply format..."
+                   disabled={isReadOnly}
+                   hasError={!!validationErrors.format}
+                 />
+                 {validationErrors.format && <ErrorMessage message={validationErrors.format} />}
                </div>
              </div>
           {showAliases && (
@@ -356,30 +453,53 @@ export default function SuggestionMenu({
               {/* Input section - only show when not read-only */}
               {!isReadOnly && (
                 <div className="flex gap-2">
-                  <Input
-                    value={newAliasInput}
-                    onChange={(e) => setNewAliasInput(e.target.value)}
-                    placeholder="Enter alias phrase..."
-                    className={`${inputClassName} flex-1 !bg-white`}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (newAliasInput.trim()) {
-                        setNewAliasesUI([
-                          ...newAliasesUI,
-                          newAliasInput.trim(),
-                        ]);
-                        setNewAliasInput("");
-                      }
-                    }}
-                    className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
-                  >
-                    + Add
-                  </Button>
+                  <div className="relative flex-1">
+                    <Input
+                      value={newAliasInput}
+                      onChange={(e) => {
+                        setNewAliasInput(e.target.value);
+                        // Clear error when user starts typing
+                        if (validationErrors.aliases) {
+                          setValidationErrors(prev => ({ ...prev, aliases: undefined }));
+                        }
+                      }}
+                      placeholder="Enter alias phrase..."
+                      className={`${getInputClassName(!!validationErrors.aliases)} !bg-white ${validationErrors.aliases ? 'pr-10' : ''}`}
+                    />
+                    {validationErrors.aliases && (
+                      <img 
+                        src="/icons/exclamation-icon.svg" 
+                        alt="Error" 
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                      />
+                    )}
+                  </div>
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => {
+                       if (newAliasInput.trim()) {
+                         setNewAliasesUI([
+                           ...newAliasesUI,
+                           newAliasInput.trim(),
+                         ]);
+                         setNewAliasInput("");
+                         // Clear error when successfully adding alias
+                         if (validationErrors.aliases) {
+                           setValidationErrors(prev => ({ ...prev, aliases: undefined }));
+                         }
+                       } else {
+                         // Show error if trying to add empty alias
+                         setValidationErrors(prev => ({ ...prev, aliases: "Please enter an alias before adding" }));
+                       }
+                     }}
+                     className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
+                   >
+                     + Add
+                   </Button>
                 </div>
               )}
+              {validationErrors.aliases && <ErrorMessage message={validationErrors.aliases} />}
               {/* Existing aliases */}
               {faq?.aliases && faq.aliases.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
@@ -442,15 +562,37 @@ export default function SuggestionMenu({
               <label className="block text-sm font-medium mb-2">
                 Reply message
               </label>
-              <textarea
-                value={newFAQ.answer}
-                onChange={(e) =>
-                  setNewFAQ({ ...newFAQ, answer: e.target.value })
-                }
-                placeholder="Enter reply message..."
-                disabled={isReadOnly}
-                className={`${inputClassName} h-24 resize-none outline-none !bg-white`}
-              />
+              <div className="relative">
+                <textarea
+                  value={newFAQ.answer}
+                  onChange={(e) => {
+                    setNewFAQ({ ...newFAQ, answer: e.target.value });
+                    // Clear error when user starts typing
+                    if (validationErrors.answer) {
+                      setValidationErrors(prev => ({ ...prev, answer: undefined }));
+                    }
+                    // Auto-resize textarea - start from h-9 (36px) minimum
+                    e.target.classList.remove('h-auto');
+                    e.target.classList.add('h-9');
+                    if (e.target.scrollHeight > 36) {
+                      e.target.classList.remove('h-9');
+                      e.target.classList.add('h-auto');
+                      e.target.style.height = e.target.scrollHeight + 'px';
+                    }
+                  }}
+                  placeholder="Enter reply message..."
+                  disabled={isReadOnly}
+                  className={`${getTextareaClassName(!!validationErrors.answer)} !bg-white ${validationErrors.answer ? 'pr-10' : ''}`}
+                />
+                {validationErrors.answer && (
+                  <img 
+                    src="/icons/exclamation-icon.svg" 
+                    alt="Error" 
+                    className="absolute right-3 top-3 w-4 h-4" 
+                  />
+                )}
+              </div>
+              {validationErrors.answer && <ErrorMessage message={validationErrors.answer} />}
             </div>
           )}
 
@@ -460,15 +602,29 @@ export default function SuggestionMenu({
                 <label className="block text-sm font-medium mb-2">
                   Reply title
                 </label>
-                <Input
-                  value={newFAQ.replyTitle}
-                  onChange={(e) =>
-                    setNewFAQ({ ...newFAQ, replyTitle: e.target.value })
-                  }
-                  placeholder="Enter reply title..."
-                  disabled={isReadOnly}
-                  className={`${inputClassName} !bg-white`}
-                />
+                <div className="relative">
+                  <Input
+                    value={newFAQ.replyTitle}
+                    onChange={(e) => {
+                      setNewFAQ({ ...newFAQ, replyTitle: e.target.value });
+                      // Clear error when user starts typing
+                      if (validationErrors.replyTitle) {
+                        setValidationErrors(prev => ({ ...prev, replyTitle: undefined }));
+                      }
+                    }}
+                    placeholder="Enter reply title..."
+                    disabled={isReadOnly}
+                    className={`${getInputClassName(!!validationErrors.replyTitle)} !bg-white ${validationErrors.replyTitle ? 'pr-10' : ''}`}
+                  />
+                  {validationErrors.replyTitle && (
+                    <img 
+                      src="/icons/exclamation-icon.svg" 
+                      alt="Error" 
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                    />
+                  )}
+                </div>
+                {validationErrors.replyTitle && <ErrorMessage message={validationErrors.replyTitle} />}
               </div>
               <div className="[&_label]:text-gray-900">
                 <ChatbotDropdown
@@ -479,6 +635,10 @@ export default function SuggestionMenu({
                     if (Array.isArray(value)) {
                       setSelectedRoomTypes(value);
                       setNewFAQ(prev => ({ ...prev, roomType: value.join(",") }));
+                      // Clear error when user selects room types
+                      if (validationErrors.roomType) {
+                        setValidationErrors(prev => ({ ...prev, roomType: undefined }));
+                      }
                     }
                   }}
                   placeholder="Select room types..."
@@ -486,21 +646,37 @@ export default function SuggestionMenu({
                   multiple={true}
                   searchable={true}
                   showAllOption={true}
+                  hasError={!!validationErrors.roomType}
                 />
+                {validationErrors.roomType && <ErrorMessage message={validationErrors.roomType} />}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
                   Button Name
                 </label>
-                <Input
-                  value={newFAQ.buttonName}
-                  onChange={(e) =>
-                    setNewFAQ({ ...newFAQ, buttonName: e.target.value })
-                  }
-                  placeholder="Enter button name..."
-                  disabled={isReadOnly}
-                  className={`${inputClassName} !bg-white`}
-                />
+                <div className="relative">
+                  <Input
+                    value={newFAQ.buttonName}
+                    onChange={(e) => {
+                      setNewFAQ({ ...newFAQ, buttonName: e.target.value });
+                      // Clear error when user starts typing
+                      if (validationErrors.buttonName) {
+                        setValidationErrors(prev => ({ ...prev, buttonName: undefined }));
+                      }
+                    }}
+                    placeholder="Enter button name..."
+                    disabled={isReadOnly}
+                    className={`${getInputClassName(!!validationErrors.buttonName)} !bg-white ${validationErrors.buttonName ? 'pr-10' : ''}`}
+                  />
+                  {validationErrors.buttonName && (
+                    <img 
+                      src="/icons/exclamation-icon.svg" 
+                      alt="Error" 
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                    />
+                  )}
+                </div>
+                {validationErrors.buttonName && <ErrorMessage message={validationErrors.buttonName} />}
               </div>
             </>
           )}
@@ -511,15 +687,29 @@ export default function SuggestionMenu({
                 <label className="block text-sm font-medium mb-2">
                   Reply title
                 </label>
-                <Input
-                  value={newFAQ.replyTitle}
-                  onChange={(e) =>
-                    setNewFAQ({ ...newFAQ, replyTitle: e.target.value })
-                  }
-                  placeholder="Enter reply title..."
-                  disabled={isReadOnly}
-                  className={`${inputClassName} !bg-white`}
-                />
+                <div className="relative">
+                  <Input
+                    value={newFAQ.replyTitle}
+                    onChange={(e) => {
+                      setNewFAQ({ ...newFAQ, replyTitle: e.target.value });
+                      // Clear error when user starts typing
+                      if (validationErrors.replyTitle) {
+                        setValidationErrors(prev => ({ ...prev, replyTitle: undefined }));
+                      }
+                    }}
+                    placeholder="Enter reply title..."
+                    disabled={isReadOnly}
+                    className={`${getInputClassName(!!validationErrors.replyTitle)} !bg-white ${validationErrors.replyTitle ? 'pr-10' : ''}`}
+                  />
+                  {validationErrors.replyTitle && (
+                    <img 
+                      src="/icons/exclamation-icon.svg" 
+                      alt="Error" 
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                    />
+                  )}
+                </div>
+                {validationErrors.replyTitle && <ErrorMessage message={validationErrors.replyTitle} />}
               </div>
               <div>
                 {newFAQ.options.map((option, index) => (
@@ -528,33 +718,59 @@ export default function SuggestionMenu({
                       <label className="block text-sm font-medium mb-2">
                         Option
                       </label>
-                      <Input
-                        value={option.option}
-                        onChange={(e) => {
-                          const newOptions = [...newFAQ.options];
-                          newOptions[index].option = e.target.value;
-                          setNewFAQ({ ...newFAQ, options: newOptions });
-                        }}
-                        placeholder="Enter option..."
-                        disabled={isReadOnly}
-                        className={`${inputClassName} !bg-white`}
-                      />
+                      <div className="relative">
+                        <Input
+                          value={option.option}
+                          onChange={(e) => {
+                            const newOptions = [...newFAQ.options];
+                            newOptions[index].option = e.target.value;
+                            setNewFAQ({ ...newFAQ, options: newOptions });
+                            // Clear error when user starts typing
+                            if (validationErrors.options) {
+                              setValidationErrors(prev => ({ ...prev, options: undefined }));
+                            }
+                          }}
+                          placeholder="Enter option..."
+                          disabled={isReadOnly}
+                          className={`${getInputClassName(!!validationErrors.options)} !bg-white ${validationErrors.options ? 'pr-10' : ''}`}
+                        />
+                        {validationErrors.options && (
+                          <img 
+                            src="/icons/exclamation-icon.svg" 
+                            alt="Error" 
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                          />
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 [&_label]:text-gray-900">
                       <label className="block text-sm font-medium mb-2">
                         Detail
                       </label>
-                      <Input
-                        value={option.detail}
-                        onChange={(e) => {
-                          const newOptions = [...newFAQ.options];
-                          newOptions[index].detail = e.target.value;
-                          setNewFAQ({ ...newFAQ, options: newOptions });
-                        }}
-                        placeholder="Enter detail..."
-                        disabled={isReadOnly}
-                        className={`${inputClassName} !bg-white`}
-                      />
+                      <div className="relative">
+                        <Input
+                          value={option.detail}
+                          onChange={(e) => {
+                            const newOptions = [...newFAQ.options];
+                            newOptions[index].detail = e.target.value;
+                            setNewFAQ({ ...newFAQ, options: newOptions });
+                            // Clear error when user starts typing
+                            if (validationErrors.options) {
+                              setValidationErrors(prev => ({ ...prev, options: undefined }));
+                            }
+                          }}
+                          placeholder="Enter detail..."
+                          disabled={isReadOnly}
+                          className={`${getInputClassName(!!validationErrors.options)} !bg-white ${validationErrors.options ? 'pr-10' : ''}`}
+                        />
+                        {validationErrors.options && (
+                          <img 
+                            src="/icons/exclamation-icon.svg" 
+                            alt="Error" 
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                          />
+                        )}
+                      </div>
                     </div>
                     {newFAQ.options.length > 1 && !isReadOnly && (
                       <button
@@ -570,6 +786,7 @@ export default function SuggestionMenu({
                     )}
                   </div>
                 ))}
+                {validationErrors.options && <ErrorMessage message={validationErrors.options} />}
                 {!isReadOnly && (
                   <Button
                     type="button"
