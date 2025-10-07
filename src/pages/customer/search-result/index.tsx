@@ -39,6 +39,8 @@ function SearchResultPage() {
       const list = Array.isArray(data?.data) ? data.data : [];
       setRooms(list);
 
+      // Filter only rooms with status "Vacant"
+      setRooms(list); // ใช้ข้อมูลทั้งหมด
     } catch (err) {
       if (err instanceof Error) {
         setError(err?.message || "Error fetching rooms");
@@ -307,7 +309,7 @@ function SearchResultPage() {
         )}
       </div>
       <Footer />
-      
+
       {/* Chatbot */}
       <Chatbot />
     </div>
