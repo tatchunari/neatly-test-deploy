@@ -221,7 +221,7 @@ function UserMenu() {
             Settings
           </Link>
           <Link
-            href="/customer/bookings"
+            href="/customer/booking-history"
             className="block px-4 py-2 hover:bg-gray-50"
           >
             Booking History
