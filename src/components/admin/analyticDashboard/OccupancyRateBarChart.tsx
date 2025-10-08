@@ -186,7 +186,7 @@ const OccupancyBarChart: React.FC<OccupancyChartProps> = ({
   return (
     <div className="w-full bg-white">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-end gap-6 mb-6 flex-wrap">
+        <div className="flex md:justify-end gap-6 mb-6 md:p-0 p-4 flex-wrap">
           {roomTypes.map((room) => (
             <div key={room.key} className="flex items-center gap-2">
               <div
