@@ -148,38 +148,34 @@ export default function RoomAndPropertyPage() {
 
   return (
     <Layout>
-      <div className="flex-1">
+      <div className="flex-1 bg-[#F6F7FC]">
         {/* Header */}
-        <div className="flex flex-row justify-between border-b border-gray-400 pb-5 mt-10 mx-10">
-          <p className="text-xl font-semibold">Room & Property</p>
-          <div className="flex flex-row gap-3">
-            <div className="flex items-center border pl-3 gap-2 bg-white border-gray-500/30 h-[46px] rounded-md overflow-hidden max-w-md w-full">
-              <Image
-                src="/assets/search.png"
-                alt="search-icon"
-                className="w-4"
-                width={800}
-                height={600}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search rooms..."
-                className="w-full h-full outline-none text-gray-500 placeholder-gray-500 text-sm"
-              />
+        <div className="bg-white border-b border-gray-400">
+          <div className="flex flex-row items-center justify-between py-5 mx-10">
+            <p className="text-xl font-semibold">Room & Property</p>
+            <div className="flex flex-row gap-3">
+              <div className="flex items-center border pl-3 gap-2 bg-white border-gray-500/30 h-[46px] rounded-md overflow-hidden max-w-md w-full">
+                <img src="/assets/search.png" className="w-4" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search rooms..."
+                  className="w-full h-full outline-none text-gray-500 placeholder-gray-500 text-sm"
+                />
+              </div>
+              <button className="text-white font-medium w-64 bg-orange-600 cursor-pointer rounded-sm">
+                <Link href="/admin/room-types/create">+ Create Room</Link>
+              </button>
             </div>
-            <button className="text-white font-medium w-64 bg-orange-600 cursor-pointer rounded-sm">
-              <Link href="/admin/room-types/create">+ Create Room</Link>
-            </button>
           </div>
         </div>
 
         {/* Room Lists */}
-        <div className="max-w-7xl mt-10 mx-auto p-6 bg-gray-50 min-h-screen min-w-3">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="max-w-7xl mt-10 mx-auto p-6 bg-[#F6F7FC] min-h-screen min-w-3">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="grid grid-cols-7 gap-5 p-4 bg-gray-300 font-medium text-sm text-gray-700">
+            <div className="grid grid-cols-7 gap-5 p-4 bg-white font-medium text-sm text-gray-700">
               <div>Image</div>
               <div>Room type</div>
               <div>Price</div>
@@ -190,6 +186,7 @@ export default function RoomAndPropertyPage() {
             </div>
 
             {/* Room Rows - Show only current page rooms */}
+            <div className="min-h-[600px]">
             {currentRooms.map((room) => (
               <div key={room.id}>
                 <Link href={`/admin/room-types/${room.id}/edit`}>
@@ -241,6 +238,7 @@ export default function RoomAndPropertyPage() {
                 </Link>
               </div>
             ))}
+            </div>
 
             {/* Show message if no rooms found */}
             {currentRooms.length === 0 && !loading && (
