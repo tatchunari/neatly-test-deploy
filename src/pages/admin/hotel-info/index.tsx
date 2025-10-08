@@ -166,6 +166,7 @@ export default function HotelInfoPage() {
             <div className="p-3 rounded-md bg-red-100 text-red-700 border border-red-200">
               Error: {error}
             </div>
+            
           )}
 
           {/* Hotel Name */}
@@ -184,8 +185,8 @@ export default function HotelInfoPage() {
               onChange={e =>
                 setHotelInfo((prev) => ({ ...prev, name: e.target.value }))
               }
-              className="border border-gray-300 rounded px-4 py-2 w-full text-base focus:outline-none focus:ring-2 focus:ring-[#B35023] bg-white"
-              style={{ height: 40 }}
+              className="border border-gray-300 rounded px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#B35023] bg-white"
+              style={{ width: 920, height: 48, minWidth: 920, maxWidth: 920, minHeight: 48, maxHeight: 48 }}
               disabled={loading}
             />
           </div>
@@ -201,7 +202,6 @@ export default function HotelInfoPage() {
             <textarea
               id="hotel-description"
               name="hotel-description"
-              rows={6}
               value={hotelInfo.description}
               onChange={e =>
                 setHotelInfo((prev) => ({
@@ -209,8 +209,8 @@ export default function HotelInfoPage() {
                   description: e.target.value,
                 }))
               }
-              className="border border-gray-300 rounded px-4 py-2 w-full text-base focus:outline-none focus:ring-2 focus:ring-[#B35023] resize-none bg-white"
-              style={{ minHeight: 160 }}
+              className="border border-gray-300 rounded px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#B35023] resize-none bg-white"
+              style={{ width: 920, height: 264, minWidth: 920, minHeight: 264, maxWidth: 920, maxHeight: 264 }}
               disabled={loading}
             />
           </div>
@@ -220,12 +220,29 @@ export default function HotelInfoPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Hotel logo <span className="text-red-500">*</span>
             </label>
-            <div className="relative w-36 h-24">
+            <div
+              className="relative"
+              style={{
+                width: 167,
+                height: 167,
+                minWidth: 167,
+                minHeight: 167,
+                maxWidth: 167,
+                maxHeight: 167,
+              }}
+            >
               {/* ถ้าไม่มีโลโก้หรือถูกลบ ให้แสดงปุ่มอัพโหลด */}
               {(logoRemoved || !hotelInfo.logo_url) ? (
                 <div
                   className="w-full h-full flex flex-col items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded cursor-pointer transition hover:bg-gray-200"
-                  style={{ minHeight: "96px" }}
+                  style={{
+                    width: 167,
+                    height: 167,
+                    minWidth: 167,
+                    minHeight: 167,
+                    maxWidth: 167,
+                    maxHeight: 167,
+                  }}
                   onClick={() => !loading && fileInputRef.current?.click()}
                   tabIndex={0}
                   role="button"
@@ -244,7 +261,15 @@ export default function HotelInfoPage() {
                   <img
                     src={hotelInfo.logo_url}
                     alt="Hotel Logo"
-                    className="w-full h-full object-contain rounded bg-white border border-gray-200"
+                    className="object-contain rounded bg-white border border-gray-200"
+                    style={{
+                      width: 167,
+                      height: 167,
+                      minWidth: 167,
+                      minHeight: 167,
+                      maxWidth: 167,
+                      maxHeight: 167,
+                    }}
                   />
                   <button
                     type="button"
