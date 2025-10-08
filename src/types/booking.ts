@@ -1,11 +1,7 @@
 // ===== BASIC TYPES =====
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
-export type PaymentMethod =
-  | "credit_card"
-  | "cash"
-  | "bank_transfer"
-  | "promptpay";
+export type PaymentMethod = "credit card" | "cash";
 export type SpecialRequestType = "standard" | "special" | "additional";
 export type BookingStep =
   | "basic_info"

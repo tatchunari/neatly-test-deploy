@@ -26,9 +26,33 @@ export class BookingService {
     bookingData: BookingFormData
   ): Promise<BookingApiResponse> {
     try {
+      console.log("=== BookingService Debug ===");
+      console.log("Input bookingData:", bookingData);
+
+      // Get current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.log("=== User not authenticated ===");
+        return {
+          success: false,
+          message: "User not authenticated",
+          error: "AUTH_REQUIRED",
+        };
+      }
+
+      console.log("=== Authenticated User ===");
+      console.log("User ID:", user.id);
+      console.log("User Email:", user.email);
+
       // 1. Validate booking data
       const validation = await this.validateBookingData(bookingData);
+      console.log("Validation result:", validation);
+
       if (!validation.isValid) {
+        console.log("Validation failed:", validation.errors);
         return {
           success: false,
           message: "Validation failed",
@@ -42,8 +66,10 @@ export class BookingService {
         bookingData.checkIn,
         bookingData.checkOut
       );
+      console.log("Room availability:", isAvailable);
 
       if (!isAvailable) {
+        console.log("Room not available");
         return {
           success: false,
           message: "Room not available",
@@ -54,33 +80,50 @@ export class BookingService {
       // 3. Calculate total amount
       const nights = calculateNights(bookingData.checkIn, bookingData.checkOut);
       const basePrice = bookingData.roomInfo?.price || 0;
+      console.log("Calculation inputs:", {
+        nights,
+        basePrice,
+        specialRequests: bookingData.specialRequests,
+      });
+
       const calculation = calculateBookingTotal(
         basePrice,
         nights,
         bookingData.specialRequests,
         bookingData.promotionCode?.discount || 0
       );
+      console.log("Calculation result:", calculation);
 
       // 4. Create booking record
+      const bookingInsertData = {
+        room_id: bookingData.roomId,
+        customer_id: user.id, // ← ใช้ user.id แทน email
+        check_in_date: bookingData.checkIn,
+        check_out_date: bookingData.checkOut,
+        total_amount: calculation.total,
+        status: BOOKING_STATUSES.PENDING,
+        promo_code: bookingData.promoCode,
+        special_requests: bookingData.specialRequests,
+        additional_request: bookingData.additionalRequests,
+        payment_method: bookingData.paymentMethod,
+      };
+
+      console.log("Booking insert data:", bookingInsertData);
+
       const { data: booking, error } = await supabase
         .from("bookings")
-        .insert({
-          room_id: bookingData.roomId,
-          customer_id: bookingData.guestInfo.email, // หรือใช้ user ID จาก auth
-          check_in_date: bookingData.checkIn, // แก้ไขเป็น check_in_date
-          check_out_date: bookingData.checkOut, // แก้ไขเป็น check_out_date
-          total_amount: calculation.total, // แก้ไขเป็น total_amount
-          status: BOOKING_STATUSES.PENDING,
-          promo_code: bookingData.promoCode,
-          special_requests: bookingData.specialRequests,
-          additional_request: bookingData.additionalRequests, // แก้ไขเป็น additional_request
-          payment_method: bookingData.paymentMethod,
-        })
+        .insert(bookingInsertData)
         .select()
         .single();
 
       if (error) {
-        console.error("Booking creation error:", error);
+        console.error("=== Supabase Error ===");
+        console.error("Error details:", error);
+        console.error("Error message:", error.message);
+        console.error("Error code:", error.code);
+        console.error("Error details:", error.details);
+        console.error("Error hint:", error.hint);
+
         return {
           success: false,
           message: "Failed to create booking",
@@ -88,13 +131,17 @@ export class BookingService {
         };
       }
 
+      console.log("=== Booking Created Successfully ===");
+      console.log("Created booking:", booking);
+
       return {
         success: true,
         message: "Booking created successfully",
         data: booking,
       };
     } catch (error) {
-      console.error("Booking service error:", error);
+      console.error("=== BookingService Catch Error ===");
+      console.error("Error:", error);
       return {
         success: false,
         message: "Internal server error",

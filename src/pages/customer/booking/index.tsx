@@ -23,6 +23,7 @@ import {
   Payment,
 } from "@/types/booking";
 import { SPECIAL_REQUESTS } from "@/constants/booking";
+import { PAYMENT_METHODS } from "@/constants/booking";
 import {
   calculateBookingTotal,
   calculateNights,
@@ -73,7 +74,7 @@ export default function BookingPage() {
   const [additionalRequest, setAdditionalRequest] = useState("");
 
   const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>("credit_card");
+    useState<PaymentMethod>("credit card");
   const [creditCardDetails, setCreditCardDetails] = useState<CreditCardDetails>(
     {
       cardNumber: "",
@@ -293,22 +294,40 @@ export default function BookingPage() {
         additionalRequests: additionalRequest,
         paymentMethod,
         creditCardDetails:
-          paymentMethod === "credit_card" ? creditCardDetails : undefined,
+          paymentMethod === PAYMENT_METHODS.CREDIT_CARD
+            ? creditCardDetails
+            : undefined,
         promoCode: promoCodeApplied ? promoCode : undefined,
       };
+
+      // เพิ่ม debug logging ก่อน create booking
+      console.log("=== DEBUG: Booking Data ===");
+      console.log("bookingData:", bookingData);
+      console.log("selectedRoom:", selectedRoom);
+      console.log("guestInfo:", guestInfo);
+      console.log("paymentMethod:", paymentMethod);
+      console.log("creditCardDetails:", creditCardDetails);
 
       // Create booking
       const bookingResponse = await BookingService.createBooking(bookingData);
 
+      // เพิ่ม debug logging หลัง create booking
+      console.log("=== DEBUG: Booking Response ===");
+      console.log("bookingResponse:", bookingResponse);
+
       if (bookingResponse.success && bookingResponse.data) {
         const booking = bookingResponse.data as Booking;
+        console.log("=== DEBUG: Booking Created ===");
+        console.log("booking:", booking);
 
         // Process payment
         const paymentResponse = await PaymentService.createPayment(
           booking.id,
           calculation.total,
           paymentMethod,
-          paymentMethod === "credit_card" ? creditCardDetails : undefined
+          paymentMethod === PAYMENT_METHODS.CREDIT_CARD
+            ? creditCardDetails
+            : undefined
         );
 
         if (paymentResponse.success && paymentResponse.data) {
@@ -316,12 +335,12 @@ export default function BookingPage() {
 
           // Process payment based on method
           let processResponse;
-          if (paymentMethod === "credit_card") {
+          if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
             processResponse = await PaymentService.processStripePayment(
               payment.id,
               "mock_stripe_payment_intent_id"
             );
-          } else if (paymentMethod === "cash") {
+          } else if (paymentMethod === PAYMENT_METHODS.CASH) {
             processResponse = await PaymentService.processCashPayment(
               payment.id
             );
@@ -336,7 +355,9 @@ export default function BookingPage() {
               confirmationNumber: `CONF-${booking.id.slice(-8).toUpperCase()}`,
               status: "confirmed",
               paymentStatus:
-                paymentMethod === "credit_card" ? "completed" : "pending",
+                paymentMethod === PAYMENT_METHODS.CREDIT_CARD
+                  ? "completed"
+                  : "pending",
               total: calculation.total,
               currency: "THB",
               checkIn: checkIn as string,
@@ -353,6 +374,9 @@ export default function BookingPage() {
           throw new Error("Payment creation failed");
         }
       } else {
+        console.log("=== DEBUG: Booking Failed ===");
+        console.log("Error:", bookingResponse.error);
+        console.log("Message:", bookingResponse.message);
         throw new Error("Booking creation failed");
       }
     } catch (error) {

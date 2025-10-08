@@ -32,10 +32,8 @@ export const PAYMENT_STATUSES = {
 
 // ===== PAYMENT CONSTANTS =====
 export const PAYMENT_METHODS = {
-  CREDIT_CARD: "credit_card",
+  CREDIT_CARD: "credit card", // ← ใช้ "credit card" (มี space)
   CASH: "cash",
-  BANK_TRANSFER: "bank_transfer",
-  PROMPTPAY: "promptpay",
 } as const;
 
 // ===== PROMOTION CONSTANTS =====

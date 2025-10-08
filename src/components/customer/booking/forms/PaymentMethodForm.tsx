@@ -87,18 +87,6 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       icon: "💵",
       description: "Pay in cash at the hotel",
     },
-    {
-      value: PAYMENT_METHODS.BANK_TRANSFER,
-      label: "Bank Transfer",
-      icon: "🏦",
-      description: "Transfer to our bank account",
-    },
-    {
-      value: PAYMENT_METHODS.PROMPTPAY,
-      label: "PromptPay",
-      icon: "📱",
-      description: "Pay with PromptPay QR code",
-    },
   ];
 
   return (

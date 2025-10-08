@@ -113,10 +113,8 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
             </h4>
             <div className="p-3 border rounded-lg bg-[var(--color-gray-50)]">
               <p className="text-[var(--color-gray-700)] font-[var(--font-inter)]">
-                {paymentMethod === "credit_card" && "💳 Credit Card"}
+                {paymentMethod === "credit card" && "💳 Credit Card"}
                 {paymentMethod === "cash" && "💵 Cash"}
-                {paymentMethod === "bank_transfer" && "🏦 Bank Transfer"}
-                {paymentMethod === "promptpay" && "📱 PromptPay"}
               </p>
             </div>
           </div>
