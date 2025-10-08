@@ -95,6 +95,7 @@ export default function Chatbot() {
   const [suggestionFAQs, setSuggestionFAQs] = useState<SuggestionFAQ[]>([]);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [showTopics, setShowTopics] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Ticket modal states
   const [showTicketModal, setShowTicketModal] = useState(false);
@@ -175,6 +176,71 @@ export default function Chatbot() {
       setIsExpanded(false);
       setIsClosing(false);
     }
+  };
+
+  const handleClearMessages = () => {
+    console.log('🗑️ Clear button clicked - showing confirmation dialog');
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearMessages = async () => {
+    if (!currentSession?.id) {
+      console.log('❌ Cannot clear messages - no active session');
+      return;
+    }
+
+    console.log('🗑️ Confirming clear messages for session:', currentSession.id);
+    console.log('📊 Current messages count:', messages.length);
+
+    try {
+      console.log('🔄 Calling clear messages API...');
+      
+      const response = await fetch('/api/chat/clear-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: currentSession.id,
+        }),
+      });
+
+      console.log('📡 API response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ API error response:', errorData);
+        throw new Error(`API returned ${response.status}: ${errorData.error || 'Unknown error'}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ API success response:', result);
+
+      // Clear local state
+      setMessages([]);
+      setShowClearConfirm(false);
+      
+      // Clear ticket state as well
+      setCurrentTicket(null);
+      setIsTicketSolved(false);
+      setIsBotTyping(false);
+      
+      console.log('✅ Messages and tickets cleared successfully');
+      console.log('📊 Messages count after clear:', 0);
+      console.log('🎫 Ticket state cleared');
+    } catch (error) {
+      console.error('❌ Error clearing messages:', error);
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
+      
+      // Still close the dialog even if there's an error
+      setShowClearConfirm(false);
+    }
+  };
+
+  const cancelClearMessages = () => {
+    console.log('❌ Clear operation cancelled by user');
+    setShowClearConfirm(false);
   };
 
   // Handle scroll to expand
@@ -1079,6 +1145,14 @@ export default function Chatbot() {
                   Topics
                 </Button>
                 <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleClearMessages()}
+                  className="text-gray-600 hover:text-red-600 text-xs px-2 py-1"
+                >
+                  Clear
+                </Button>
+                <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => handleClose()}
@@ -1151,7 +1225,7 @@ export default function Chatbot() {
               className="bg-gray-50 shadow-[inset_0_-16px_16px_-8px_rgba(0,0,0,0.1)] h-[calc(100%-120px)] overflow-y-auto"
               onScrollCapture={handleScroll}
             >
-               <div className="p-4 space-y-2">
+               <div className="py-4 space-y-2">
                 {/* Loading Session */}
                 {isLoadingSession && (
                   <div className="flex flex-col items-center justify-center py-8">
@@ -1164,7 +1238,7 @@ export default function Chatbot() {
 
                  {/* Greeting message */}
                 {!isLoadingSession && greetingMessage && (
-                  <div className={`flex flex-col items-start ${messages.length > 0 ? 'px-4' : ''}`}>
+                  <div className="flex flex-col items-start !px-4 !mx-0">
                      <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800">
                        <p className="text-sm">{greetingMessage}</p>
                      </div>
@@ -1173,7 +1247,7 @@ export default function Chatbot() {
 
                  {/* Suggestion buttons */}
                 {!isLoadingSession && suggestionFAQs.length > 0 && (
-                  <div className={`flex flex-wrap gap-2 mt-4 ${messages.length > 0 ? 'px-4' : ''}`}>
+                  <div className="flex flex-wrap gap-2 mt-4 !px-4 !mx-0">
                      {suggestionFAQs.map((faq) => (
                        <Button
                          key={faq.id}
@@ -1550,6 +1624,36 @@ export default function Chatbot() {
                   Cancel
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Messages Confirmation Modal */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[631px] max-w-full mx-4">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+              Clear Chat History
+            </h2>
+            <hr className="border-gray-300 mb-4" />
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to clear all messages in this chat? This action cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                onClick={cancelClearMessages}
+                variant="outline"
+                className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmClearMessages}
+                className="bg-orange-600 text-white hover:bg-orange-700 cursor-pointer"
+              >
+                Clear Messages
+              </Button>
             </div>
           </div>
         </div>

@@ -45,6 +45,13 @@ export default function ChatbotAdmin() {
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
   const [showCreateFAQ, setShowCreateFAQ] = useState<boolean>(false);
 
+  // Snackbar states
+  const [snackbar, setSnackbar] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error' | 'delete';
+  }>({ show: false, message: '', type: 'success' });
+
   // Greeting and Fallback states
   const [greetingMessage, setGreetingMessage] = useState("");
   const [fallbackMessage, setFallbackMessage] = useState("");
@@ -55,6 +62,14 @@ export default function ChatbotAdmin() {
   const [contexts, setContexts] = useState<Context[]>([]);
   const [newContext, setNewContext] = useState({ content: "" });
   const [editingContext, setEditingContext] = useState<Context | null>(null);
+
+  // Snackbar functions
+  const showSnackbar = (message: string, type: 'success' | 'error' | 'delete') => {
+    setSnackbar({ show: true, message, type });
+    setTimeout(() => {
+      setSnackbar(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
 
   // Validation error states
   const [validationErrors, setValidationErrors] = useState<{
@@ -141,6 +156,7 @@ export default function ChatbotAdmin() {
         console.log("FAQ updated with ID:", editingFAQ.id);
         setEditingFAQ(null);
         fetchFAQs();
+        showSnackbar("Suggestion updated successfully", "success");
       } else {
       }
     } catch (error) {
@@ -151,10 +167,6 @@ export default function ChatbotAdmin() {
   };
 
   const handleDeleteFAQ = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this FAQ?")) {
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await fetch(`/api/chat/faqs?id=${id}`, {
@@ -163,10 +175,13 @@ export default function ChatbotAdmin() {
 
       if (response.ok) {
         fetchFAQs();
+        showSnackbar("Suggestion deleted successfully", "delete");
       } else {
+        showSnackbar("Failed to delete suggestion", "error");
       }
     } catch (error) {
       console.error("Error deleting FAQ:", error);
+      showSnackbar("Error deleting suggestion", "error");
     } finally {
       setLoading(false);
     }
@@ -247,6 +262,7 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setIsEditingGreeting(false);
         fetchFAQs();
+        showSnackbar("Greeting message saved successfully", "success");
       } else {
       }
     } catch (error) {
@@ -290,6 +306,7 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setIsEditingFallback(false);
         fetchFAQs();
+        showSnackbar("Fallback message saved successfully", "success");
       } else {
       }
     } catch (error) {
@@ -374,12 +391,15 @@ export default function ChatbotAdmin() {
         console.log("✅ Admin: All contexts created successfully");
         setNewContext({ content: "" });
         fetchContexts();
+        showSnackbar("Details added successfully", "success");
       } else {
         console.error("❌ Admin: Some contexts failed to create");
         setValidationErrors(prev => ({ ...prev, context: "Some details failed to save" }));
+        showSnackbar("Failed to add details", "error");
       }
     } catch (error) {
       console.error("❌ Admin: Error creating contexts:", error);
+      showSnackbar("Error adding details", "error");
       setValidationErrors(prev => ({ ...prev, context: "Error creating details" }));
     } finally {
       console.log("🟡 Admin: Setting loading to false");
@@ -428,20 +448,19 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setEditingContext(null);
         fetchContexts();
+        showSnackbar("Details updated successfully", "success");
       } else {
+        showSnackbar("Failed to update details", "error");
       }
     } catch (error) {
       console.error("Error updating context:", error);
+      showSnackbar("Error updating details", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteContext = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this context?")) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/chat/contexts?id=${id}`, {
         method: "DELETE",
@@ -449,10 +468,13 @@ export default function ChatbotAdmin() {
 
       if (response.ok) {
         fetchContexts();
+        showSnackbar("Details deleted successfully", "delete");
       } else {
+        showSnackbar("Failed to delete details", "error");
       }
     } catch (error) {
       console.error("Error deleting context:", error);
+      showSnackbar("Error deleting details", "error");
     }
   };
 
@@ -829,6 +851,7 @@ export default function ChatbotAdmin() {
                             setEditingFAQ(faq);
                           }}
                           onClose={() => setEditingFAQ(null)}
+                          onShowSnackbar={showSnackbar}
                         />
                       </Reorder.Item>
                     ))}
@@ -853,6 +876,7 @@ export default function ChatbotAdmin() {
                   onDeleteFAQ={handleDeleteFAQ}
                   onDeleteAlias={handleDeleteAlias}
                   onClose={() => setShowCreateFAQ(false)}
+                  onShowSnackbar={showSnackbar}
                 />
               )}
 
@@ -878,6 +902,22 @@ export default function ChatbotAdmin() {
 
 
       </div>
+
+      {/* Snackbar */}
+      {snackbar.show && (
+        <div className="fixed top-4 right-4 z-[9999] animate-in slide-in-from-right duration-300">
+          <div className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${
+            snackbar.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+            snackbar.type === 'delete' ? 'bg-orange-100 text-orange-800 border border-orange-200' :
+            'bg-red-100 text-red-800 border border-red-200'
+          }`}>
+            {snackbar.type === 'success' && <span className="text-green-600">✓</span>}
+            {snackbar.type === 'delete' && <span className="text-orange-600">🗑️</span>}
+            {snackbar.type === 'error' && <span className="text-red-600">✕</span>}
+            <span className="font-medium">{snackbar.message}</span>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

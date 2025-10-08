@@ -7,10 +7,28 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, User-Agent, X-Internal-Request');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
+
+  // Log request details for debugging
+  console.log('🤖 Bot response API called:', {
+    method: req.method,
+    headers: req.headers,
+    body: req.body,
+    userAgent: req.headers['user-agent'],
+    internalRequest: req.headers['x-internal-request']
+  });
 
   try {
     const { sessionId, userMessage } = req.body;
@@ -396,11 +414,63 @@ export default async function handler(
     });
 
   } catch (error) {
-    console.error('Error in bot response:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate bot response',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
+    console.error('❌ Error in bot response:', error);
+    console.error('❌ Error type:', typeof error);
+    console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
+    // Return a fallback response instead of 500 error
+    try {
+      const { data: fallbackContext, error: fallbackError } = await supabase
+        .from("chatbot_faqs")
+        .select("reply_message")
+        .eq("topic", "::fallback::")
+        .single();
+
+      let fallbackMessage = "I'm sorry, I'm having trouble processing your request right now. Please try again later.";
+      
+      if (!fallbackError && fallbackContext) {
+        fallbackMessage = fallbackContext.reply_message;
+      }
+
+      // Save fallback message to database
+      const { data: botMessage, error: saveError } = await supabase
+        .from('chatbot_messages')
+        .insert({
+          session_id: req.body.sessionId,
+          message: fallbackMessage,
+          is_bot: true
+        })
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error('❌ Error saving fallback message:', saveError);
+      }
+
+      return res.status(200).json({
+        message: botMessage || { message: fallbackMessage, is_bot: true },
+        responseData: {
+          format: 'message',
+          message: fallbackMessage
+        },
+        success: true,
+        fallback: true,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } catch (fallbackError) {
+      console.error('❌ Fallback response failed:', fallbackError);
+      return res.status(200).json({
+        message: { message: "I'm sorry, I'm having trouble processing your request right now. Please try again later.", is_bot: true },
+        responseData: {
+          format: 'message',
+          message: "I'm sorry, I'm having trouble processing your request right now. Please try again later."
+        },
+        success: true,
+        fallback: true,
+        error: 'Fallback response failed'
+      });
+    }
   }
 }
 

@@ -42,6 +42,7 @@ interface SuggestionMenuProps {
   faq?: FAQ;
   onClose?: () => void;
   onEdit?: () => void;
+  onShowSnackbar?: (message: string, type: 'success' | 'error' | 'delete') => void;
 }
 
 export default function SuggestionMenu({ 
@@ -54,7 +55,8 @@ export default function SuggestionMenu({
   isReadOnly = false,
   faq,
   onClose,
-  onEdit
+  onEdit,
+  onShowSnackbar
 }: SuggestionMenuProps) {
   // Base input styles
   const baseInputStyles = "w-full border !bg-white border-gray-300 rounded-md text-sm px-3 py-2";
@@ -208,6 +210,9 @@ export default function SuggestionMenu({
 
 
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [faqToDelete, setFaqToDelete] = useState<FAQ | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Aliases states
   const [newAliasesUI, setNewAliasesUI] = useState<string[]>([]);
@@ -234,6 +239,9 @@ export default function SuggestionMenu({
   const handleCreateFAQ = async () => {
     // Clear previous validation errors
     setValidationErrors({});
+    
+    // Set loading state
+    setIsSaving(true);
 
     // Validation based on format
     const errors: typeof validationErrors = {};
@@ -283,6 +291,7 @@ export default function SuggestionMenu({
     // If there are validation errors, set them and return
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
+      setIsSaving(false);
       return;
     }
 
@@ -366,7 +375,10 @@ export default function SuggestionMenu({
         setShowAliases(false);
         setSelectedRoomTypes([]);
         onFetchFAQs();
-        alert(isEditing ? "FAQ updated successfully!" : "FAQ created successfully!");
+        // FAQ updated/created successfully
+        if (onShowSnackbar) {
+          onShowSnackbar(isEditing ? "Suggestion updated successfully" : "Suggestion created successfully", "success");
+        }
         // Close the create form
         if (onClose) {
           onClose();
@@ -374,19 +386,28 @@ export default function SuggestionMenu({
       } else {
         const errorData = await response.json();
         console.error("Failed to create FAQ:", errorData);
-        alert(`Failed to create FAQ: ${errorData.error || 'Unknown error'}`);
+        // FAQ creation failed - error logged to console
+        if (onShowSnackbar) {
+          onShowSnackbar("Failed to save suggestion", "error");
+        }
       }
     } catch (error) {
       console.error("Error creating FAQ:", error);
-      alert(`Error creating FAQ: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // FAQ creation error - error logged to console
+      if (onShowSnackbar) {
+        onShowSnackbar("Error saving suggestion", "error");
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
+    <>
     <div>
 
       {/* Create New FAQ */}
-      <div className="mb-6 pl-4 pr-0 py-4 border border-gray-200 rounded-lg bg-gray-100">
+      <div className="mb-6 pl-4 pr-0 py-4 border border-gray-200 rounded-lg bg-gray-100 transition-none">
         <div className="flex gap-0">
           {/* Left side - Form fields (95%) */}
           <div className="flex-1 w-[95%] space-y-4">
@@ -862,10 +883,10 @@ export default function SuggestionMenu({
             <div className="flex gap-2">
               <Button
                 onClick={handleCreateFAQ}
-                disabled={loading}
+                disabled={isSaving}
                 className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-600 cursor-pointer"
               >
-                {loading ? "Saving..." : "Save"}
+                {isSaving ? "Saving..." : "Save"}
               </Button>
               <Button
                 onClick={() => {
@@ -930,7 +951,7 @@ export default function SuggestionMenu({
                     onClose();
                   }
                 }}
-                disabled={loading}
+                disabled={isSaving}
                 variant="ghost"
                 className="cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200"
               >
@@ -970,9 +991,8 @@ export default function SuggestionMenu({
                 className="p-2 text-gray-700 hover:text-gray-900 cursor-pointer" 
                 title="Delete"
                 onClick={() => {
-                  if (onDeleteFAQ) {
-                    onDeleteFAQ(faq.id);
-                  }
+                  setFaqToDelete(faq);
+                  setShowDeleteModal(true);
                 }}
               >
                 <img src="/delete.svg" alt="Delete" className="w-5 h-5" />
@@ -983,5 +1003,45 @@ export default function SuggestionMenu({
       </div>
 
     </div>
+
+    {/* Delete Confirmation Modal */}
+    {showDeleteModal && faqToDelete && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+        <div className="bg-white p-6 rounded-lg shadow-lg w-[631px] max-w-full mx-4">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+            Delete Suggestion menu?
+          </h2>
+          <hr className="border-gray-300 mb-4" />
+          <p className="text-gray-600 mb-6">
+            {`Are you sure you want to delete "${faqToDelete.topic}" ?`}
+          </p>
+           <div className="flex gap-2 justify-end">
+             <Button
+               onClick={() => {
+                 if (onDeleteFAQ) {
+                   onDeleteFAQ(faqToDelete.id);
+                 }
+                 setShowDeleteModal(false);
+                 setFaqToDelete(null);
+               }}
+               variant="outline"
+               className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
+             >
+               Yes, I want to delete
+             </Button>
+             <Button
+               onClick={() => {
+                 setShowDeleteModal(false);
+                 setFaqToDelete(null);
+               }}
+               className="bg-orange-600 text-white hover:bg-orange-700 cursor-pointer"
+             >
+               {`No, I don't`}
+             </Button>
+           </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
