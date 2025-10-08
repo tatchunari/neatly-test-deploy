@@ -77,7 +77,7 @@ const BookingTrendsChart: React.FC<BookingTrendsChartProps> = ({
 
   console.log("Chart Data", chartData);
   return (
-    <div className="bg-white rounded-lg shadow-md p-8 w-full h-90 mt-8">
+    <div className="bg-white rounded-lg shadow-md p-8 w-full h-100 sm:h-90 mt-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-medium text-gray-700">
           Booking Trends by Day

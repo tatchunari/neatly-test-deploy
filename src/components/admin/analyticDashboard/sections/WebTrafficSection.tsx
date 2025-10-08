@@ -3,240 +3,219 @@ import { DropDownInput } from "../../ui/DropdownInput";
 import { LineChartComponent, LineChartData } from "../LineChartComponent";
 
 import { useForm } from "react-hook-form";
-import { useState, useMemo } from "react";
-import { Statistics } from "@/pages/admin/analytics";
+import { useState, useEffect, useMemo } from "react";
 
-interface WebTrafficSectionProps {
-  statsData: Statistics[] | null | undefined;
+interface PageViewRecord {
+  page: string;
+  date: string;
+  hour: string;
+  timestamp: string;
+  views: string;
 }
+
 type Timeframe = "Real-time" | "Yesterday" | "Last 7 Days" | "Last 30 days";
 
-const revenueData = [
-  { time: "04:00 AM", value: 0 },
-  { time: "06:00 AM", value: 0 },
-  { time: "12:00 AM", value: 30 },
-  { time: "04:00 PM", value: 28 },
-  { time: "08:00 PM", value: 60 },
-  { time: "12:00 PM", value: 50 },
-];
-
-const options = ["All Pages", "Home", "Superior Garden", "Deluxe", "Superior"];
-
-const WebTrafficSection: React.FC<WebTrafficSectionProps> = ({ statsData }) => {
+const WebTrafficSection = () => {
   const { setValue } = useForm();
   const [selectedTimeframe, setSelectedTimeframe] =
     useState<Timeframe>("Yesterday");
   const [selectedPage, setSelectedPage] = useState("All Pages");
+  const [pageViewData, setPageViewData] = useState<PageViewRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Calculate web traffic data based on selected timeframe
-  const trafficData = useMemo(() => {
-    if (!statsData || statsData.length === 0) return [];
+  // Fixed page options
+  const pageMapping: Record<string, string | null> = {
+    "All Pages": null,
+    Home: "/",
+    "Superior Garden View": "/customer/search-result/1",
+    Deluxe: "/customer/search-result/2",
+    Superior: "/customer/search-result/3",
+    Supreme: "/customer/search-result/4",
+  };
+
+  // Fetch GA4 data
+  useEffect(() => {
+    async function fetchPageViews() {
+      try {
+        const response = await fetch("/api/test-ga4");
+        const result = await response.json();
+
+        if (result.success && Array.isArray(result.data)) {
+          setPageViewData(result.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch GA4 data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPageViews();
+  }, []);
+
+  // Filter + Aggregate data
+  const chartData: LineChartData[] = useMemo(() => {
+    if (pageViewData.length === 0) return [];
 
     const now = new Date();
-    let filteredStats = [];
+    const selectedPath = pageMapping[selectedPage];
 
-    // Filter statistics based on timeframe
-    switch (selectedTimeframe) {
-      case "Real-time":
-      case "Yesterday":
-        // Get yesterday's data
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        filteredStats = statsData.filter((stat) => {
-          const statDate = new Date(stat.period_start);
-          return statDate.toDateString() === yesterday.toDateString();
-        });
-        break;
+    // Filter by selected page
+    let filtered = selectedPath
+      ? pageViewData.filter((d) => d.page === selectedPath)
+      : pageViewData;
 
-      case "Last 7 Days":
-        const sevenDaysAgo = new Date(now);
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        filteredStats = statsData.filter((stat) => {
-          const statDate = new Date(stat.period_start);
-          return statDate >= sevenDaysAgo && statDate <= now;
-        });
-        break;
+    // Helper: group by key (hour or date)
+    const groupBy = (
+      arr: PageViewRecord[],
+      keyFn: (item: PageViewRecord) => string
+    ) => {
+      const map = new Map<string, number>();
+      for (const item of arr) {
+        const key = keyFn(item);
+        const views = parseInt(item.views, 10);
+        map.set(key, (map.get(key) ?? 0) + views);
+      }
+      return Array.from(map.entries()).map(([key, value]) => ({
+        key,
+        value,
+      }));
+    };
 
-      case "Last 30 days":
-        const thirtyDaysAgo = new Date(now);
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        filteredStats = statsData.filter((stat) => {
-          const statDate = new Date(stat.period_start);
-          return statDate >= thirtyDaysAgo && statDate <= now;
-        });
-        break;
-
-      default:
-        filteredStats = statsData;
-    }
-
-    // For Yesterday/Real-time: Show hourly data (simulate 24 hours)
-    interface HourlyDataObject {
-      time: string | number;
-      value: number;
-    }
+    // Filter timeframe
     if (
-      selectedTimeframe === "Yesterday" ||
-      selectedTimeframe === "Real-time"
+      selectedTimeframe === "Real-time" ||
+      selectedTimeframe === "Yesterday"
     ) {
-      const hourlyData: LineChartData[] = [];
-      const totalVisitors = filteredStats.reduce(
-        (sum, stat) => sum + (stat.total_visitors || 0),
-        0
-      );
+      const targetDate = new Date(now);
+      if (selectedTimeframe === "Yesterday")
+        targetDate.setDate(targetDate.getDate() - 1);
+      const dateStr = targetDate.toISOString().slice(0, 10).replace(/-/g, "");
 
-      // Simulate hourly distribution (peak hours in afternoon/evening)
-      const hours = [
-        { time: "12:00 AM", factor: 0.02 },
-        { time: "02:00 AM", factor: 0.01 },
-        { time: "04:00 AM", factor: 0.01 },
-        { time: "06:00 AM", factor: 0.03 },
-        { time: "08:00 AM", factor: 0.05 },
-        { time: "10:00 AM", factor: 0.08 },
-        { time: "12:00 PM", factor: 0.1 },
-        { time: "02:00 PM", factor: 0.12 },
-        { time: "04:00 PM", factor: 0.15 },
-        { time: "06:00 PM", factor: 0.18 },
-        { time: "08:00 PM", factor: 0.14 },
-        { time: "10:00 PM", factor: 0.08 },
-      ];
+      filtered = filtered.filter((item) => item.date === dateStr);
 
-      hours.forEach((hour) => {
-        hourlyData.push({
-          time: hour.time,
-          value: Math.round(totalVisitors * hour.factor),
-        });
+      const grouped = groupBy(filtered, (item) => item.hour.padStart(2, "0"));
+      return grouped.map(({ key, value }) => ({
+        time: `${key}:00`,
+        value,
+      }));
+    }
+
+    if (selectedTimeframe === "Last 7 Days") {
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      filtered = filtered.filter((item) => {
+        const date = new Date(item.timestamp);
+        return date >= sevenDaysAgo && date <= now;
       });
 
-      return hourlyData;
+      const grouped = groupBy(filtered, (item) => item.date);
+      return grouped.map(({ key, value }) => ({
+        time: new Date(
+          `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}`
+        ).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        value,
+      }));
     }
 
-    // For Last 7 Days: Show daily data
-    if (selectedTimeframe === "Last 7 Days") {
-      const dailyData = [];
-      for (let i = 6; i >= 0; i--) {
-        const day = new Date(now);
-        day.setDate(day.getDate() - i);
-
-        const dayStats = filteredStats.filter((stat) => {
-          const statDate = new Date(stat.period_start);
-          return statDate.toDateString() === day.toDateString();
-        });
-
-        const visitors = dayStats.reduce(
-          (sum, stat) => sum + (stat.total_visitors || 0),
-          0
-        );
-
-        dailyData.push({
-          time: day.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
-          value: visitors,
-        });
-      }
-      return dailyData;
-    }
-
-    // For Last 30 Days: Show weekly data
     if (selectedTimeframe === "Last 30 days") {
-      const weeklyData = [];
-      for (let i = 4; i >= 0; i--) {
-        const weekStart = new Date(now);
-        weekStart.setDate(weekStart.getDate() - i * 7);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const weekStats = filteredStats.filter((stat) => {
-          const statDate = new Date(stat.period_start);
-          return statDate >= weekStart && statDate <= weekEnd;
-        });
+      filtered = filtered.filter((item) => {
+        const date = new Date(item.timestamp);
+        return date >= thirtyDaysAgo && date <= now;
+      });
 
-        const visitors = weekStats.reduce(
-          (sum, stat) => sum + (stat.total_visitors || 0),
-          0
-        );
+      const grouped = groupBy(filtered, (item) => item.date);
+      const daily = grouped.map(({ key, value }) => ({
+        date: new Date(
+          `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}`
+        ),
+        value,
+      }));
 
-        weeklyData.push({
-          time: `${weekStart.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })}`,
-          value: visitors,
-        });
+      // Group by week
+      const weeklyMap = new Map<string, number>();
+      for (const { date, value } of daily) {
+        const weekKey = `${date.getFullYear()}-W${Math.ceil(
+          date.getDate() / 7
+        )}`;
+        weeklyMap.set(weekKey, (weeklyMap.get(weekKey) ?? 0) + value);
       }
-      return weeklyData;
+
+      return Array.from(weeklyMap.entries()).map(([key, value]) => ({
+        time: key,
+        value,
+      }));
     }
 
     return [];
-  }, [statsData, selectedTimeframe]);
+  }, [pageViewData, selectedTimeframe, selectedPage]);
 
-  // Calculate dynamic Y-axis ticks
+  // Calculate Y-axis ticks
   const yAxisTicks = useMemo(() => {
-    if (trafficData.length === 0) return [0, 20, 40, 60, 80, 100, 120, 140];
+    if (chartData.length === 0) return [0, 20, 40, 60, 80, 100];
+    const max = Math.max(...chartData.map((d) => d.value));
+    const step = Math.ceil(max / 6 / 10) * 10 || 1;
+    return Array.from({ length: 7 }, (_, i) => i * step);
+  }, [chartData]);
 
-    const maxValue = Math.max(...trafficData.map((d) => d.value));
-    const tickCount = 7;
-    const step = Math.ceil(maxValue / tickCount / 10) * 10 || 1; // Round to nearest 10
+  const buttonClass = (timeframe: Timeframe) =>
+    selectedTimeframe === timeframe
+      ? "whitespace-nowrap border border-orange-500 text-orange-600 bg-orange-100"
+      : "whitespace-nowrap border border-gray-400 hover:border-orange-500 hover:text-orange-600 hover:bg-orange-100";
 
-    return Array.from({ length: tickCount + 1 }, (_, i) => i * step);
-  }, [trafficData]);
-
-  const handleTimeframeClick = (timeframe: Timeframe) => {
-    setSelectedTimeframe(timeframe);
-  };
-
-  const buttonClass = (timeframe: Timeframe) => {
-    return selectedTimeframe === timeframe
-      ? "whitespace-nowrap border-1 border-orange-500 text-orange-600 bg-orange-100"
-      : "whitespace-nowrap border-1 border-gray-400 hover:border-orange-500 hover:text-orange-600 hover:bg-orange-100";
-  };
-
-  return (
-    <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-90 mt-10">
-      <div className="flex w-full justify-between">
-        <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
-          Website Traffic
-        </h2>
-        {/* Filter Section */}
-        <div className="flex flex-row gap-4">
-          <DropDownInput
-            options={options}
-            name="options"
-            setValue={setValue}
-            onChange={(value) => setSelectedPage(value)}
-          />
-          <Button
-            loading={false}
-            text="Real-time"
-            onClick={() => handleTimeframeClick("Real-time")}
-            className={buttonClass("Real-time")}
-          />
-          <Button
-            loading={false}
-            text="Yesterday"
-            onClick={() => handleTimeframeClick("Yesterday")}
-            className={buttonClass("Yesterday")}
-          />
-          <Button
-            loading={false}
-            text="Last 7 Days"
-            onClick={() => handleTimeframeClick("Last 7 Days")}
-            className={buttonClass("Last 7 Days")}
-          />
-          <Button
-            loading={false}
-            text="Last 30 days"
-            onClick={() => handleTimeframeClick("Last 30 days")}
-            className={buttonClass("Last 30 days")}
-          />
+  if (loading) {
+    return (
+      <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-90 mt-10">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-80 bg-gray-100 rounded"></div>
         </div>
       </div>
-      {/* Line Chart */}
-      {trafficData.length > 0 ? (
+    );
+  }
+
+  return (
+    <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-110 sm:h-full mt-10 p-5">
+      <div className="flex flex-col w-full justify-between">
+        <div className="flex flex-col md:flex-row justify-between">
+          <div className="flex flex-row items-center pr-5 mb-5 gap-4">
+            <h2 className="mt-6 sm:mt-0 ml-3 sm:ml-0 text-lg font-medium text-gray-700">
+              Website Traffic
+            </h2>
+            {/* Filters */}
+            <div className="flex md:flex-row flex-col md:justify-between gap-4 ">
+              <DropDownInput
+                options={Object.keys(pageMapping)}
+                name="pageFilter"
+                setValue={setValue}
+                onChange={(value) => setSelectedPage(value)}
+              />
+            </div>
+          </div>
+          <div className="flex flex-row border border-white/20 rounded-lg overflow-x-auto whitespace-nowrap gap-2 py-2 px-4 ">
+            {(
+              ["Real-time", "Yesterday", "Last 7 Days", "Last 30 days"] as const
+            ).map((tf) => (
+              <Button
+                key={tf}
+                loading={false}
+                text={tf}
+                onClick={() => setSelectedTimeframe(tf)}
+                className={buttonClass(tf)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Chart */}
+      {chartData.length > 0 ? (
         <LineChartComponent
-          data={trafficData}
+          data={chartData}
           datakey="time"
           lineColor="#E87B5A"
           height="h-80"
@@ -244,7 +223,7 @@ const WebTrafficSection: React.FC<WebTrafficSectionProps> = ({ statsData }) => {
         />
       ) : (
         <div className="flex items-center justify-center h-80 text-gray-400">
-          No traffic data available for selected timeframe
+          No traffic data available
         </div>
       )}
     </div>
