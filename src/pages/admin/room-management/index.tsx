@@ -95,6 +95,24 @@ export default function IndexPage() {
     return filteredRooms.slice(from, to)
   }, [filteredRooms, page])
 
+  // Generate page numbers to display (sliding window like room-types)
+  const getPageNumbers = () => {
+    const pages: number[] = []
+    const maxVisiblePages = 5
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (page <= 3) {
+        for (let i = 1; i <= 5; i++) pages.push(i)
+      } else if (page >= totalPages - 2) {
+        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i)
+      } else {
+        for (let i = page - 2; i <= page + 2; i++) pages.push(i)
+      }
+    }
+    return pages
+  }
+
   return (
     <Layout>
       <main className="flex-1 w-full bg-[#F6F7FC]">
@@ -245,22 +263,23 @@ export default function IndexPage() {
                     />
                   </button>
 
-                  {Array.from({ length: totalPages }).slice(0, 5).map((_, i) => {
-                    const pageNumber = i + 1
-                    return (
-                      <button
-                        key={pageNumber}
-                        className={`px-3 py-1 rounded-md text-sm ${
-                          pageNumber === page
-                            ? "bg-white text-gray-700 border border-gray-600"
-                            : "text-gray-700 hover:bg-gray-200"
-                        }`}
-                        onClick={() => setPage(pageNumber)}
-                      >
-                        {pageNumber}
-                      </button>
-                    )
-                  })}
+                  {getPageNumbers().map((p) => (
+                    <button
+                      key={p}
+                      className={`px-3 py-1 rounded-md text-sm ${
+                        p === page
+                          ? "bg-white text-gray-700 border border-gray-600"
+                          : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                      onClick={() => setPage(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  {totalPages > 5 && page < totalPages - 2 && (
+                    <span className="text-gray-400">...</span>
+                  )}
 
                   <button
                     className="p-2 rounded-md hover:bg-gray-200 disabled:opacity-50"
