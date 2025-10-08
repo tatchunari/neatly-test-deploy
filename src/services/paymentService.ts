@@ -3,6 +3,7 @@ import {
   PaymentApiResponse,
   PaymentMethod,
   PaymentStatus,
+  Payment,
 } from "@/types/booking";
 import {
   BOOKING_ERROR_CODES,
@@ -40,7 +41,7 @@ export class PaymentService {
       }
 
       // 2. Prepare payment data
-      const paymentData: any = {
+      const paymentData: Partial<Payment> = {
         booking_id: bookingId,
         amount: amount,
         payment_method: paymentMethod,
@@ -453,10 +454,6 @@ export class PaymentService {
         return "Credit Card";
       case PAYMENT_METHODS.CASH:
         return "Cash";
-      case PAYMENT_METHODS.BANK_TRANSFER:
-        return "Bank Transfer";
-      case PAYMENT_METHODS.PROMPTPAY:
-        return "PromptPay";
       default:
         return "Unknown";
     }

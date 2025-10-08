@@ -122,7 +122,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
           {/* Next Steps */}
           <div className="mb-6">
             <h4 className="mb-3 font-medium text-[var(--color-gray-900)] font-[var(--font-inter)]">
-              What's Next?
+              What&apos;s Next?
             </h4>
             <ul className="space-y-2 text-sm text-[var(--color-gray-600)] font-[var(--font-inter)]">
               <li className="flex items-start">

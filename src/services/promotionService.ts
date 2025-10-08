@@ -2,6 +2,18 @@ import { supabase } from "@/lib/supabaseClient";
 import { PromotionCode, BookingApiResponse } from "@/types/booking";
 import { BOOKING_ERROR_CODES, DISCOUNT_TYPES } from "@/constants/booking";
 
+// เพิ่ม interface สำหรับ booking
+interface BookingForCalculation {
+  room_id: string;
+  check_in: string;
+  check_out: string;
+  total: number;
+  special_requests?: Array<{
+    selected: boolean;
+    price?: number;
+  }>;
+}
+
 export class PromotionService {
   // ===== VALIDATE PROMOTION CODE =====
   static async validatePromotionCode(
@@ -261,7 +273,9 @@ export class PromotionService {
   }
 
   // ===== CALCULATE ORIGINAL TOTAL =====
-  private static async calculateOriginalTotal(booking: any): Promise<number> {
+  private static async calculateOriginalTotal(
+    booking: BookingForCalculation
+  ): Promise<number> {
     try {
       // Get room price
       const { data: room, error } = await supabase
@@ -284,8 +298,8 @@ export class PromotionService {
       // Calculate special requests total
       const specialRequestsTotal =
         booking.special_requests
-          ?.filter((req: any) => req.selected && req.price)
-          .reduce((sum: number, req: any) => sum + (req.price || 0), 0) || 0;
+          ?.filter((req) => req.selected && req.price)
+          .reduce((sum: number, req) => sum + (req.price || 0), 0) || 0;
 
       return room.price * nights + specialRequestsTotal;
     } catch (error) {

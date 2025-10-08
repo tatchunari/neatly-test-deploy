@@ -69,7 +69,7 @@ export const PaymentFailedModal: React.FC<PaymentFailedModalProps> = ({
             Payment Failed
           </h2>
           <p className="mt-2 text-[var(--color-red-100)] font-[var(--font-inter)]">
-            We couldn't process your payment
+            We couldn&apos;t process your payment
           </p>
         </div>
 

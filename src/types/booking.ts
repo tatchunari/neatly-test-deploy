@@ -27,15 +27,24 @@ export interface Booking {
   updated_at: string;
 }
 
+// กำหนด interface สำหรับ meta
+interface PaymentMeta {
+  card_owner?: string;
+  expiry_date?: string;
+  [key: string]: unknown; // สำหรับ fields อื่นๆ
+}
+
 export interface Payment {
   id: string;
   booking_id: string;
   stripe_payment_id?: string;
   amount: number;
   status: PaymentStatus;
-  meta?: Record<string, any>;
+  payment_method: PaymentMethod;
+  card_last_four?: string;
+  meta?: PaymentMeta; // ← ใช้ interface ที่กำหนด
   created_at: string;
-  paid_at: string; // แก้ไขจาก created_at
+  paid_at: string;
 }
 
 // ===== ROOM INFORMATION =====

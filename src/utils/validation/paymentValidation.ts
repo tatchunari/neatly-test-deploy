@@ -26,8 +26,6 @@ export const validatePaymentData = (data: {
   const validPaymentMethods: PaymentMethod[] = [
     PAYMENT_METHODS.CREDIT_CARD,
     PAYMENT_METHODS.CASH,
-    PAYMENT_METHODS.BANK_TRANSFER,
-    PAYMENT_METHODS.PROMPTPAY,
   ];
   if (!validPaymentMethods.includes(data.paymentMethod)) {
     errors.push("Invalid payment method");
