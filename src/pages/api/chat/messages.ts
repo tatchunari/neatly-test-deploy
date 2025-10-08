@@ -166,9 +166,10 @@ export default async function handler(
 
           // Call bot response API asynchronously (fire-and-forget)
           // The typing indicator will be hidden when the bot message arrives via Realtime
-          const botResponseUrl = `${
-            process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-          }/api/chat/bot-response`;
+          const baseUrl = process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}`
+            : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+          const botResponseUrl = `${baseUrl}/api/chat/bot-response`;
 
           fetch(botResponseUrl, {
             method: "POST",
