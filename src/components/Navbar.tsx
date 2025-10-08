@@ -224,7 +224,7 @@ function UserMenu() {
             href="/customer/bookings"
             className="block px-4 py-2 hover:bg-gray-50"
           >
-            Booking
+            Booking History
           </Link>
           <button
             onClick={handleLogout}
