@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { HotelInfoProvider } from "@/context/HotelInfoContext";
 import type { AppProps } from "next/app";
 import Script from "next/script";
 import { useEffect } from "react";
@@ -33,7 +34,9 @@ export default function App({ Component, pageProps }: AppProps) {
         `}
       </Script>
       <AuthProvider>
-        <Component {...pageProps} />
+        <HotelInfoProvider>
+          <Component {...pageProps} />
+        </HotelInfoProvider>
       </AuthProvider>
     </>
   );
