@@ -95,6 +95,7 @@ export default function Chatbot() {
   const [suggestionFAQs, setSuggestionFAQs] = useState<SuggestionFAQ[]>([]);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [showTopics, setShowTopics] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Ticket modal states
   const [showTicketModal, setShowTicketModal] = useState(false);
@@ -175,6 +176,71 @@ export default function Chatbot() {
       setIsExpanded(false);
       setIsClosing(false);
     }
+  };
+
+  const handleClearMessages = () => {
+    console.log('🗑️ Clear button clicked - showing confirmation dialog');
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearMessages = async () => {
+    if (!currentSession?.id) {
+      console.log('❌ Cannot clear messages - no active session');
+      return;
+    }
+
+    console.log('🗑️ Confirming clear messages for session:', currentSession.id);
+    console.log('📊 Current messages count:', messages.length);
+
+    try {
+      console.log('🔄 Calling clear messages API...');
+      
+      const response = await fetch('/api/chat/clear-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: currentSession.id,
+        }),
+      });
+
+      console.log('📡 API response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ API error response:', errorData);
+        throw new Error(`API returned ${response.status}: ${errorData.error || 'Unknown error'}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ API success response:', result);
+
+      // Clear local state
+      setMessages([]);
+      setShowClearConfirm(false);
+      
+      // Clear ticket state as well
+      setCurrentTicket(null);
+      setIsTicketSolved(false);
+      setIsBotTyping(false);
+      
+      console.log('✅ Messages and tickets cleared successfully');
+      console.log('📊 Messages count after clear:', 0);
+      console.log('🎫 Ticket state cleared');
+    } catch (error) {
+      console.error('❌ Error clearing messages:', error);
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
+      
+      // Still close the dialog even if there's an error
+      setShowClearConfirm(false);
+    }
+  };
+
+  const cancelClearMessages = () => {
+    console.log('❌ Clear operation cancelled by user');
+    setShowClearConfirm(false);
   };
 
   // Handle scroll to expand
@@ -1079,6 +1145,14 @@ export default function Chatbot() {
                   Topics
                 </Button>
                 <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleClearMessages()}
+                  className="text-gray-600 hover:text-red-600 text-xs px-2 py-1"
+                >
+                  Clear
+                </Button>
+                <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => handleClose()}
@@ -1550,6 +1624,35 @@ export default function Chatbot() {
                   Cancel
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Messages Confirmation Modal */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 max-w-full mx-4">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+              Clear Chat History
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to clear all messages in this chat? This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={confirmClearMessages}
+                className="bg-red-500 text-white hover:bg-red-600 cursor-pointer flex-1"
+              >
+                Clear Messages
+              </Button>
+              <Button
+                onClick={cancelClearMessages}
+                variant="outline"
+                className="cursor-pointer"
+              >
+                Cancel
+              </Button>
             </div>
           </div>
         </div>
