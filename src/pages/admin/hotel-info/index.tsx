@@ -1,5 +1,5 @@
 import Layout from "@/components/admin/Layout";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // เชื่อมต่อกับ database table ชื่อ hotel_information โดยตรงผ่าน API
 // (สมมติว่ามี API endpoint ที่เชื่อมกับ table นี้แล้ว เช่น /api/hotel-information)
@@ -20,6 +20,10 @@ export default function HotelInfoPage() {
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // State to track if logo is removed (for upload UI)
+  const [logoRemoved, setLogoRemoved] = useState(false);
 
   // โหลดข้อมูลจาก database table hotel_information
   useEffect(() => {
@@ -35,6 +39,7 @@ export default function HotelInfoPage() {
             description: data.data.description,
             logo_url: data.data.logo_url,
           });
+          setLogoRemoved(!data.data.logo_url); // ถ้าไม่มีโลโก้ ให้ขึ้นอัพโหลด
         } else {
           setError(data.message || "Failed to fetch hotel information");
         }
@@ -63,7 +68,7 @@ export default function HotelInfoPage() {
         body: JSON.stringify({
           name: hotelInfo.name,
           description: hotelInfo.description,
-          logo_url: hotelInfo.logo_url,
+          logo_url: logoRemoved ? "" : hotelInfo.logo_url,
         }),
       });
       const data = await res.json();
@@ -74,6 +79,7 @@ export default function HotelInfoPage() {
           description: data.data.description,
           logo_url: data.data.logo_url,
         });
+        setLogoRemoved(!data.data.logo_url);
         setTimeout(() => setUpdateMessage(""), 3000);
       } else {
         setUpdateMessage("Failed to update hotel information. Please try again.");
@@ -82,6 +88,31 @@ export default function HotelInfoPage() {
       setUpdateMessage("Failed to update hotel information. Please try again.");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  // ฟังก์ชันเมื่อคลิกกากบาท ให้รูปหาย แล้วขึ้นให้อัพโหลด
+  const handleRemoveLogo = () => {
+    setHotelInfo((prev) => ({ ...prev, logo_url: "" }));
+    setLogoRemoved(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // ฟังก์ชันเมื่อเลือกไฟล์ใหม่
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setHotelInfo((prev) => ({
+          ...prev,
+          logo_url: ev.target?.result as string,
+        }));
+        setLogoRemoved(false);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -99,8 +130,8 @@ export default function HotelInfoPage() {
           disabled={isUpdating || loading}
           className={`${
             isUpdating || loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-[#B35023] hover:bg-[#a03f18]"
+              ? "bg-orange-600 cursor-not-allowed"
+              : "bg-orange-600 hover:bg-[#a03f18]"
           } text-white rounded px-8 py-3 text-base font-medium transition-colors`}
           style={{ width: 121, height: 48 }}
         >
@@ -190,30 +221,74 @@ export default function HotelInfoPage() {
               Hotel logo <span className="text-red-500">*</span>
             </label>
             <div className="relative w-36 h-24">
-              <img
-                src={hotelInfo.logo_url}
-                alt="Hotel Logo"
-                className="w-full h-full object-contain rounded bg-white border border-gray-200"
-              />
-              <button
-                type="button"
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-600"
-                aria-label="Remove logo"
-                onClick={() =>
-                  setHotelInfo((prev) => ({ ...prev, logo_url: "" }))
-                }
-                disabled={loading}
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path
-                    d="M3 3L9 9M9 3L3 9"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
+              {/* ถ้าไม่มีโลโก้หรือถูกลบ ให้แสดงปุ่มอัพโหลด */}
+              {(logoRemoved || !hotelInfo.logo_url) ? (
+                <div
+                  className="w-full h-full flex flex-col items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded cursor-pointer transition hover:bg-gray-200"
+                  style={{ minHeight: "96px" }}
+                  onClick={() => !loading && fileInputRef.current?.click()}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="Upload logo"
+                  onKeyDown={e => {
+                    if ((e.key === "Enter" || e.key === " ") && !loading) {
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                >
+                  <span className="text-3xl text-[#B35023] mb-1">+</span>
+                  <span className="text-[#B35023] text-sm font-medium">Upload photo</span>
+                </div>
+              ) : (
+                <>
+                  <img
+                    src={hotelInfo.logo_url}
+                    alt="Hotel Logo"
+                    className="w-full h-full object-contain rounded bg-white border border-gray-200"
                   />
-                </svg>
-              </button>
+                  <button
+                    type="button"
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-600"
+                    aria-label="Remove logo"
+                    onClick={handleRemoveLogo}
+                    disabled={loading}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M3 3L9 9M9 3L3 9"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                  {/* คลิกที่รูปเพื่ออัปโหลด */}
+                  <div
+                    className="absolute inset-0 cursor-pointer"
+                    style={{ zIndex: 10 }}
+                    onClick={() => !loading && fileInputRef.current?.click()}
+                    aria-label="Upload logo"
+                    tabIndex={0}
+                    role="button"
+                    onKeyDown={e => {
+                      if ((e.key === "Enter" || e.key === " ") && !loading) {
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                  />
+                </>
+              )}
+              {/* ปุ่มอัปโหลดรูปใหม่ */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleLogoChange}
+                disabled={loading}
+              />
             </div>
+            <div className="text-xs text-gray-500 mt-2">Allowed: PNG, JPG, JPEG, GIF</div>
           </div>
         </form>
       </div>
