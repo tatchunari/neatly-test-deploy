@@ -1,5 +1,5 @@
 export interface RoomType {
-  id: string;
+  id: number; // room_types.id (int4) - เปลี่ยนเป็น number
   name: string;
   description: string;
   base_price: number;
@@ -7,7 +7,7 @@ export interface RoomType {
   guests: number;
   room_size: number;
   bed_type: string;
-  amenities: string[]; // JSON/array
+  amenities: string[];
   main_image: string;
-  gallery_images: string[]; // JSON/array
+  gallery_images: string[];
 }
