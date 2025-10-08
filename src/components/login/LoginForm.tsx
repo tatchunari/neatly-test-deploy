@@ -1,13 +1,7 @@
-<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
-=======
-import { useState } from "react";
-import { useRouter } from "next/router";
-import { supabase } from "@/lib/supabaseClient";
->>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
 
 interface Errors {
   username: string;
@@ -20,32 +14,21 @@ export default function LoginForm() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errors, setErrors] = useState<Errors>({ username: "", password: "" });
-<<<<<<< HEAD
   const [submitting, setSubmitting] = useState(false);
-=======
->>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-<<<<<<< HEAD
     const newErrors: Errors = { username: "", password: "" };
 
     const trimmedUsername = username.trim();
     const trimmedPassword = password.trim();
 
     // validate
-=======
-    let newErrors: Errors = { username: "", password: "" };
-    const trimmedUsername = username.trim();
-    const trimmedPassword = password.trim();
-
->>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
     if (!trimmedUsername) {
       newErrors.username = "Username or Email is required";
     } else {
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedUsername);
-<<<<<<< HEAD
       if (!isEmail && trimmedUsername.length < 3) {
         newErrors.username = "Username must be at least 3 characters";
       }
@@ -55,21 +38,10 @@ export default function LoginForm() {
     } else if (trimmedPassword.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
-=======
-      if (!isEmail && trimmedUsername.length < 6) {
-        newErrors.username = "Username must be at least 6 characters";
-      }
-    }
-
-    if (!trimmedPassword) newErrors.password = "Password is required";
-    else if (trimmedPassword.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
->>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
 
     setErrors(newErrors);
     if (newErrors.username || newErrors.password) return;
 
-<<<<<<< HEAD
     setSubmitting(true);
 
     try {
@@ -149,36 +121,6 @@ export default function LoginForm() {
       isMounted = false;
     };
   }, [router]);
-=======
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedUsername);
-    let emailToLogin = trimmedUsername;
-
-    if (!isEmail) {
-      const { data, error } = await supabase
-        .from("users")
-        .select("email")
-        .eq("username", trimmedUsername)
-        .single();
-
-      if (error || !data?.email) {
-        setErrors({ username: "Username not found", password: "" });
-        return;
-      }
-      emailToLogin = data.email;
-    }
-
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: emailToLogin,
-      password: trimmedPassword,
-    });
-
-    if (authError) {
-      setErrors({ username: "Login failed: " + authError.message, password: "" });
-    } else {
-      router.push("/dashboard");
-    }
-  };
->>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
 
   return (
     <form onSubmit={handleSubmit}>
@@ -219,7 +161,6 @@ export default function LoginForm() {
       <div className="flex flex-col">
         <button
           type="submit"
-<<<<<<< HEAD
           disabled={submitting}
           className="w-full md:w-[452px] h-[48px] mb-4 md:mb-[16px] rounded bg-orange-600 font-inter text-white text-[16px] font-semibold leading-[16px] px-8 cursor-pointer transition hover:bg-orange-700 disabled:opacity-60"
         >
@@ -237,19 +178,6 @@ export default function LoginForm() {
 
           <a href="#" className="w-full sm:w-auto ml-0 sm:ml-auto text-left sm:text-right mt-1 sm:mt-0 font-semibold text-orange-500 text-[15px] md:text-[16px] hover:underline">
             Forgot Password?
-=======
-          className="w-full md:w-[452px] h-[48px] mb-4 md:mb-[16px] rounded bg-orange-600 font-inter text-white text-[16px] font-semibold leading-[16px] px-8 cursor-pointer transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
-        >
-          Log In
-        </button>
-
-        <div className="flex items-center gap-2">
-          <p className="font-inter text-[15px] md:text-[16px] leading-[150%] tracking-[-0.02em] text-gray-700">
-            Don’t have an account yet?
-          </p>
-          <a href="/customer/register" className="font-semibold text-orange-500 text-[15px] md:text-[16px] hover:underline">
-            Register
->>>>>>> dd737d9 (feat: create CustomerLoginPage component with integrated LoginForm and responsive layout)
           </a>
         </div>
       </div>
