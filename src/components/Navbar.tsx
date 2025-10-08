@@ -221,7 +221,7 @@ function UserMenu() {
             Settings
           </Link>
           <Link
-            href="/customer/booking"
+            href="/customer/booking-history"
             className="block px-4 py-2 hover:bg-gray-50"
           >
             Booking History
@@ -300,7 +300,7 @@ function MobileUserMenu({
           Payment Method
         </Link>
         <Link
-          href="/customer/booking"
+          href="/customer/booking-history"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Booking History
