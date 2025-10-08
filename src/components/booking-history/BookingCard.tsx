@@ -2,7 +2,8 @@ import { useId, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ConfirmModal from "@/components/ui/ConfirmModal";
-import NonRefundModal from "@/components/ui/NonRefundModal"; 
+import NonRefundModal from "@/components/ui/NonRefundModal";
+
 export type Booking = {
   id: string;
   roomName: string;
@@ -29,6 +30,9 @@ export type Booking = {
   currency: "THB" | "USD" | string;
   total: number;
   additionalRequest?: string;
+
+  // เพิ่มเพื่อให้ตรงกับ index.tsx
+  promoCode?: string;
 };
 
 export default function BookingCard({ booking }: { booking: Booking }) {
@@ -51,21 +55,42 @@ export default function BookingCard({ booking }: { booking: Booking }) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(n);
-    } catch (_) {
+    } catch {
       return `${booking.currency} ${money(n)}`;
     }
   };
 
+  // แปลงสตริงวันที่จาก Supabase -> ISO ที่ JS parse ได้เสถียร
+  function normalizeToISO(rawInput: string): string | null {
+    if (!rawInput) return null;
+    let s = rawInput.trim();
+
+    // "YYYY-MM-DD HH:mm:ss" -> "YYYY-MM-DDTHH:mm:ss"
+    if (s.includes(" ")) s = s.replace(" ", "T");
+
+    // timezone แบบ +0700 -> +07:00
+    s = s.replace(/([+\-]\d{2})(\d{2})$/, "$1:$2");
+
+    // กรณี +00 หรือ +0000 ให้เป็น Z (UTC)
+    s = s.replace(/\+00(?::?00)?$/, "Z");
+
+    // ถ้าไม่มี timezone เลย เติม Z เป็น UTC
+    if (!/[zZ]|[+\-]\d{2}:\d{2}$/.test(s)) s = `${s}Z`;
+
+    return s;
+  }
+
   // ตัดสินใจว่าเป็น non-refund หรือไม่จาก 48 ชั่วโมงก่อน check-in
   function shouldNonRefund(): boolean {
-    if (!booking.checkInAtRaw) return false; // ถ้าไม่มีข้อมูล ให้ถือว่า refund ได้
-    const now = Date.now();
-    const checkInTs = new Date(booking.checkInAtRaw).getTime();
+    if (!booking.checkInAtRaw) return false; // ไม่มีข้อมูล: ถือว่า refund ได้
+    const iso = normalizeToISO(booking.checkInAtRaw);
+    if (!iso) return false;
+
+    const checkInTs = new Date(iso).getTime();
     if (Number.isNaN(checkInTs)) return false;
 
-    const diffMs = checkInTs - now;
-    const hours = diffMs / (1000 * 60 * 60);
-    // ถ้าเลยวันเช็คอินแล้ว หรือ <= 48 ชม. ⇒ non-refund
+    const hours = (checkInTs - Date.now()) / (1000 * 60 * 60);
+    // <= 48 ชม. (หรือเลยวันเช็คอิน) ⇒ non-refund
     return hours <= 48;
   }
 
@@ -78,7 +103,6 @@ export default function BookingCard({ booking }: { booking: Booking }) {
   };
 
   const handleCancelConfirm = () => {
-    // ค่อยต่อกับ Supabase ทีหลังได้
     console.log("Cancel with refund:", booking.id);
     setShowRefundModal(false);
   };

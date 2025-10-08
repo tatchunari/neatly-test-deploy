@@ -1,10 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import Footer from "@/components/Footer";
-import BookingCard, { type Booking } from "@/components/bookings/BookingCard";
+import BookingCard, { type Booking } from "@/components/booking-history/BookingCard";
 import { supabase } from "@/lib/supabaseClient";
 
-// แปลงวันที่ UTC ให้ตรงกับใน Supabase
+type RoomFields = {
+  room_type: string | null;
+  main_image_url: string | string[] | null;
+  currency: string | null;
+  guests: number | null;
+};
+
+type BookingRowRaw = {
+  id: string;
+  room_id: string | null;
+  booking_date: string | null;
+  check_in_date: string | null;
+  check_out_date: string | null;
+  total_amount: number | null;
+  additional_request: string | null;
+  promo_code: string | null;
+  special_requests: string[] | string | null;
+  status: string | null;
+  payment_method: string | null;
+  rooms: RoomFields | RoomFields[] | null;
+};
+
+// แปลงวันที่ UTC ให้เป็นข้อความแบบ Supabase UI
 function fmtDateUTC(d?: string | null) {
   if (!d) return "-";
   const safe = typeof d === "string" ? d.replace(" ", "T") : d;
@@ -27,7 +49,6 @@ function calcNights(checkIn?: string | null, checkOut?: string | null) {
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24)) || 1;
 }
 
-// Pagination config
 const PAGE_SIZE = 6;
 
 export default function BookingHistoryPage() {
@@ -35,7 +56,7 @@ export default function BookingHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0); // total rows in supabase
+  const [total, setTotal] = useState(0);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(total / PAGE_SIZE)),
@@ -85,14 +106,23 @@ export default function BookingHistoryPage() {
 
       setTotal(count ?? 0);
 
-      const mapped: Booking[] = (data || []).map((row: any) => {
-        const roomName: string = row?.rooms?.room_type ?? "Room";
+      // type-safe cast
+      const rows: BookingRowRaw[] = (data ?? []) as unknown as BookingRowRaw[];
 
-        //  รูปจาก main_image_url
-        const rawImg = row?.rooms?.main_image_url;
+      const mapped: Booking[] = rows.map((row) => {
+        // normalize rooms เป็น object เดียว
+        const roomsObj: RoomFields | null = Array.isArray(row.rooms)
+          ? (row.rooms[0] ?? null)
+          : row.rooms;
+
+        const roomName: string = roomsObj?.room_type ?? "Room";
+
+        // main_image_url 
+        const rawImg = roomsObj?.main_image_url;
         let imageUrl = "/images/sample-room-1.png";
-        if (Array.isArray(rawImg) && rawImg.length > 0) imageUrl = rawImg[0];
-        else if (typeof rawImg === "string" && rawImg.trim()) {
+        if (Array.isArray(rawImg) && rawImg.length > 0) {
+          imageUrl = rawImg[0] as string;
+        } else if (typeof rawImg === "string" && rawImg.trim()) {
           try {
             const parsed = JSON.parse(rawImg);
             imageUrl = Array.isArray(parsed) && parsed[0] ? parsed[0] : rawImg;
@@ -101,17 +131,18 @@ export default function BookingHistoryPage() {
           }
         }
 
-        const currency: string = row?.rooms?.currency ?? "THB";
+        const currency: string = roomsObj?.currency ?? "THB";
         const guests: number =
-          typeof row?.rooms?.guests === "number" && row.rooms.guests > 0
-            ? row.rooms.guests
+          typeof roomsObj?.guests === "number" && (roomsObj?.guests ?? 0) > 0
+            ? (roomsObj?.guests as number)
             : 1;
 
-        // special_requests
+        // special_requests -> items (ไม่มีราคา)
         let requests: string[] = [];
-        const sr = row?.special_requests;
-        if (Array.isArray(sr)) requests = [...sr];
-        else if (typeof sr === "string" && sr.trim()) {
+        const sr = row.special_requests;
+        if (Array.isArray(sr)) {
+          requests = [...sr];
+        } else if (typeof sr === "string" && sr.trim()) {
           try {
             const parsed = JSON.parse(sr);
             if (Array.isArray(parsed)) requests = parsed.filter(Boolean);
@@ -120,49 +151,44 @@ export default function BookingHistoryPage() {
           }
         }
         requests.sort();
+        const items = requests.map((r) => ({ label: r, amount: 0 }));
 
-        const nights = calcNights(row?.check_in_date, row?.check_out_date);
-        const items = requests.map((r: string) => ({ label: r, amount: 0 }));
+        const nights = calcNights(row.check_in_date, row.check_out_date);
 
-        return {
+        const booking: Booking = {
           id: row.id,
           roomName,
           imageUrl,
-          checkInDate: fmtDateUTC(row?.check_in_date),
-          checkOutDate: fmtDateUTC(row?.check_out_date),
-          bookedAtText: fmtDateUTC(row?.booking_date),
-          promoCode: row?.promo_code || undefined,
-          checkInAtRaw: row?.check_in_date ?? null,
-          bookingDateRaw: row?.booking_date ?? null,
+          checkInDate: fmtDateUTC(row.check_in_date),
+          checkOutDate: fmtDateUTC(row.check_out_date),
+          bookedAtText: fmtDateUTC(row.booking_date),
+
+          // ✅ สำคัญมาก: ส่งค่านี้ไปให้ BookingCard ใช้ตัดสินใจ 48 ชม.
+          checkInAtRaw: row.check_in_date ?? undefined,
+
           checkInNote: undefined,
           checkOutNote: undefined,
           guests,
           nights,
           payment: {
             status:
-              row?.status === "confirmed"
+              row.status === "confirmed"
                 ? "success"
-                : row?.status === "refunded" || row?.status === "cancelled"
+                : row.status === "refunded" || row.status === "cancelled"
                 ? "failed"
                 : "pending",
-            method: row?.payment_method ?? "Credit Card",
+            method: row.payment_method ?? "Credit Card",
           },
           items,
           currency,
-          total: Number(row?.total_amount) || 0,
-          additionalRequest: row?.additional_request || undefined,
-        } as Booking;
-      });
+          total: Number(row.total_amount) || 0,
+          additionalRequest: row.additional_request || undefined,
 
-      // sort ฝั่ง client อีกชั้น
-      mapped.sort((a, b) => {
-        const ta = (a as any).bookingDateRaw
-          ? new Date((a as any).bookingDateRaw).getTime()
-          : 0;
-        const tb = (b as any).bookingDateRaw
-          ? new Date((b as any).bookingDateRaw).getTime()
-          : 0;
-        return tb - ta;
+          // ถ้าต้องแสดงโค้ดโปรโมชันในอนาคต การ์ดมี prop รองรับแล้ว
+          promoCode: row.promo_code || undefined,
+        };
+
+        return booking;
       });
 
       setBookings(mapped);
@@ -171,13 +197,12 @@ export default function BookingHistoryPage() {
 
     fetchBookings();
 
-    // scroll to top เมื่อเปลี่ยนหน้า
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [page]);
 
-  // สร้างเลขหน้าที่จะแสดง (สูงสุด 5 ตัว)
+  // เลขหน้า (สูงสุด 5)
   const visiblePages = useMemo(() => {
     const pages: number[] = [];
     const maxToShow = 5;
@@ -188,7 +213,7 @@ export default function BookingHistoryPage() {
       return pages;
     }
     let start = Math.max(1, page - 2);
-    let end = Math.min(totalP, start + maxToShow - 1);
+    const end = Math.min(totalP, start + maxToShow - 1);
     if (end - start + 1 < maxToShow) start = Math.max(1, end - maxToShow + 1);
     for (let i = start; i <= end; i++) pages.push(i);
     return pages;
