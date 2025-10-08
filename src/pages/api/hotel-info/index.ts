@@ -1,46 +1,81 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
-// Mock data storage (ใน production ควรใช้ database)
-let hotelInfo = {
-  name: "Neatly Hotel",
-  description: `Set in Bangkok, Thailand, Neatly Hotel offers 5-star accommodation with an outdoor pool, kids' club, sports facilities and a fitness centre. There is also a spa, an indoor pool and saunas.
+// สร้าง supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-All units at the hotel are equipped with a seating area, a flat-screen TV with satellite channels, a dining area and a private bathroom with free toiletries, a bathtub and a hairdryer. Every room in Neatly Hotel features a furnished balcony. Some rooms are equipped with a coffee machine.
-
-Free WiFi and entertainment facilities are available at property and also rentals are provided to explore the area.`,
-  logoUrl: "/logo.png"
-};
-
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
-    // ดึงข้อมูลโรงแรม
-    res.status(200).json({
+    // ดึงข้อมูลโรงแรมจาก supabase (table: hotel_information)
+    const { data, error } = await supabase
+      .from('hotel_information')
+      .select('*')
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch hotel information',
+        error: error.message,
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      data: hotelInfo
+      data,
     });
   } else if (req.method === 'PUT') {
-    // อัปเดตข้อมูลโรงแรม
-    const { name, description, logoUrl } = req.body;
-    
+    // อัปเดตข้อมูลโรงแรมใน supabase (table: hotel_information)
+    const { name, description, logo_url } = req.body;
+
     // Validate required fields
     if (!name || !description) {
       return res.status(400).json({
         success: false,
-        message: 'Hotel name and description are required'
+        message: 'Hotel name and description are required',
       });
     }
 
-    // Update hotel info
-    hotelInfo = {
-      name: name.trim(),
-      description: description.trim(),
-      logoUrl: logoUrl || hotelInfo.logoUrl
-    };
+    // ดึงข้อมูลโรงแรมปัจจุบัน (assume มีแค่ 1 record)
+    const { data: currentData, error: fetchError } = await supabase
+      .from('hotel_information')
+      .select('*')
+      .single();
+
+    if (fetchError || !currentData) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch current hotel information',
+        error: fetchError ? fetchError.message : 'No hotel information found',
+      });
+    }
+
+    // อัปเดตข้อมูล (update by id)
+    const { data: updatedData, error: updateError } = await supabase
+      .from('hotel_information')
+      .update({
+        name: name.trim(),
+        description: description.trim(),
+        logo_url: logo_url ?? currentData.logo_url,
+      })
+      .eq('id', currentData.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update hotel information',
+        error: updateError.message,
+      });
+    }
 
     res.status(200).json({
       success: true,
       message: 'Hotel information updated successfully',
-      data: hotelInfo
+      data: updatedData,
     });
   } else {
     res.setHeader('Allow', ['GET', 'PUT']);
