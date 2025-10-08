@@ -220,6 +220,12 @@ function UserMenu() {
           >
             Settings
           </Link>
+          <Link
+            href="/customer/bookings"
+            className="block px-4 py-2 hover:bg-gray-50"
+          >
+            Booking
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600"
