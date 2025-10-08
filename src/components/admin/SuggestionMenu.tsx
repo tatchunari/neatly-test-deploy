@@ -1013,7 +1013,7 @@ export default function SuggestionMenu({
           </h2>
           <hr className="border-gray-300 mb-4" />
           <p className="text-gray-600 mb-6">
-            Are you sure you want to delete "{faqToDelete.topic}" ?
+            {`Are you sure you want to delete "${faqToDelete.topic}" ?`}
           </p>
            <div className="flex gap-2 justify-end">
              <Button
@@ -1036,7 +1036,7 @@ export default function SuggestionMenu({
                }}
                className="bg-orange-600 text-white hover:bg-orange-700 cursor-pointer"
              >
-               No, I don't
+               {`No, I don't`}
              </Button>
            </div>
         </div>
