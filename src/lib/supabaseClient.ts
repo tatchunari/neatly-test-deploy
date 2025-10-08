@@ -11,10 +11,7 @@ if (!supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { 
-      persistSession: true, // เก็บ session ค้างไว้ใน localStorage
-      autoRefreshToken: true // ต่ออายุ token ให้อัตโนมัติ
-    },
+    auth: { persistSession: true, autoRefreshToken: true },
     realtime: {
       params: {
         eventsPerSecond: 10,
