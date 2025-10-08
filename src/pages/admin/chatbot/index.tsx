@@ -156,7 +156,7 @@ export default function ChatbotAdmin() {
         console.log("FAQ updated with ID:", editingFAQ.id);
         setEditingFAQ(null);
         fetchFAQs();
-        showSnackbar("Updated successfully", "success");
+        showSnackbar("Suggestion updated successfully", "success");
       } else {
       }
     } catch (error) {
@@ -175,13 +175,13 @@ export default function ChatbotAdmin() {
 
       if (response.ok) {
         fetchFAQs();
-        showSnackbar("Deleted successfully", "delete");
+        showSnackbar("Suggestion deleted successfully", "delete");
       } else {
-        showSnackbar("Failed to delete FAQ", "error");
+        showSnackbar("Failed to delete suggestion", "error");
       }
     } catch (error) {
       console.error("Error deleting FAQ:", error);
-      showSnackbar("Error deleting FAQ", "error");
+      showSnackbar("Error deleting suggestion", "error");
     } finally {
       setLoading(false);
     }
@@ -262,7 +262,7 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setIsEditingGreeting(false);
         fetchFAQs();
-        showSnackbar("Greeting saved successfully", "success");
+        showSnackbar("Greeting message saved successfully", "success");
       } else {
       }
     } catch (error) {
@@ -306,7 +306,7 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setIsEditingFallback(false);
         fetchFAQs();
-        showSnackbar("Fallback saved successfully", "success");
+        showSnackbar("Fallback message saved successfully", "success");
       } else {
       }
     } catch (error) {
@@ -391,12 +391,15 @@ export default function ChatbotAdmin() {
         console.log("✅ Admin: All contexts created successfully");
         setNewContext({ content: "" });
         fetchContexts();
+        showSnackbar("Details added successfully", "success");
       } else {
         console.error("❌ Admin: Some contexts failed to create");
         setValidationErrors(prev => ({ ...prev, context: "Some details failed to save" }));
+        showSnackbar("Failed to add details", "error");
       }
     } catch (error) {
       console.error("❌ Admin: Error creating contexts:", error);
+      showSnackbar("Error adding details", "error");
       setValidationErrors(prev => ({ ...prev, context: "Error creating details" }));
     } finally {
       console.log("🟡 Admin: Setting loading to false");
@@ -445,20 +448,19 @@ export default function ChatbotAdmin() {
       if (response.ok) {
         setEditingContext(null);
         fetchContexts();
+        showSnackbar("Details updated successfully", "success");
       } else {
+        showSnackbar("Failed to update details", "error");
       }
     } catch (error) {
       console.error("Error updating context:", error);
+      showSnackbar("Error updating details", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteContext = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this context?")) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/chat/contexts?id=${id}`, {
         method: "DELETE",
@@ -466,10 +468,13 @@ export default function ChatbotAdmin() {
 
       if (response.ok) {
         fetchContexts();
+        showSnackbar("Details deleted successfully", "delete");
       } else {
+        showSnackbar("Failed to delete details", "error");
       }
     } catch (error) {
       console.error("Error deleting context:", error);
+      showSnackbar("Error deleting details", "error");
     }
   };
 
@@ -846,6 +851,7 @@ export default function ChatbotAdmin() {
                             setEditingFAQ(faq);
                           }}
                           onClose={() => setEditingFAQ(null)}
+                          onShowSnackbar={showSnackbar}
                         />
                       </Reorder.Item>
                     ))}
@@ -870,6 +876,7 @@ export default function ChatbotAdmin() {
                   onDeleteFAQ={handleDeleteFAQ}
                   onDeleteAlias={handleDeleteAlias}
                   onClose={() => setShowCreateFAQ(false)}
+                  onShowSnackbar={showSnackbar}
                 />
               )}
 

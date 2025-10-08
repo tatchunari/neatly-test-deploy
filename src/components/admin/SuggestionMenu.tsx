@@ -42,6 +42,7 @@ interface SuggestionMenuProps {
   faq?: FAQ;
   onClose?: () => void;
   onEdit?: () => void;
+  onShowSnackbar?: (message: string, type: 'success' | 'error' | 'delete') => void;
 }
 
 export default function SuggestionMenu({ 
@@ -54,7 +55,8 @@ export default function SuggestionMenu({
   isReadOnly = false,
   faq,
   onClose,
-  onEdit
+  onEdit,
+  onShowSnackbar
 }: SuggestionMenuProps) {
   // Base input styles
   const baseInputStyles = "w-full border !bg-white border-gray-300 rounded-md text-sm px-3 py-2";
@@ -374,6 +376,9 @@ export default function SuggestionMenu({
         setSelectedRoomTypes([]);
         onFetchFAQs();
         // FAQ updated/created successfully
+        if (onShowSnackbar) {
+          onShowSnackbar(isEditing ? "Suggestion updated successfully" : "Suggestion created successfully", "success");
+        }
         // Close the create form
         if (onClose) {
           onClose();
@@ -382,10 +387,16 @@ export default function SuggestionMenu({
         const errorData = await response.json();
         console.error("Failed to create FAQ:", errorData);
         // FAQ creation failed - error logged to console
+        if (onShowSnackbar) {
+          onShowSnackbar("Failed to save suggestion", "error");
+        }
       }
     } catch (error) {
       console.error("Error creating FAQ:", error);
       // FAQ creation error - error logged to console
+      if (onShowSnackbar) {
+        onShowSnackbar("Error saving suggestion", "error");
+      }
     } finally {
       setIsSaving(false);
     }
