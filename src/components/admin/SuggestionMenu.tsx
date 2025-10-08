@@ -407,7 +407,7 @@ export default function SuggestionMenu({
     <div>
 
       {/* Create New FAQ */}
-      <div className="mb-6 pl-4 pr-0 py-4 border border-gray-200 rounded-lg bg-gray-100">
+      <div className="mb-6 pl-4 pr-0 py-4 border border-gray-200 rounded-lg bg-gray-100 transition-none">
         <div className="flex gap-0">
           {/* Left side - Form fields (95%) */}
           <div className="flex-1 w-[95%] space-y-4">
