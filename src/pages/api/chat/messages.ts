@@ -175,6 +175,8 @@ export default async function handler(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "User-Agent": "Neatly-Internal-API",
+              "X-Internal-Request": "true",
             },
             body: JSON.stringify({
               sessionId: sessionId as string,
@@ -185,15 +187,17 @@ export default async function handler(
             .then((response) => {
               console.log("Bot response API call status:", response.status);
               if (!response.ok) {
-                throw new Error(
-                  `Bot response API returned ${response.status}: ${response.statusText}`
-                );
+                console.error(`Bot response API returned ${response.status}: ${response.statusText}`);
+                // Don't throw error, just log it - the bot will handle fallback internally
+                return null;
               }
               return response.json();
             })
             .then((data) => {
-              console.log("Bot response generated successfully:", data);
-              // Note: Typing indicator will be hidden when bot message arrives via Realtime
+              if (data) {
+                console.log("Bot response generated successfully:", data);
+                // Note: Typing indicator will be hidden when bot message arrives via Realtime
+              }
             })
             .catch((error) => {
               console.error("Error calling bot response API:", error);
