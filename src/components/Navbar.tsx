@@ -300,7 +300,7 @@ function MobileUserMenu({
           Payment Method
         </Link>
         <Link
-          href="/customer/booking-history"
+          href="/customer/bookings"
           className="flex items-center gap-2 px-2 py-2 text-[#222] text-sm hover:text-[#F47A1F]"
         >
           Booking History
