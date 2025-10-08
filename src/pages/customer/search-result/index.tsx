@@ -36,13 +36,9 @@ function SearchResultPage() {
       }
       const data = await response.json();
       // สมมติว่า API ส่ง { data: [...] }
-
       const list = Array.isArray(data?.data) ? data.data : [];
       setRooms(list);
 
-      // // Filter only rooms with status "Vacant"
-      // const vacantRooms = list.filter((room: Room) => room.status === "Vacant");
-      // setRooms(vacantRooms);
     } catch (err) {
       if (err instanceof Error) {
         setError(err?.message || "Error fetching rooms");

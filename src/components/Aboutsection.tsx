@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useHotelInfo } from "@/context/HotelInfoContext";
 
 const images = [
   { src: "/image/deluxe.jpg", alt: "Deluxe" },
@@ -12,6 +13,7 @@ const images = [
 ];
 
 export default function Aboutsection() {
+  const { hotelInfo, loading } = useHotelInfo();
   const [index, setIndex] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -79,7 +81,7 @@ export default function Aboutsection() {
             letterSpacing: 0,
           }}
         >
-          Neatly Hotel
+          {loading ? "Loading..." : hotelInfo.name}
         </h2>
         <div
           className="text-[#4B5755] text-[10px] md:text-[12px] leading-[26px] md:leading-[30px] font-Noto text-left w-full max-w-[700px] mb-0"
@@ -88,22 +90,15 @@ export default function Aboutsection() {
             marginBottom: 0,
           }}
         >
-          <p className="mb-2 md:mb-4">
-            Set in Bangkok, Thailand, Neatly Hotel offers 5-star accommodation
-            with an outdoor pool, kids&apos; club, sports facilities and a
-            fitness center. There is also a spa, an indoor pool and sauna.
-          </p>
-          <p className="mb-2 md:mb-4">
-            All units at the hotel are equipped with a seating area, a
-            flat-screen TV with satellite channels, a dining area and a private
-            bathroom with free toiletries, a bathtub and a hairdryer. Every room
-            in Neatly Hotel features a furnished balcony. Some rooms are
-            equipped with a coffee machine.
-          </p>
-          <p>
-            Free WiFi and entertainment facilities are available at property and
-            also rentals are provided to explore the area.
-          </p>
+          {loading ? (
+            <p>Loading hotel description...</p>
+          ) : (
+            hotelInfo.description.split('\n\n').map((paragraph, index) => (
+              <p key={index} className={index < hotelInfo.description.split('\n\n').length - 1 ? "mb-2 md:mb-4" : ""}>
+                {paragraph}
+              </p>
+            ))
+          )}
         </div>
       </div>
       {/* Image Carousel */}
