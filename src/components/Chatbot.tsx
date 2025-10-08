@@ -1225,7 +1225,7 @@ export default function Chatbot() {
               className="bg-gray-50 shadow-[inset_0_-16px_16px_-8px_rgba(0,0,0,0.1)] h-[calc(100%-120px)] overflow-y-auto"
               onScrollCapture={handleScroll}
             >
-               <div className="p-4 space-y-2">
+               <div className="py-4 space-y-2">
                 {/* Loading Session */}
                 {isLoadingSession && (
                   <div className="flex flex-col items-center justify-center py-8">
@@ -1238,7 +1238,7 @@ export default function Chatbot() {
 
                  {/* Greeting message */}
                 {!isLoadingSession && greetingMessage && (
-                  <div className={`flex flex-col items-start ${messages.length > 0 ? 'px-4' : ''}`}>
+                  <div className="flex flex-col items-start !px-4 !mx-0">
                      <div className="max-w-[80%] p-3 rounded-lg bg-white text-gray-800">
                        <p className="text-sm">{greetingMessage}</p>
                      </div>
@@ -1247,7 +1247,7 @@ export default function Chatbot() {
 
                  {/* Suggestion buttons */}
                 {!isLoadingSession && suggestionFAQs.length > 0 && (
-                  <div className={`flex flex-wrap gap-2 mt-4 ${messages.length > 0 ? 'px-4' : ''}`}>
+                  <div className="flex flex-wrap gap-2 mt-4 !px-4 !mx-0">
                      {suggestionFAQs.map((faq) => (
                        <Button
                          key={faq.id}
@@ -1631,27 +1631,28 @@ export default function Chatbot() {
 
       {/* Clear Messages Confirmation Modal */}
       {showClearConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96 max-w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[631px] max-w-full mx-4">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">
               Clear Chat History
             </h2>
+            <hr className="border-gray-300 mb-4" />
             <p className="text-gray-600 mb-6">
               Are you sure you want to clear all messages in this chat? This action cannot be undone.
             </p>
-            <div className="flex gap-2">
-              <Button
-                onClick={confirmClearMessages}
-                className="bg-red-500 text-white hover:bg-red-600 cursor-pointer flex-1"
-              >
-                Clear Messages
-              </Button>
+            <div className="flex gap-2 justify-end">
               <Button
                 onClick={cancelClearMessages}
                 variant="outline"
-                className="cursor-pointer"
+                className="cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-50"
               >
                 Cancel
+              </Button>
+              <Button
+                onClick={confirmClearMessages}
+                className="bg-orange-600 text-white hover:bg-orange-700 cursor-pointer"
+              >
+                Clear Messages
               </Button>
             </div>
           </div>
