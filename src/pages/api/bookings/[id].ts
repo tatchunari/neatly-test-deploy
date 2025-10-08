@@ -9,9 +9,31 @@ const supabase = createClient(
 type Data = {
   success: boolean;
   message: string;
-  data?: any;
+  data?: unknown;
   error?: string;
 };
+
+type Profile = {
+  id: string
+  first_name?: string | null
+  last_name?: string | null
+  username?: string | null
+  full_name?: string | null
+}
+
+type BookingRow = {
+  id: string
+  customer_name?: string | null
+  customer_id?: string | null
+  user_id?: string | null
+  profile_id?: string | null
+  guests?: number | null
+  room_type?: string | null
+  bed_type?: string | null
+  rooms?: { guests?: number | null; room_type?: string | null; bed_type?: string | null } | null
+  profiles?: Profile | null
+  [key: string]: unknown
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -30,16 +52,16 @@ export default async function handler(
   if (req.method === "GET") {
     try {
       // Attempt with profiles; if it fails, retry without to avoid breaking the UI
-      let data: any | null = null
-      let baseError: any = null
+      let data: BookingRow | null = null
+      let baseError: unknown = null
       try {
         const result = await supabase
           .from("bookings")
           .select("*, rooms(guests, room_type, bed_type), profiles(first_name, last_name, username, full_name)")
           .eq("id", id)
           .single();
-        data = result.data as any | null
-        baseError = result.error
+        data = (result.data as unknown as BookingRow) ?? null
+        baseError = result.error ?? null
       } catch (e) {
         baseError = e
       }
@@ -57,15 +79,15 @@ export default async function handler(
             error: fallback.error.message,
           });
         }
-        data = fallback.data as any | null
+        data = (fallback.data as unknown as BookingRow) ?? null
       }
 
       // Enrich and synthesize name. If profiles join isn't present and customer_name is null, fetch profile by customer_id.
       let enriched = data
         ? (() => {
-            const profile = (data as any)?.profiles ?? null
+            const profile = data?.profiles ?? null
             const synthesizedName =
-              (data as any)?.customer_name
+              data?.customer_name
               || profile?.full_name
               || [profile?.first_name, profile?.last_name].filter(Boolean).join(" ")
               || profile?.username
@@ -73,15 +95,15 @@ export default async function handler(
             return {
               ...data,
               customer_name: synthesizedName,
-              guests: (data as any)?.rooms?.guests ?? (data as any)?.guests ?? null,
-              room_type: (data as any)?.rooms?.room_type ?? (data as any)?.room_type ?? null,
-              bed_type: (data as any)?.rooms?.bed_type ?? (data as any)?.bed_type ?? null,
+              guests: data?.rooms?.guests ?? data?.guests ?? null,
+              room_type: data?.rooms?.room_type ?? data?.room_type ?? null,
+              bed_type: data?.rooms?.bed_type ?? data?.bed_type ?? null,
             }
           })()
         : null
 
-      if (enriched && !enriched.customer_name && ((enriched as any).customer_id || (enriched as any).user_id || (enriched as any).profile_id)) {
-        const key = ((enriched as any).customer_id || (enriched as any).user_id || (enriched as any).profile_id) as string
+      if (enriched && !enriched.customer_name && (enriched.customer_id || enriched.user_id || enriched.profile_id)) {
+        const key = String(enriched.customer_id || enriched.user_id || enriched.profile_id)
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("id, first_name, last_name, username, full_name")
