@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-// API for getting all bookings data
-=======
->>>>>>> 45cf2d4 (feat: add booking management functionality with detailed booking view and API integration)
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 
@@ -10,36 +6,10 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-<<<<<<< HEAD
-interface Booking {
-  id: string;
-  room_id: string;
-  customer_id: string;
-  check_in_date: string;
-  check_out_date: string;
-  total_amount: number;
-  status: "pending" | "confirmed" | "cancelled" | "refunded";
-  promo_code?: string;
-  created_at: string;
-  updated_at: string;
-  additional_request?: string;
-  booking_date: string;
-  payment_method: "cash" | "credit card";
-  customer_name: string;
-  special_request?: string[];
-  standard_request?: string[];
-}
-
-type Data = {
-  success: boolean;
-  message: string;
-  data?: Booking[];
-=======
 type Data = {
   success: boolean;
   message: string;
   data?: any;
->>>>>>> 45cf2d4 (feat: add booking management functionality with detailed booking view and API integration)
   error?: string;
 };
 
@@ -48,22 +18,6 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   if (req.method === "GET") {
-<<<<<<< HEAD
-    // ✅ Fetch all bookings
-    try {
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("❌ Error:", error.message);
-        return res.status(400).json({
-          success: false,
-          message: "Failed to fetch bookings",
-          error: error.message,
-        });
-=======
     try {
       // First attempt: include profiles join; if it fails due to missing relation, retry without profiles
       let data: any[] | null = null
@@ -144,17 +98,12 @@ export default async function handler(
             return b
           })
         }
->>>>>>> 45cf2d4 (feat: add booking management functionality with detailed booking view and API integration)
       }
 
       return res.status(200).json({
         success: true,
         message: "Bookings fetched successfully",
-<<<<<<< HEAD
-        data,
-=======
         data: enriched,
->>>>>>> 45cf2d4 (feat: add booking management functionality with detailed booking view and API integration)
       });
     } catch (error) {
       return res.status(500).json({
@@ -165,14 +114,6 @@ export default async function handler(
     }
   }
 
-<<<<<<< HEAD
-  // ❌ Other methods not allowed
-  return res.status(405).json({
-    success: false,
-    message: "Method not allowed. Use GET or POST.",
-  });
-}
-=======
   return res.status(405).json({
     success: false,
     message: "Method not allowed. Use GET.",
@@ -180,4 +121,3 @@ export default async function handler(
 }
 
 
->>>>>>> 45cf2d4 (feat: add booking management functionality with detailed booking view and API integration)
