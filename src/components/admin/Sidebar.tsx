@@ -55,23 +55,23 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-68 min-h-screen bg-green-800 flex flex-col fixed z-50">
+    <aside className="w-68 min-h-screen bg-green-800 flex flex-col fixed z-50 overflow-y-auto">
       {/* Logo */}
       <div className="flex items-center justify-center mt-10">
         <Image
-          className="w-35"
+          className="w-30"
           src="/assets/logo-white.png"
           alt="logo"
           width={800}
           height={600}
         />
       </div>
-      <div className="flex justify-center items-center font-inter font-light text-xl mt-6 text-green-300">
+      <div className="flex justify-center items-center font-inter font-light text-lg mt-6 text-green-300">
         Admin Panel Control
       </div>
 
       {/* Navigation */}
-      <nav className="mt-25 flex-1 w-full">
+      <nav className="mt-15 flex-1 w-full">
         {menuItems.map((item) => {
           const isActive =
             router.pathname === item.href ||
@@ -109,7 +109,13 @@ export default function Sidebar() {
           onClick={handleLogout}
           className="flex items-center w-full px-7 py-5 text-md font-inter font-medium text-green-300 hover:bg-green-600 hover:text-white cursor-pointer transition-colors"
         >
-          <img className="w-6 h-6 mr-4" src="/assets/logout.png" alt="Logout" />
+          <Image
+            width={80}
+            height={60}
+            className="w-6 h-6 mr-4"
+            src="/assets/logout.png"
+            alt="Logout"
+          />
           Log Out
         </button>
       </div>
