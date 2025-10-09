@@ -22,6 +22,8 @@ const WebTrafficSection = () => {
   const [selectedPage, setSelectedPage] = useState("All Pages");
   const [pageViewData, setPageViewData] = useState<PageViewRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Fixed page options
   const pageMapping: Record<string, string | null> = {
@@ -33,25 +35,64 @@ const WebTrafficSection = () => {
     Supreme: "/customer/search-result/4",
   };
 
-  // Fetch GA4 data
+  // Fetch GA4 data with error handling and retry logic
   useEffect(() => {
     async function fetchPageViews() {
       try {
-        const response = await fetch("/api/test-ga4");
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch("/api/test-ga4", {
+          // Add timeout to prevent hanging requests
+          signal: AbortSignal.timeout(10000), // 10 second timeout
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success && Array.isArray(result.data)) {
           setPageViewData(result.data);
+          setError(null);
+          setRetryCount(0); // Reset retry count on success
+        } else {
+          throw new Error("Invalid data format received from API");
         }
       } catch (err) {
         console.error("Failed to fetch GA4 data:", err);
+
+        // Set user-friendly error message
+        if (err instanceof Error) {
+          if (err.name === "TimeoutError") {
+            setError(
+              "Request timed out. Google Analytics is taking too long to respond."
+            );
+          } else if (err.message.includes("500")) {
+            setError(
+              "Google Analytics service is temporarily unavailable. Please try again."
+            );
+          } else if (err.message.includes("Failed to fetch")) {
+            setError("Network error. Please check your connection.");
+          } else {
+            setError(err.message);
+          }
+        } else {
+          setError("An unexpected error occurred while loading traffic data.");
+        }
       } finally {
         setLoading(false);
       }
     }
 
     fetchPageViews();
-  }, []);
+  }, [retryCount]); // Refetch when retryCount changes
+
+  // Manual retry function
+  const handleRetry = () => {
+    setRetryCount((prev) => prev + 1);
+  };
 
   // Filter + Aggregate data
   const chartData: LineChartData[] = useMemo(() => {
@@ -167,12 +208,48 @@ const WebTrafficSection = () => {
       ? "whitespace-nowrap border border-orange-500 text-orange-600 bg-orange-100"
       : "whitespace-nowrap border border-gray-400 hover:border-orange-500 hover:text-orange-600 hover:bg-orange-100";
 
+  // Loading state
   if (loading) {
     return (
       <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-90 mt-10">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="h-80 bg-gray-100 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-90 mt-10">
+        <div className="flex flex-col items-center justify-center h-80 space-y-4">
+          <div className="text-center">
+            <svg
+              className="mx-auto h-12 w-12 text-red-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">
+              Unable to Load Traffic Data
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 max-w-md">{error}</p>
+          </div>
+          <Button
+            loading={false}
+            text="Retry"
+            onClick={handleRetry}
+            className="border border-orange-500 text-orange-600 bg-orange-100 hover:bg-orange-200"
+          />
         </div>
       </div>
     );
@@ -223,7 +300,7 @@ const WebTrafficSection = () => {
         />
       ) : (
         <div className="flex items-center justify-center h-80 text-gray-400">
-          No traffic data available
+          No traffic data available for the selected filters
         </div>
       )}
     </div>
