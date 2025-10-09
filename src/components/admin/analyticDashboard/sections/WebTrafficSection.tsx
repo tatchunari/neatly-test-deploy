@@ -25,6 +25,11 @@ const WebTrafficSection = () => {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
+  // DEBUG MODE - Remove in production
+  const [debugMode, setDebugMode] = useState<
+    "normal" | "error500" | "timeout" | "invalid"
+  >("normal");
+
   // Fixed page options
   const pageMapping: Record<string, string | null> = {
     "All Pages": null,
@@ -42,7 +47,10 @@ const WebTrafficSection = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch("/api/test-ga4", {
+        // DEBUG MODE - Add query parameter to simulate errors
+        const debugParam = debugMode === "normal" ? "" : `?debug=${debugMode}`;
+
+        const response = await fetch(`/api/test-ga4${debugParam}`, {
           // Add timeout to prevent hanging requests
           signal: AbortSignal.timeout(10000), // 10 second timeout
         });
@@ -87,7 +95,7 @@ const WebTrafficSection = () => {
     }
 
     fetchPageViews();
-  }, [retryCount]); // Refetch when retryCount changes
+  }, [retryCount, debugMode]); // Refetch when retryCount or debugMode changes
 
   // Manual retry function
   const handleRetry = () => {
@@ -136,10 +144,14 @@ const WebTrafficSection = () => {
       filtered = filtered.filter((item) => item.date === dateStr);
 
       const grouped = groupBy(filtered, (item) => item.hour.padStart(2, "0"));
-      return grouped.map(({ key, value }) => ({
-        time: `${key}:00`,
-        value,
-      }));
+
+      // Sort by hour (numerically)
+      return grouped
+        .sort((a, b) => parseInt(a.key, 10) - parseInt(b.key, 10))
+        .map(({ key, value }) => ({
+          time: `${key}:00`,
+          value,
+        }));
     }
 
     if (selectedTimeframe === "Last 7 Days") {
@@ -152,12 +164,16 @@ const WebTrafficSection = () => {
       });
 
       const grouped = groupBy(filtered, (item) => item.date);
-      return grouped.map(({ key, value }) => ({
-        time: new Date(
-          `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}`
-        ).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        value,
-      }));
+
+      // Sort by date
+      return grouped
+        .sort((a, b) => a.key.localeCompare(b.key))
+        .map(({ key, value }) => ({
+          time: new Date(
+            `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}`
+          ).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          value,
+        }));
     }
 
     if (selectedTimeframe === "Last 30 days") {
@@ -170,12 +186,16 @@ const WebTrafficSection = () => {
       });
 
       const grouped = groupBy(filtered, (item) => item.date);
-      const daily = grouped.map(({ key, value }) => ({
-        date: new Date(
-          `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}`
-        ),
-        value,
-      }));
+
+      // Sort by date first
+      const daily = grouped
+        .sort((a, b) => a.key.localeCompare(b.key))
+        .map(({ key, value }) => ({
+          date: new Date(
+            `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}`
+          ),
+          value,
+        }));
 
       // Group by week
       const weeklyMap = new Map<string, number>();
@@ -186,10 +206,12 @@ const WebTrafficSection = () => {
         weeklyMap.set(weekKey, (weeklyMap.get(weekKey) ?? 0) + value);
       }
 
-      return Array.from(weeklyMap.entries()).map(([key, value]) => ({
-        time: key,
-        value,
-      }));
+      return Array.from(weeklyMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([key, value]) => ({
+          time: key,
+          value,
+        }));
     }
 
     return [];
@@ -257,6 +279,53 @@ const WebTrafficSection = () => {
 
   return (
     <div className="flex flex-col bg-white rounded-lg shadow-md sm:p-8 w-full h-110 sm:h-full mt-10 p-5">
+      {/* DEBUG MODE CONTROLS - Remove in production */}
+      {/*
+      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+        <p className="text-xs font-semibold text-yellow-800 mb-2">
+          DEBUG MODE (Remove before deploy)
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setDebugMode("normal")}
+            className={`px-3 py-1 text-xs rounded ${
+              debugMode === "normal" ? "bg-green-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            Normal
+          </button>
+          <button
+            onClick={() => setDebugMode("error500")}
+            className={`px-3 py-1 text-xs rounded ${
+              debugMode === "error500" ? "bg-red-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            500 Error
+          </button>
+          <button
+            onClick={() => setDebugMode("timeout")}
+            className={`px-3 py-1 text-xs rounded ${
+              debugMode === "timeout"
+                ? "bg-orange-500 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            Timeout
+          </button>
+          <button
+            onClick={() => setDebugMode("invalid")}
+            className={`px-3 py-1 text-xs rounded ${
+              debugMode === "invalid"
+                ? "bg-purple-500 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            Invalid Data
+          </button>
+        </div>
+      </div>
+      */}
+
       <div className="flex flex-col w-full justify-between">
         <div className="flex flex-col md:flex-row justify-between">
           <div className="flex flex-row items-center pr-5 mb-5 gap-4">
