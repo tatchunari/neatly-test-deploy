@@ -1,12 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { BetaAnalyticsDataClient } from "@google-analytics/data";
 
-const analyticsDataClient = new BetaAnalyticsDataClient();
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const analyticsDataClient = new BetaAnalyticsDataClient({
+    credentials: {
+      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"), // Important: Convert \n to actual newlines
+    },
+  });
   try {
     if (!process.env.GOOGLE_ANALYTICS_PROPERTY_ID) {
       throw new Error("Missing GA4 property ID");
